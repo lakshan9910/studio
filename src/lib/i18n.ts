@@ -53,6 +53,8 @@ export const translations = {
         add: 'Add',
         no_products_found: 'No products found',
         no_products_found_desc: 'Try adjusting your search or adding new products.',
+        warehouses: 'Warehouses',
+        stock_transfers: 'Stock Transfers',
     },
     mg: {
         storefront: 'Varotra',
@@ -107,6 +109,8 @@ export const translations = {
         add: 'Ampiana',
         no_products_found: 'Tsy nahitana vokatra',
         no_products_found_desc: 'Andramo ovaina ny fikarohanao na ampio vokatra vaovao.',
+        warehouses: 'Trano fitehirizam-bokatra',
+        stock_transfers: 'Famindrana tahiry',
     },
     ar: {
         storefront: 'واجهة المتجر',
@@ -161,6 +165,8 @@ export const translations = {
         add: 'إضافة',
         no_products_found: 'لم يتم العثور على منتجات',
         no_products_found_desc: 'حاول تعديل بحثك أو إضافة منتجات جديدة.',
+        warehouses: 'المستودعات',
+        stock_transfers: 'تحويلات المخزون',
     },
     si: {
         storefront: 'වෙළඳසැල',
@@ -215,6 +221,8 @@ export const translations = {
         add: 'එක් කරන්න',
         no_products_found: 'නිෂ්පාදන හමු නොවීය',
         no_products_found_desc: 'ඔබගේ සෙවීම සකස් කිරීමට උත්සාහ කරන්න හෝ නව නිෂ්පාදන එක් කරන්න.',
+        warehouses: 'ගබඩා',
+        stock_transfers: 'තොග මාරු කිරීම්',
     },
     ta: {
         storefront: 'கடை முகப்பு',
@@ -269,6 +277,8 @@ export const translations = {
         add: 'சேர்',
         no_products_found: 'தயாரிப்புகள் எதுவும் இல்லை',
         no_products_found_desc: 'உங்கள் தேடலை சரிசெய்ய முயற்சிக்கவும் அல்லது புதிய தயாரிப்புகளைச் சேர்க்கவும்.',
+        warehouses: 'கிடங்குகள்',
+        stock_transfers: 'பங்கு இடமாற்றங்கள்',
     },
 };
 

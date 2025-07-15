@@ -3,6 +3,13 @@ export type UserRole = 'Admin' | 'Cashier';
 export type PaymentMethod = 'Cash' | 'Card' | 'Online' | 'Credit';
 export type StockAdjustmentType = 'Addition' | 'Subtraction';
 export type PaymentStatus = 'Paid' | 'Due' | 'Overdue';
+export type TransferStatus = 'Pending' | 'In Transit' | 'Completed' | 'Cancelled';
+
+export interface Warehouse {
+    id: string;
+    name: string;
+    location?: string;
+}
 
 export interface ProductVariant {
   id: string; // Unique ID for the variant, e.g., prod_001-small
@@ -157,4 +164,18 @@ export interface StockAdjustment {
   type: StockAdjustmentType;
 }
 
-    
+export interface StockTransferItem {
+  productId: string;
+  variantId: string;
+  quantity: number;
+}
+
+export interface StockTransfer {
+    id: string;
+    date: string;
+    fromWarehouseId: string;
+    toWarehouseId: string;
+    items: StockTransferItem[];
+    status: TransferStatus;
+    notes?: string;
+}

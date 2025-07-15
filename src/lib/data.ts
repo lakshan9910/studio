@@ -1,5 +1,11 @@
 
-import type { Product, Category, Brand, Unit, Purchase, Return, Sale, Customer, Supplier, Expense, ExpenseCategory, StockAdjustment } from '@/types';
+import type { Product, Category, Brand, Unit, Purchase, Return, Sale, Customer, Supplier, Expense, ExpenseCategory, StockAdjustment, Warehouse, StockTransfer } from '@/types';
+
+export const initialWarehouses: Warehouse[] = [
+    { id: 'wh_01', name: 'Main Warehouse', location: '123 Warehouse St, Big City' },
+    { id: 'wh_02', name: 'Downtown Store', location: '456 Main St, Downtown' },
+    { id: 'wh_03', name: 'North Branch', location: '789 North Ave, Suburbia' },
+];
 
 export const initialProducts: Product[] = [
   {
@@ -197,4 +203,17 @@ export const initialStockAdjustments: StockAdjustment[] = [
   },
 ];
 
-    
+export const initialStockTransfers: StockTransfer[] = [
+    {
+        id: 'trans_001',
+        date: '2024-07-29T14:00:00Z',
+        fromWarehouseId: 'wh_01',
+        toWarehouseId: 'wh_02',
+        items: [
+            { productId: 'prod_001', variantId: 'prod_001-bag', quantity: 10 },
+            { productId: 'prod_004', variantId: 'prod_004-pc', quantity: 20 },
+        ],
+        status: 'Completed',
+        notes: 'Restocking for downtown store weekly.',
+    }
+];

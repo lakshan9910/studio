@@ -10,13 +10,57 @@ import { useSettings } from '@/context/SettingsContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { 
     LogOut, Settings, Store, Users, BarChart3, ShoppingCart, Receipt, Undo2, 
-    Shapes, Shield, Beaker, Truck, UserCog, Wallet, Package, Search
+    Shapes, Shield, Beaker, Truck, UserCog, Wallet, Package, Search,
+    Calculator, Bell
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
 import { Input } from '@/components/ui/input';
+
+function SimpleCalculator() {
+    const [input, setInput] = useState('');
+    const [result, setResult] = useState('');
+
+    const handleButtonClick = (value: string) => {
+        if (value === '=') {
+            try {
+                setResult(eval(input).toString());
+            } catch (error) {
+                setResult('Error');
+            }
+        } else if (value === 'C') {
+            setInput('');
+            setResult('');
+        } else {
+            setInput(prev => prev + value);
+        }
+    };
+    
+    const buttons = ['7','8','9','/','4','5','6','*','1','2','3','-','0','.','=','+'];
+
+    return (
+        <div className="p-2">
+            <div className="bg-muted text-right p-2 rounded-lg mb-2 min-h-[4rem]">
+                <div className="text-sm text-muted-foreground">{input}</div>
+                <div className="text-xl font-bold">{result}</div>
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+                {buttons.map(btn => (
+                    <Button key={btn} onClick={() => handleButtonClick(btn)} variant="outline">
+                        {btn}
+                    </Button>
+                ))}
+                 <Button onClick={() => handleButtonClick('C')} variant="destructive" className="col-span-4">
+                    Clear
+                </Button>
+            </div>
+        </div>
+    );
+}
 
 
 export default function DashboardLayout({
@@ -29,6 +73,14 @@ export default function DashboardLayout({
   const router = useRouter();
   const pathname = usePathname();
   const [searchTerm, setSearchTerm] = useState('');
+  const [time, setTime] = useState<Date | null>(null);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -178,40 +230,81 @@ export default function DashboardLayout({
       </aside>
 
       <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-64 w-full">
-         <header className="sticky top-0 z-30 flex h-16 items-center justify-end gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                <Button variant="secondary" size="icon" className="rounded-full">
-                    <Avatar>
-                    <AvatarImage src={user.imageUrl || `https://avatar.vercel.sh/${user.email}.png`} alt={user.name} />
-                    <AvatarFallback>{user.name?.charAt(0) || user.email.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <span className="sr-only">Toggle user menu</span>
-                </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                <DropdownMenuLabel>{user.name || user.email} <span className='text-xs text-muted-foreground'>({user.role})</span></DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {isAdmin && (
-                <DropdownMenuItem asChild>
-                    <Link href="/dashboard/settings">
-                        <Settings className="mr-2 h-4 w-4" />
-                        <span>Settings</span>
-                    </Link>
-                </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Logout</span>
-                </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
+         <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+            <div className="flex items-center gap-2">
+                 <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="outline" size="icon">
+                            <Calculator className="h-4 w-4" />
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                       <SimpleCalculator />
+                    </PopoverContent>
+                </Popover>
+                 <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="outline" size="icon">
+                            <Bell className="h-4 w-4" />
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent>
+                       <p className="text-sm">No new notifications.</p>
+                    </PopoverContent>
+                </Popover>
+                 <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="outline" size="icon">
+                            <Calendar className="h-4 w-4" />
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                        <Calendar
+                            mode="single"
+                            selected={new Date()}
+                            disabled
+                            className="rounded-md border"
+                        />
+                    </PopoverContent>
+                </Popover>
+            </div>
+            
+            <div className="flex items-center gap-4">
+                 <div className="text-sm font-medium text-muted-foreground">
+                    {time ? time.toLocaleTimeString() : '...'}
+                </div>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                    <Button variant="secondary" size="icon" className="rounded-full">
+                        <Avatar>
+                        <AvatarImage src={user.imageUrl || `https://avatar.vercel.sh/${user.email}.png`} alt={user.name} />
+                        <AvatarFallback>{user.name?.charAt(0) || user.email.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <span className="sr-only">Toggle user menu</span>
+                    </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>{user.name || user.email} <span className='text-xs text-muted-foreground'>({user.role})</span></DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {isAdmin && (
+                    <DropdownMenuItem asChild>
+                        <Link href="/dashboard/settings">
+                            <Settings className="mr-2 h-4 w-4" />
+                            <span>Settings</span>
+                        </Link>
+                    </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={logout}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Logout</span>
+                    </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
         </header>
         <main className="flex-1 sm:px-6">{children}</main>
       </div>
     </div>
   );
 }
-
-    

@@ -219,7 +219,7 @@ export default function DashboardLayout({
   
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
-      <aside className="hidden border-r bg-sidebar text-sidebar-foreground md:block">
+      <aside className="hidden border-r bg-muted/40 md:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
             <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
                  <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
@@ -260,9 +260,9 @@ export default function DashboardLayout({
                 </SheetTrigger>
                 <SheetContent 
                     side="left" 
-                    className="flex flex-col p-0 bg-sidebar text-sidebar-foreground"
+                    className="flex flex-col p-0"
                 >
-                    <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+                     <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
                         <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
                             {settings.storeLogo ? (
                                 <Image src={settings.storeLogo} alt={settings.storeName} width={24} height={24} className="object-contain" />

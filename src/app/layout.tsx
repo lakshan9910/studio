@@ -3,7 +3,6 @@ import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { SettingsProvider } from '@/context/SettingsContext';
 import { Toaster } from "@/components/ui/toaster";
-import { ThemeUpdater } from '@/context/ThemeUpdater';
 
 export const metadata: Metadata = {
   title: 'Firebase Studio App',
@@ -25,7 +24,6 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <SettingsProvider>
             <AuthProvider>
-              <ThemeUpdater />
               {children}
               <Toaster />
             </AuthProvider>

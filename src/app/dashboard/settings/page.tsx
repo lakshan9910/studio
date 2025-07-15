@@ -16,16 +16,9 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { FileInput } from "@/components/ui/file-input";
-import { Slider } from "@/components/ui/slider";
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
-
-const themeColorSchema = z.object({
-    h: z.number().min(0).max(360),
-    s: z.number().min(0).max(100),
-    l: z.number().min(0).max(100),
-});
 
 const systemSettingsSchema = z.object({
   currency: z.string().length(3, "Currency code must be 3 characters."),
@@ -56,41 +49,9 @@ const receiptSettingsSchema = z.object({
     receiptFooterText: z.string().optional(),
 });
 
-const themeSettingsSchema = z.object({
-    themePrimary: themeColorSchema,
-    themeBackground: themeColorSchema,
-    themeAccent: themeColorSchema,
-    themeSidebarBackground: themeColorSchema,
-    themeSidebarForeground: themeColorSchema,
-});
-
-const settingsSchema = systemSettingsSchema.merge(brandingSettingsSchema).merge(emailSettingsSchema).merge(receiptSettingsSchema).merge(themeSettingsSchema);
+const settingsSchema = systemSettingsSchema.merge(brandingSettingsSchema).merge(emailSettingsSchema).merge(receiptSettingsSchema);
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
-
-function ColorPicker({ form, name, label }: { form: any, name: `themePrimary` | `themeBackground` | `themeAccent` | `themeSidebarBackground` | `themeSidebarForeground`, label: string }) {
-    const hsl = form.watch(name);
-    const colorString = `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
-    return (
-        <div className="space-y-2 rounded-md border p-4">
-            <div className="flex items-center justify-between">
-                <FormLabel>{label}</FormLabel>
-                <div className="flex items-center gap-2">
-                    <span className="text-sm font-mono text-muted-foreground">{`hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`}</span>
-                    <div className="h-6 w-6 rounded-full border" style={{ backgroundColor: colorString }} />
-                </div>
-            </div>
-            <div className="grid grid-cols-[auto,1fr] items-center gap-x-2 gap-y-1 pt-2">
-                <span className="text-xs font-medium text-muted-foreground">H</span>
-                <FormField control={form.control} name={`${name}.h`} render={({ field }) => (<FormItem><FormControl><Slider value={[field.value]} onValueChange={(v) => field.onChange(v[0])} max={360} step={1} /></FormControl></FormItem>)} />
-                <span className="text-xs font-medium text-muted-foreground">S</span>
-                <FormField control={form.control} name={`${name}.s`} render={({ field }) => (<FormItem><FormControl><Slider value={[field.value]} onValueChange={(v) => field.onChange(v[0])} max={100} step={1} /></FormControl></FormItem>)} />
-                <span className="text-xs font-medium text-muted-foreground">L</span>
-                <FormField control={form.control} name={`${name}.l`} render={({ field }) => (<FormItem><FormControl><Slider value={[field.value]} onValueChange={(v) => field.onChange(v[0])} max={100} step={1} /></FormControl></FormItem>)} />
-            </div>
-        </div>
-    );
-}
 
 export default function SettingsPage() {
   const { user, loading } = useAuth();
@@ -217,30 +178,6 @@ export default function SettingsPage() {
                             />
                     </CardContent>
                 </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Theme Customization</CardTitle>
-                        <CardDescription>Adjust the application's color scheme for the main content area.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4 pt-6">
-                        <ColorPicker form={form} name="themePrimary" label="Primary Color" />
-                        <ColorPicker form={form} name="themeBackground" label="Background Color" />
-                        <ColorPicker form={form} name="themeAccent" label="Accent Color" />
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Sidebar Theme</CardTitle>
-                        <CardDescription>Customize the colors for the navigation sidebar.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4 pt-6">
-                        <ColorPicker form={form} name="themeSidebarBackground" label="Sidebar Background" />
-                        <ColorPicker form={form} name="themeSidebarForeground" label="Sidebar Text" />
-                    </CardContent>
-                </Card>
-
 
                 <Card>
                     <CardHeader>

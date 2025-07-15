@@ -12,7 +12,7 @@ interface AuthContextType {
   login: (email: string, pass: string) => Promise<void>;
   signup: (name: string, email: string, pass: string) => Promise<void>;
   logout: () => void;
-  addUser: (name: string, email: string, pass: string, role: UserRole) => Promise<User>;
+  addUser: (name: string, email: string, pass: string, role: UserRole, phone?: string, imageUrl?: string) => Promise<User>;
   updateUser: (userId: string, data: Partial<Omit<User, 'id' | 'email'>>) => Promise<User>;
   deleteUser: (userId: string) => Promise<void>;
   updateUserPassword: (userId: string, newPass: string) => Promise<void>;
@@ -27,14 +27,18 @@ let MOCK_USERS: { [key: string]: User & { password_hash: string } } = {
     email: "admin@example.com",
     name: "Admin User",
     role: "Admin",
-    password_hash: "password123" 
+    password_hash: "password123",
+    phone: "111-222-3333",
+    imageUrl: "https://placehold.co/100x100.png"
   },
   "cashier@example.com": {
     id: "user_cashier_1",
     email: "cashier@example.com",
     name: "Cashier User",
     role: "Cashier",
-    password_hash: "password123"
+    password_hash: "password123",
+    phone: "444-555-6666",
+    imageUrl: "https://placehold.co/100x100.png"
   }
 };
 
@@ -89,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const addUser = async (name: string, email: string, pass: string, role: UserRole): Promise<User> => {
+  const addUser = async (name: string, email: string, pass: string, role: UserRole, phone?: string, imageUrl?: string): Promise<User> => {
     return new Promise((resolve, reject) => {
         setTimeout(() => {
             const existingUser = Object.values(MOCK_USERS).find(u => u.email === email);
@@ -101,6 +105,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     name,
                     email,
                     role,
+                    phone,
+                    imageUrl,
                 };
                 MOCK_USERS[email] = { ...newUser, password_hash: pass };
                 syncUsersState();

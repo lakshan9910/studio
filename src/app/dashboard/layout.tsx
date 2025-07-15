@@ -109,7 +109,7 @@ export default function DashboardLayout({
                     <DropdownMenuTrigger asChild>
                     <Button variant="secondary" size="icon" className="rounded-full">
                         <Avatar>
-                        <AvatarImage src={`https://avatar.vercel.sh/${user.email}.png`} alt={user.name} />
+                        <AvatarImage src={user.imageUrl || `https://avatar.vercel.sh/${user.email}.png`} alt={user.name} />
                         <AvatarFallback>{user.name?.charAt(0) || user.email.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <span className="sr-only">Toggle user menu</span>

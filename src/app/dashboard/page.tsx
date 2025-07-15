@@ -134,48 +134,43 @@ export default function PosPage() {
   const productModalData = editingProduct;
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-4rem)]">
-      <main className="flex-1">
-        <div className="max-w-screen-2xl mx-auto grid grid-cols-1 lg:grid-cols-[2fr,1fr] gap-6 p-4 sm:p-6 lg:p-8">
-          <div className="flex flex-col gap-4">
-            <ProductCatalog 
-                products={products}
-                categories={categories}
-                brands={brands}
-                units={units}
-                onAddToOrder={handleAddToOrder} 
-                onAddProduct={handleOpenAddProduct}
-                onEditProduct={handleOpenEditProduct}
-                onDeleteProduct={handleDeleteProduct}
-            />
-          </div>
-          <div className="flex flex-col gap-4">
-            <h2 className="text-2xl font-bold tracking-tight hidden lg:block">Current Order</h2>
-            <div className="flex-1">
-                <OrderPanel
+    <div className="flex flex-col h-full">
+        <div className="grid flex-1 items-start gap-4 md:gap-8 lg:grid-cols-3 xl:grid-cols-3">
+            <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
+                 <ProductCatalog 
+                    products={products}
+                    categories={categories}
+                    brands={brands}
+                    units={units}
+                    onAddToOrder={handleAddToOrder} 
+                    onAddProduct={handleOpenAddProduct}
+                    onEditProduct={handleOpenEditProduct}
+                    onDeleteProduct={handleDeleteProduct}
+                />
+            </div>
+             <div className="h-full">
+                 <OrderPanel
                     items={orderItems}
                     onUpdateQuantity={handleUpdateQuantity}
                     onRemoveItem={handleRemoveItem}
                     onFinalize={handleFinalizeOrder}
                 />
             </div>
-          </div>
         </div>
-      </main>
-      <ReceiptModal
-        isOpen={isReceiptOpen}
-        onClose={handleNewOrder}
-        receipt={completedOrder}
-      />
-      <ProductModal
-        isOpen={isProductModalOpen}
-        onClose={() => setProductModalOpen(false)}
-        onSave={handleSaveProduct}
-        product={productModalData}
-        categories={categories}
-        brands={brands}
-        units={units}
-      />
+        <ReceiptModal
+            isOpen={isReceiptOpen}
+            onClose={handleNewOrder}
+            receipt={completedOrder}
+        />
+        <ProductModal
+            isOpen={isProductModalOpen}
+            onClose={() => setProductModalOpen(false)}
+            onSave={handleSaveProduct}
+            product={productModalData}
+            categories={categories}
+            brands={brands}
+            units={units}
+        />
     </div>
   );
 }

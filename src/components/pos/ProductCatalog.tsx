@@ -13,7 +13,6 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Search, Plus, LoaderCircle, Frown, Edit, Trash2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
@@ -124,8 +123,6 @@ export function ProductCatalog({ products: initialProducts, categories, brands, 
   const handleSuggestionClick = (suggestion: string) => {
     form.setValue('query', suggestion, { shouldDirty: true });
     setSuggestions([]);
-    // You can optionally trigger the search directly
-    // startAiTransition(() => handleAiSearch({ query: suggestion }));
   }
 
   return (
@@ -167,13 +164,12 @@ export function ProductCatalog({ products: initialProducts, categories, brands, 
                     </Card>
                 )}
             </div>
-             <Button onClick={onAddProduct} size="lg" className="h-11 hidden sm:inline-flex">
+             <Button onClick={onAddProduct} size="lg" className="h-11">
                 <Plus className="mr-2 h-4 w-4" /> Add Product
             </Button>
         </CardHeader>
         <CardContent className="p-0 flex-1 relative">
-            <ScrollArea className="absolute inset-0">
-                <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 overflow-y-auto h-full">
                     {filteredProducts.length > 0 ? filteredProducts.map((product) => (
                     <Card key={product.id} className="flex flex-col overflow-hidden group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 relative rounded-lg">
                         <CardContent className="p-0 flex-1 flex flex-col">
@@ -227,7 +223,6 @@ export function ProductCatalog({ products: initialProducts, categories, brands, 
                         </div>
                     )}
                 </div>
-            </ScrollArea>
       </CardContent>
     </Card>
   );

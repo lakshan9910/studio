@@ -80,6 +80,8 @@ export interface PurchaseItem {
   variantId: string;
   quantity: number;
   cost: number; // Cost per unit
+  batchNumber?: string;
+  expiryDate?: string; // ISO date string
 }
 
 export interface Purchase {
@@ -149,3 +151,5 @@ export interface StockAdjustment {
   reason: string;
   type: StockAdjustmentType;
 }
+
+    

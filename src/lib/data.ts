@@ -130,9 +130,10 @@ export const initialPurchases: Purchase[] = [
         supplierId: 'sup_01',
         date: '2024-07-20T10:00:00Z',
         items: [
-            { productId: 'prod_001', variantId: 'prod_001-kg', quantity: 50, cost: 1.50 },
+            { productId: 'prod_001', variantId: 'prod_001-kg', quantity: 50, cost: 1.50, batchNumber: 'BT-1A', expiryDate: '2025-01-01' },
+            { productId: 'prod_005', variantId: 'prod_005-1l', quantity: 100, cost: 2.10, batchNumber: 'BT-2B', expiryDate: '2024-10-15' },
         ],
-        totalCost: 75.00,
+        totalCost: 285.00,
         status: 'Completed',
     },
 ];
@@ -195,3 +196,5 @@ export const initialStockAdjustments: StockAdjustment[] = [
     type: 'Subtraction',
   },
 ];
+
+    

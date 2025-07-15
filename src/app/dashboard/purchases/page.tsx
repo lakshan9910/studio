@@ -7,7 +7,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { initialPurchases, initialProducts, initialSuppliers } from "@/lib/data";
-import type { Purchase, Product, Supplier } from "@/types";
+import type { Purchase, Product, Supplier, ProductVariant } from "@/types";
 import { useAuth } from '@/context/AuthContext';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,17 +17,19 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MoreHorizontal, PlusCircle, Trash, Edit, Trash2, Search } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash, Edit, Trash2, Search, Info } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/use-debounce";
-
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const purchaseItemSchema = z.object({
   productId: z.string().min(1, "Product is required."),
   variantId: z.string().min(1, "Variant is required."),
   quantity: z.coerce.number().min(1, "Quantity must be at least 1."),
   cost: z.coerce.number().min(0.01, "Cost must be positive."),
+  batchNumber: z.string().optional(),
+  expiryDate: z.string().optional(),
 });
 
 const purchaseSchema = z.object({
@@ -46,7 +48,7 @@ export default function PurchasesPage() {
   const { toast } = useToast();
 
   const [purchases, setPurchases] = useState<Purchase[]>(initialPurchases);
-  const [products] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>(initialProducts);
   const [suppliers] = useState<Supplier[]>(initialSuppliers);
   const [isModalOpen, setModalOpen] = useState(false);
   const [editingPurchase, setEditingPurchase] = useState<Purchase | null>(null);
@@ -54,7 +56,16 @@ export default function PurchasesPage() {
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const productMap = new Map(products.map(p => [p.id, p]));
+  const productMap = useMemo(() => {
+    const map = new Map<string, { product: Product, variant: ProductVariant }>();
+    products.forEach(p => {
+        p.variants.forEach(v => {
+            map.set(v.id, { product: p, variant: v });
+        });
+    });
+    return map;
+  }, [products]);
+
   const supplierMap = new Map(suppliers.map(s => [s.id, s.name]));
 
   const form = useForm<PurchaseFormValues>({
@@ -121,6 +132,21 @@ export default function PurchasesPage() {
 
   const onSubmit = (data: PurchaseFormValues) => {
     const totalCost = data.items.reduce((sum, item) => sum + item.quantity * item.cost, 0);
+
+     setProducts(prevProducts => {
+        const newProducts = JSON.parse(JSON.stringify(prevProducts));
+        data.items.forEach(item => {
+            const product = newProducts.find((p: Product) => p.id === item.productId);
+            if (product) {
+                const variant = product.variants.find((v: ProductVariant) => v.id === item.variantId);
+                if (variant) {
+                    variant.stock += item.quantity;
+                }
+            }
+        });
+        return newProducts;
+    });
+
     if (editingPurchase) {
       setPurchases(
         purchases.map((p) =>
@@ -188,6 +214,7 @@ export default function PurchasesPage() {
                   <TableHead>Date</TableHead>
                   <TableHead>Total Cost</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Items</TableHead>
                   <TableHead className="w-[100px] text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -200,6 +227,40 @@ export default function PurchasesPage() {
                       <TableCell>{format(new Date(purchase.date), "PPP")}</TableCell>
                       <TableCell>${purchase.totalCost.toFixed(2)}</TableCell>
                       <TableCell>{purchase.status}</TableCell>
+                       <TableCell>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <Info className="h-4 w-4" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-80">
+                               <div className="grid gap-4">
+                                <div className="space-y-2">
+                                  <h4 className="font-medium leading-none">Purchased Items</h4>
+                                   <p className="text-sm text-muted-foreground">
+                                    Details of items in this purchase order.
+                                  </p>
+                                </div>
+                                <div className="grid gap-2 text-sm">
+                                  {purchase.items.map((item, index) => {
+                                      const details = productMap.get(item.variantId);
+                                      return (
+                                          <div key={index} className="grid grid-cols-3 items-center gap-2 border-b pb-2 last:border-b-0">
+                                              <span className="col-span-3 font-semibold">{details?.product.name} ({details?.variant.name})</span>
+                                              <span>Qty: {item.quantity}</span>
+                                              <span>Cost: ${item.cost.toFixed(2)}</span>
+                                              <span>Total: ${(item.quantity * item.cost).toFixed(2)}</span>
+                                               {item.batchNumber && <span className="col-span-3">Batch: {item.batchNumber}</span>}
+                                                {item.expiryDate && <span className="col-span-3">Expires: {format(new Date(item.expiryDate), "PPP")}</span>}
+                                          </div>
+                                      )
+                                  })}
+                                </div>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                      </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -224,7 +285,7 @@ export default function PurchasesPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
+                    <TableCell colSpan={7} className="h-24 text-center">
                       No purchases found.
                     </TableCell>
                   </TableRow>
@@ -261,7 +322,7 @@ export default function PurchasesPage() {
       </Card>
 
       <Dialog open={isModalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingPurchase ? "Edit Purchase Order" : "Add New Purchase Order"}</DialogTitle>
             <DialogDescription>
@@ -304,9 +365,9 @@ export default function PurchasesPage() {
                    const selectedProductId = watchedItems.items[index]?.productId;
                    const availableVariants = products.find(p => p.id === selectedProductId)?.variants || [];
                    return (
-                     <div key={field.id} className="grid grid-cols-5 items-end gap-2 p-2 border rounded-md">
+                     <div key={field.id} className="grid grid-cols-1 md:grid-cols-[2fr,1fr,1fr,1fr,1fr,auto] items-end gap-2 p-3 border rounded-md">
                        <FormField control={form.control} name={`items.${index}.productId`} render={({ field }) => (
-                           <FormItem className="flex-1 col-span-2">
+                           <FormItem>
                               <FormLabel className="text-xs">Product</FormLabel>
                               <Select onValueChange={field.onChange} defaultValue={field.value}>
                                   <FormControl>
@@ -320,7 +381,7 @@ export default function PurchasesPage() {
                            </FormItem>
                        )}/>
                        <FormField control={form.control} name={`items.${index}.variantId`} render={({ field }) => (
-                           <FormItem className="flex-1">
+                           <FormItem>
                               <FormLabel className="text-xs">Variant</FormLabel>
                               <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!selectedProductId}>
                                   <FormControl>
@@ -334,17 +395,29 @@ export default function PurchasesPage() {
                            </FormItem>
                        )}/>
                        <FormField control={form.control} name={`items.${index}.quantity`} render={({ field }) => (
-                           <FormItem className="w-24">
+                           <FormItem>
                              <FormLabel className="text-xs">Quantity</FormLabel>
                              <FormControl><Input type="number" placeholder="Qty" {...field} /></FormControl>
                              <FormMessage />
                            </FormItem>
                        )}/>
                         <FormField control={form.control} name={`items.${index}.cost`} render={({ field }) => (
-                           <FormItem className="w-24">
+                           <FormItem>
                              <FormLabel className="text-xs">Unit Cost</FormLabel>
                              <FormControl><Input type="number" step="0.01" placeholder="Cost" {...field} /></FormControl>
                               <FormMessage />
+                           </FormItem>
+                       )}/>
+                        <FormField control={form.control} name={`items.${index}.batchNumber`} render={({ field }) => (
+                           <FormItem>
+                             <FormLabel className="text-xs">Batch No.</FormLabel>
+                             <FormControl><Input placeholder="Optional" {...field} /></FormControl>
+                           </FormItem>
+                       )}/>
+                        <FormField control={form.control} name={`items.${index}.expiryDate`} render={({ field }) => (
+                           <FormItem>
+                             <FormLabel className="text-xs">Expiry Date</FormLabel>
+                             <FormControl><Input type="date" {...field} /></FormControl>
                            </FormItem>
                        )}/>
                        <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}>
@@ -353,7 +426,7 @@ export default function PurchasesPage() {
                      </div>
                    );
                 })}
-                <Button type="button" variant="outline" size="sm" onClick={() => append({ productId: "", variantId: "", quantity: 1, cost: 0 })}>
+                <Button type="button" variant="outline" size="sm" onClick={() => append({ productId: "", variantId: "", quantity: 1, cost: 0, batchNumber: '', expiryDate: '' })}>
                     <PlusCircle className="mr-2 h-4 w-4" /> Add Item
                 </Button>
               </div>
@@ -369,3 +442,5 @@ export default function PurchasesPage() {
     </div>
   );
 }
+
+    

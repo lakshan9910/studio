@@ -1,6 +1,3 @@
-
-"use server"
-
 import { authenticator } from 'otplib';
 import qrcode from 'qrcode';
 

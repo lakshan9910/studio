@@ -90,6 +90,8 @@ export interface User {
   phone?: string;
   imageUrl?: string;
   permissions: Permission[];
+  twoFactorEnabled?: boolean;
+  twoFactorSecret?: string;
 }
 
 export interface PurchaseItem {
@@ -245,7 +247,7 @@ export interface LoanRepayment {
     date: string; // ISO date string
     amount: number;
     method: 'Payroll' | 'Manual';
-    payrollId?: string; // Link to the payroll run if deducted
+    payrollId?: string; // Link to the payroll run if a deduction
 }
 
 export interface Loan {

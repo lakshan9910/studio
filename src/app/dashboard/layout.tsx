@@ -17,7 +17,7 @@ import {
     LogOut, Settings, Store, Users, BarChart3, ShoppingCart, Receipt, Undo2, 
     Shapes, Shield, Beaker, Truck, UserCog, Wallet, Package, Search,
     Calculator, Bell, Menu, Globe, History, Wrench, Barcode, Warehouse, ArrowRightLeft,
-    Briefcase, CalendarCheck, HandCoins, DollarSign
+    Briefcase, CalendarCheck, HandCoins, DollarSign, UserRound
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
@@ -370,6 +370,12 @@ export default function DashboardLayout({
                         <DropdownMenuContent align="end">
                         <DropdownMenuLabel>{user.name || user.email}</DropdownMenuLabel>
                         <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                            <Link href="/dashboard/settings/profile">
+                                <UserRound className="mr-2 h-4 w-4" />
+                                <span>Profile Settings</span>
+                            </Link>
+                        </DropdownMenuItem>
                         {hasPermission('settings:write') && (
                         <DropdownMenuItem asChild>
                             <Link href="/dashboard/settings">

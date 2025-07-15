@@ -5,12 +5,14 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useRouter } from 'next/navigation';
 import type { User } from '@/types';
 import { allPermissions, Permission } from '@/types/permissions';
+import { verifyTwoFactorCode } from '@/lib/2fa';
 
 interface AuthContextType {
   user: User | null;
   users: User[];
   loading: boolean;
-  login: (email: string, pass: string) => Promise<void>;
+  login: (email: string, pass: string) => Promise<User>;
+  verifyTwoFactor: (userId: string, code: string) => Promise<void>;
   signup: (name: string, email: string, pass: string) => Promise<void>;
   logout: () => void;
   addUser: (name: string, email: string, pass: string, phone?: string, imageUrl?: string, permissions?: Permission[]) => Promise<User>;
@@ -32,6 +34,7 @@ let MOCK_USERS: { [key: string]: User & { password_hash: string } } = {
     imageUrl: "https://placehold.co/100x100.png",
     permissions: allPermissions,
     password_hash: "password123",
+    twoFactorEnabled: false,
   },
   "cashier@example.com": {
     id: "user_cashier_1",
@@ -41,6 +44,7 @@ let MOCK_USERS: { [key: string]: User & { password_hash: string } } = {
     imageUrl: "https://placehold.co/100x100.png",
     permissions: ['pos:read', 'pos:write'],
     password_hash: "password123",
+    twoFactorEnabled: false,
   }
 };
 
@@ -69,23 +73,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const login = async (email: string, pass: string): Promise<void> => {
+  const login = async (email: string, pass: string): Promise<User> => {
     setLoading(true);
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         const existingUser = Object.values(MOCK_USERS).find(u => u.email === email);
         if (existingUser && existingUser.password_hash === pass) {
           const { password_hash, ...userToStore } = existingUser;
-          setUser(userToStore);
-          sessionStorage.setItem('user', JSON.stringify(userToStore));
+          if (!userToStore.twoFactorEnabled) {
+            setUser(userToStore);
+            sessionStorage.setItem('user', JSON.stringify(userToStore));
+          }
           setLoading(false);
-          resolve();
+          resolve(userToStore);
         } else {
           setLoading(false);
           reject(new Error("Invalid email or password."));
         }
       }, 500);
     });
+  };
+  
+  const verifyTwoFactor = async (userId: string, code: string): Promise<void> => {
+      return new Promise((resolve, reject) => {
+          setTimeout(() => {
+              const userToVerify = Object.values(MOCK_USERS).find(u => u.id === userId);
+              if (!userToVerify || !userToVerify.twoFactorSecret) {
+                  return reject(new Error("2FA not set up for this user."));
+              }
+              const isValid = verifyTwoFactorCode(userToVerify.twoFactorSecret, code);
+
+              if (isValid) {
+                  const { password_hash, ...userToStore } = userToVerify;
+                  setUser(userToStore);
+                  sessionStorage.setItem('user', JSON.stringify(userToStore));
+                  resolve();
+              } else {
+                  reject(new Error("Invalid 2FA code."));
+              }
+          }, 300);
+      });
   };
 
   const signup = async (name: string, email: string, pass: string): Promise<void> => {
@@ -109,6 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     phone,
                     imageUrl,
                     permissions,
+                    twoFactorEnabled: false,
                 };
                 MOCK_USERS[email] = { ...newUser, password_hash: pass };
                 syncUsersState();
@@ -127,7 +155,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const updatedUser = { ...userToUpdate, ...data };
           MOCK_USERS[email] = updatedUser;
           
-          // If the logged in user is the one being updated, update their session
           if(user?.id === userId) {
             const { password_hash, ...userToStore } = updatedUser;
             setUser(userToStore);
@@ -178,7 +205,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const hasPermission = (permission: Permission): boolean => {
     if (!user || !user.permissions) return false;
-    // Admins implicitly have all permissions
     if (user.permissions.includes('admin')) return true;
     return user.permissions.includes(permission);
   };
@@ -189,7 +215,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/login');
   };
 
-  const value = { user, users, loading, login, signup, logout, addUser, updateUser, deleteUser, updateUserPassword, hasPermission };
+  const value = { user, users, loading, login, verifyTwoFactor, signup, logout, addUser, updateUser, deleteUser, updateUserPassword, hasPermission };
 
   return (
     <AuthContext.Provider value={value}>

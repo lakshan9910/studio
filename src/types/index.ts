@@ -99,3 +99,11 @@ export interface Supplier {
   email?: string;
   phone?: string;
 }
+
+export interface Expense {
+    id: string;
+    date: string; // ISO date string
+    category: string;
+    description: string;
+    amount: number;
+}

@@ -9,10 +9,13 @@ import { OrderPanel } from '@/components/pos/OrderPanel';
 import { ReceiptModal, ReceiptData } from '@/components/pos/ReceiptModal';
 import { ProductModal, ProductFormData } from '@/components/pos/ProductModal';
 import { useAuth } from '@/context/AuthContext';
+import { useSettings } from '@/context/SettingsContext';
 
 
 export default function PosPage() {
   const { user } = useAuth();
+  const { settings } = useSettings();
+
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [brands, setBrands] = useState<Brand[]>(initialBrands);
@@ -62,13 +65,6 @@ export default function PosPage() {
     if (orderItems.length === 0) return;
     const { subtotal, tax, total } = calculateTotal();
 
-    // In a real app, you'd fetch this from your global settings state/context
-    const settings = {
-        storeName: 'Cashy POS',
-        receiptHeaderText: 'Thank you for your purchase!',
-        receiptFooterText: 'Please come again!',
-    }
-
     setCompletedOrder({
       items: [...orderItems],
       subtotal,
@@ -76,8 +72,8 @@ export default function PosPage() {
       total,
       cashierName: user?.name || 'N/A',
       storeName: settings.storeName,
-      headerText: settings.receiptHeaderText,
-      footerText: settings.receiptFooterText,
+      headerText: settings.receiptHeaderText || '',
+      footerText: settings.receiptFooterText || '',
     });
     setReceiptOpen(true);
   };

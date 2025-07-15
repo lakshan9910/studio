@@ -33,9 +33,10 @@ interface ProductCatalogProps {
   onAddProduct: () => void;
   onEditProduct: (product: Product) => void;
   onDeleteProduct: (productId: string) => void;
+  isManagementView?: boolean;
 }
 
-export function ProductCatalog({ products: initialProducts, categories, brands, units, onAddToOrder, onAddProduct, onEditProduct, onDeleteProduct }: ProductCatalogProps) {
+export function ProductCatalog({ products: initialProducts, categories, brands, units, onAddToOrder, onAddProduct, onEditProduct, onDeleteProduct, isManagementView = false }: ProductCatalogProps) {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(initialProducts);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isAiLoading, startAiTransition] = useTransition();
@@ -210,9 +211,11 @@ export function ProductCatalog({ products: initialProducts, categories, brands, 
                         </CardContent>
                         <CardFooter className="p-2 pt-0 flex items-center justify-between">
                              <p className="text-xl font-bold ml-2">${product.price.toFixed(2)}</p>
-                            <Button onClick={() => onAddToOrder(product)} className="w-auto font-bold">
-                                <Plus className="mr-2 h-4 w-4" /> Add
-                            </Button>
+                            {!isManagementView &&
+                                <Button onClick={() => onAddToOrder(product)} className="w-auto font-bold">
+                                    <Plus className="mr-2 h-4 w-4" /> Add
+                                </Button>
+                            }
                         </CardFooter>
                     </Card>
                     )) : (

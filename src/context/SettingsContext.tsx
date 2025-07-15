@@ -1,7 +1,8 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { translations, TranslationKey } from '@/lib/i18n';
 
 export interface Settings {
     storeName: string;
@@ -13,12 +14,15 @@ export interface Settings {
     smtpPass?: string;
     receiptHeaderText?: string;
     receiptFooterText?: string;
+    language: string;
 }
 
 interface SettingsContextType {
   settings: Settings;
   loading: boolean;
   updateSettings: (newSettings: Partial<Settings>) => void;
+  setLanguage: (lang: string) => void;
+  t: (key: TranslationKey) => string;
 }
 
 const defaultSettings: Settings = {
@@ -31,6 +35,7 @@ const defaultSettings: Settings = {
     smtpPass: '',
     receiptHeaderText: 'Thank you for your purchase!',
     receiptFooterText: 'Please come again!',
+    language: 'en',
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -60,7 +65,21 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const value = { settings, loading, updateSettings };
+  const setLanguage = (lang: string) => {
+    updateSettings({ language: lang });
+  };
+
+  const t = useCallback((key: TranslationKey): string => {
+    const lang = settings.language;
+    if (lang in translations && key in translations[lang as keyof typeof translations]) {
+        return translations[lang as keyof typeof translations][key] as string;
+    }
+    // Fallback to English
+    return translations.en[key] as string;
+  }, [settings.language]);
+
+
+  const value = { settings, loading, updateSettings, setLanguage, t };
 
   return (
     <SettingsContext.Provider value={value}>

@@ -66,49 +66,50 @@ function SimpleCalculator() {
     );
 }
 
-const NavContent = ({ searchTerm, isAdmin }: { searchTerm: string, isAdmin: boolean }) => {
+const NavContent = ({ searchTerm, isAdmin, t }: { searchTerm: string, isAdmin: boolean, t: (key: string) => string }) => {
     const pathname = usePathname();
     const navLinks = [
         { 
-            category: 'Storefront',
+            category: t('storefront'),
             adminOnly: false,
             links: [
                 { href: '/dashboard', label: 'POS', icon: Store },
             ]
         },
         {
-            category: 'Analytics & Finance',
+            category: t('analytics_finance'),
             adminOnly: true,
             links: [
-                { href: '/dashboard/reports', label: 'Reports', icon: BarChart3 },
-                { href: '/dashboard/purchases', label: 'Purchases', icon: ShoppingCart },
-                { href: '/dashboard/expenses', label: 'Expenses', icon: Receipt },
-                { href: '/dashboard/expense-categories', label: 'Expense Categories', icon: Wallet },
+                { href: '/dashboard/reports', label: t('reports'), icon: BarChart3 },
+                { href: '/dashboard/purchases', label: t('purchases'), icon: ShoppingCart },
+                { href: '/dashboard/expenses', label: t('expenses'), icon: Receipt },
+                { href: '/dashboard/expense-categories', label: t('expense_categories'), icon: Wallet },
             ]
         },
         {
-            category: 'General',
+            category: t('general'),
             adminOnly: false,
             links: [
-                 { href: '/dashboard/returns', label: 'Returns', icon: Undo2 },
-                 { href: '/dashboard/customers', label: 'Customers', icon: Users },
+                 { href: '/dashboard/returns', label: t('returns'), icon: Undo2 },
+                 { href: '/dashboard/customers', label: t('customers'), icon: Users },
             ]
         },
         {
-            category: 'Product Management',
+            category: t('product_management'),
             adminOnly: true,
             links: [
-                { href: '/dashboard/categories', label: 'Categories', icon: Shapes },
-                { href: '/dashboard/brands', label: 'Brands', icon: Shield },
-                { href: '/dashboard/units', label: 'Units', icon: Beaker },
+                { href: '/dashboard/products', label: t('products'), icon: Package },
+                { href: '/dashboard/categories', label: t('categories'), icon: Shapes },
+                { href: '/dashboard/brands', label: t('brands'), icon: Shield },
+                { href: '/dashboard/units', label: t('units'), icon: Beaker },
             ]
         },
         {
-            category: 'User & Supplier Management',
+            category: t('user_supplier_management'),
             adminOnly: true,
             links: [
-                { href: '/dashboard/suppliers', label: 'Suppliers', icon: Truck },
-                { href: '/dashboard/users', label: 'Users', icon: UserCog },
+                { href: '/dashboard/suppliers', label: t('suppliers'), icon: Truck },
+                { href: '/dashboard/users', label: t('users'), icon: UserCog },
             ]
         },
     ];
@@ -164,9 +165,8 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { user, loading, logout } = useAuth();
-  const { settings } = useSettings();
+  const { settings, setLanguage, t } = useSettings();
   const router = useRouter();
-  const { toast } = useToast();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [time, setTime] = useState<Date | null>(null);
@@ -216,13 +216,6 @@ export default function DashboardLayout({
 
   const isAdmin = user.role === 'Admin';
   
-  const handleLanguageChange = (lang: string) => {
-    toast({
-        title: "Language Switch",
-        description: `Language changed to ${lang}. (UI only)`,
-    });
-  };
-
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
       <aside className="hidden border-r bg-muted/40 md:block">
@@ -243,14 +236,14 @@ export default function DashboardLayout({
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                             type="search"
-                            placeholder="Search modules..."
+                            placeholder={t('search_modules')}
                             className="w-full rounded-lg bg-background pl-8 h-9"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
                 </div>
-                <NavContent searchTerm={searchTerm} isAdmin={isAdmin} />
+                <NavContent searchTerm={searchTerm} isAdmin={isAdmin} t={t} />
             </div>
         </div>
       </aside>
@@ -276,7 +269,7 @@ export default function DashboardLayout({
                         </Link>
                     </div>
                     <div className="flex-1 overflow-y-auto">
-                        <NavContent searchTerm={searchTerm} isAdmin={isAdmin} />
+                        <NavContent searchTerm={searchTerm} isAdmin={isAdmin} t={t}/>
                     </div>
                 </SheetContent>
             </Sheet>
@@ -300,7 +293,7 @@ export default function DashboardLayout({
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent>
-                        <p className="text-sm">No new notifications.</p>
+                        <p className="text-sm">{t('no_notifications')}</p>
                         </PopoverContent>
                     </Popover>
                     <Popover>
@@ -331,13 +324,13 @@ export default function DashboardLayout({
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                             <DropdownMenuLabel>Select Language</DropdownMenuLabel>
+                             <DropdownMenuLabel>{t('select_language')}</DropdownMenuLabel>
                              <DropdownMenuSeparator />
-                             <DropdownMenuItem onSelect={() => handleLanguageChange('English')}>English</DropdownMenuItem>
-                             <DropdownMenuItem onSelect={() => handleLanguageChange('Malagasy')}>Malagasy</DropdownMenuItem>
-                             <DropdownMenuItem onSelect={() => handleLanguageChange('Arabic')}>Arabic</DropdownMenuItem>
-                             <DropdownMenuItem onSelect={() => handleLanguageChange('Sinhala')}>Sinhala</DropdownMenuItem>
-                             <DropdownMenuItem onSelect={() => handleLanguageChange('Tamil')}>Tamil</DropdownMenuItem>
+                             <DropdownMenuItem onSelect={() => setLanguage('en')}>English</DropdownMenuItem>
+                             <DropdownMenuItem onSelect={() => setLanguage('mg')}>Malagasy</DropdownMenuItem>
+                             <DropdownMenuItem onSelect={() => setLanguage('ar')}>Arabic</DropdownMenuItem>
+                             <DropdownMenuItem onSelect={() => setLanguage('si')}>Sinhala</DropdownMenuItem>
+                             <DropdownMenuItem onSelect={() => setLanguage('ta')}>Tamil</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
 
@@ -358,14 +351,14 @@ export default function DashboardLayout({
                         <DropdownMenuItem asChild>
                             <Link href="/dashboard/settings">
                                 <Settings className="mr-2 h-4 w-4" />
-                                <span>Settings</span>
+                                <span>{t('settings')}</span>
                             </Link>
                         </DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={logout}>
                             <LogOut className="mr-2 h-4 w-4" />
-                            <span>Logout</span>
+                            <span>{t('logout')}</span>
                         </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>

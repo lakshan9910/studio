@@ -1,4 +1,4 @@
-import type { Product, Category, Brand, Unit, Purchase, Return } from '@/types';
+import type { Product, Category, Brand, Unit, Purchase, Return, Sale } from '@/types';
 
 export const initialProducts: Product[] = [
   {
@@ -154,8 +154,9 @@ export const initialPurchases: Purchase[] = [
         items: [
             { productId: 'prod_001', quantity: 50, cost: 1.50 },
             { productId: 'prod_002', quantity: 100, cost: 0.75 },
+            { productId: 'prod_009', quantity: 80, cost: 1.00 },
         ],
-        totalCost: 150.00,
+        totalCost: 235.00,
         status: 'Completed',
     },
      {
@@ -164,9 +165,23 @@ export const initialPurchases: Purchase[] = [
         date: '2024-07-22T14:30:00Z',
         items: [
             { productId: 'prod_003', quantity: 20, cost: 3.00 },
+            { productId: 'prod_004', quantity: 50, cost: 1.80 },
+            { productId: 'prod_010', quantity: 40, cost: 1.50 },
         ],
-        totalCost: 60.00,
-        status: 'Pending',
+        totalCost: 210.00,
+        status: 'Completed',
+    },
+    {
+        id: 'purch_003',
+        supplier: 'Happy Cow Dairy',
+        date: '2024-07-23T09:00:00Z',
+        items: [
+            { productId: 'prod_005', quantity: 60, cost: 2.20 },
+            { productId: 'prod_006', quantity: 40, cost: 4.50 },
+            { productId: 'prod_011', quantity: 50, cost: 2.50 },
+        ],
+        totalCost: 437.00,
+        status: 'Completed',
     }
 ];
 
@@ -180,5 +195,44 @@ export const initialReturns: Return[] = [
         ],
         totalValue: 3.89,
         status: 'Completed'
+    }
+];
+
+export const initialSales: Sale[] = [
+    {
+        id: 'sale_001',
+        date: '2024-07-28T10:30:00Z',
+        items: [
+            { productId: 'prod_001', quantity: 2, price: 2.99 },
+            { productId: 'prod_003', quantity: 1, price: 5.49 },
+        ],
+        total: 11.47
+    },
+    {
+        id: 'sale_002',
+        date: '2024-07-28T12:15:00Z',
+        items: [
+            { productId: 'prod_005', quantity: 1, price: 3.89 },
+            { productId: 'prod_006', quantity: 1, price: 6.99 },
+            { productId: 'prod_007', quantity: 2, price: 4.79 },
+        ],
+        total: 20.46
+    },
+    {
+        id: 'sale_003',
+        date: '2024-07-29T15:00:00Z',
+        items: [
+            { productId: 'prod_002', quantity: 5, price: 1.49 },
+            { productId: 'prod_012', quantity: 3, price: 3.29 },
+        ],
+        total: 17.32
+    },
+    {
+        id: 'sale_004',
+        date: '2024-07-30T18:45:00Z',
+        items: [
+            { productId: 'prod_008', quantity: 4, price: 3.99 },
+        ],
+        total: 15.96
     }
 ];

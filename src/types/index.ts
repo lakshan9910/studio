@@ -13,6 +13,19 @@ export interface OrderItem extends Product {
   quantity: number;
 }
 
+export interface SaleItem {
+    productId: string;
+    quantity: number;
+    price: number; // Price per unit at time of sale
+}
+
+export interface Sale {
+    id: string;
+    date: string; // ISO date string
+    items: SaleItem[];
+    total: number;
+}
+
 export interface Category {
   id: string;
   name: string;

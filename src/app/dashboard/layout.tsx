@@ -8,7 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { LayoutDashboard, LogOut, Package, Settings, ShoppingCart, Tag, Building, Beaker, ShoppingBag, Undo2 } from 'lucide-react';
+import { LayoutDashboard, LogOut, Package, Settings, ShoppingCart, Tag, Building, Beaker, ShoppingBag, Undo2, BarChart3 } from 'lucide-react';
 
 export default function DashboardLayout({
   children,
@@ -64,6 +64,9 @@ export default function DashboardLayout({
           </Link>
           <Link href="/dashboard" className="text-foreground transition-colors hover:text-foreground">
             POS
+          </Link>
+           <Link href="/dashboard/reports" className="text-muted-foreground transition-colors hover:text-foreground">
+            Reports
           </Link>
           <Link href="/dashboard/purchases" className="text-muted-foreground transition-colors hover:text-foreground">
             Purchases

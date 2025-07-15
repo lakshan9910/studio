@@ -27,7 +27,7 @@ export default function HomePage() {
     const todaySales = sales.filter(s => isToday(new Date(s.date)));
     const todayRevenue = todaySales.reduce((sum, s) => sum + s.total, 0);
 
-    const newCustomersThisMonth = customers.filter(c => c.createdAt && isThisMonth(new Date(c.createdAt))).length;
+    const newCustomersThisMonth = customers.filter(c => (c.createdAt && isThisMonth(new Date(c.createdAt)))).length;
     
     const lowStockItems = products.flatMap(p => 
       p.variants.filter(v => v.stock > 0 && v.stock < LOW_STOCK_THRESHOLD)
@@ -145,22 +145,22 @@ export default function HomePage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
-             <Link href="/dashboard" legacyBehavior passHref>
+             <Link href="/dashboard">
                 <Button className="w-full justify-start">
                     <ShoppingCart className="mr-2 h-4 w-4" /> New Sale
                 </Button>
             </Link>
-             <Link href="/dashboard/products" legacyBehavior passHref>
+             <Link href="/dashboard/products">
                 <Button variant="secondary" className="w-full justify-start">
                     <Package className="mr-2 h-4 w-4" /> Add Product
                 </Button>
             </Link>
-             <Link href="/dashboard/expenses" legacyBehavior passHref>
+             <Link href="/dashboard/expenses">
                 <Button variant="secondary" className="w-full justify-start">
                     <Receipt className="mr-2 h-4 w-4" /> Add Expense
                 </Button>
             </Link>
-             <Link href="/dashboard/reports" legacyBehavior passHref>
+             <Link href="/dashboard/reports">
                 <Button variant="secondary" className="w-full justify-start">
                     <ArrowRight className="mr-2 h-4 w-4" /> View All Reports
                 </Button>

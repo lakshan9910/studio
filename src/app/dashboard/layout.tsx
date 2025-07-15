@@ -345,6 +345,9 @@ export default function DashboardLayout({
             </div>
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">{children}</main>
+        <footer className="border-t bg-muted/40 px-4 lg:px-6 py-3 text-center text-sm text-muted-foreground">
+            © {new Date().getFullYear()} Solo solutions. All rights reserved.
+        </footer>
       </div>
     </div>
   );

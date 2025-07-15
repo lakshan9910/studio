@@ -60,18 +60,33 @@ const brandSchema = z.object({
 type BrandFormValues = z.infer<typeof brandSchema>;
 
 const ROWS_PER_PAGE = 10;
+const BRANDS_STORAGE_KEY = 'pos_brands';
 
 export default function BrandsPage() {
   const { hasPermission, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
-  const [brands, setBrands] = useState<Brand[]>(initialBrands);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [isModalOpen, setModalOpen] = useState(false);
   const [editingBrand, setEditingBrand] = useState<Brand | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    const storedBrands = localStorage.getItem(BRANDS_STORAGE_KEY);
+    if (storedBrands) {
+      setBrands(JSON.parse(storedBrands));
+    } else {
+      setBrands(initialBrands);
+    }
+  }, []);
+
+  const persistBrands = (updatedBrands: Brand[]) => {
+    setBrands(updatedBrands);
+    localStorage.setItem(BRANDS_STORAGE_KEY, JSON.stringify(updatedBrands));
+  }
 
   const form = useForm<BrandFormValues>({
     resolver: zodResolver(brandSchema),
@@ -158,11 +173,10 @@ export default function BrandsPage() {
     }
 
     if (editingBrand) {
-      setBrands(
-        brands.map((b) =>
+      const updatedBrands = brands.map((b) =>
           b.id === editingBrand.id ? { ...b, name: data.name, imageUrl: imageData } : b
-        )
-      );
+        );
+      persistBrands(updatedBrands);
       toast({ title: "Brand Updated", description: "The brand has been successfully updated." });
     } else {
       const newBrand: Brand = {
@@ -170,7 +184,7 @@ export default function BrandsPage() {
         name: data.name,
         imageUrl: imageData,
       };
-      setBrands([...brands, newBrand]);
+      persistBrands([...brands, newBrand]);
       toast({ title: "Brand Added", description: "A new brand has been successfully added." });
     }
     handleCloseModal();
@@ -181,7 +195,8 @@ export default function BrandsPage() {
       toast({ variant: 'destructive', title: 'Permission Denied'});
       return;
     }
-    setBrands(brands.filter((b) => b.id !== brandId));
+    const updatedBrands = brands.filter((b) => b.id !== brandId);
+    persistBrands(updatedBrands);
     toast({ title: "Brand Deleted", description: "The brand has been successfully deleted." });
   };
   

@@ -10,18 +10,39 @@ import { ProductCatalog } from '@/components/pos/ProductCatalog';
 import { ProductModal, ProductFormData } from '@/components/pos/ProductModal';
 import { useToast } from '@/hooks/use-toast';
 
+const PRODUCTS_STORAGE_KEY = 'pos_products';
+const CATEGORIES_STORAGE_KEY = 'pos_categories';
+const BRANDS_STORAGE_KEY = 'pos_brands';
+const UNITS_STORAGE_KEY = 'pos_units';
+
 export default function ProductsPage() {
   const { hasPermission, loading } = useAuth();
   const router = useRouter();
-  const [products, setProducts] = useState<Product[]>(initialProducts);
-  const [categories] = useState<Category[]>(initialCategories);
-  const [brands] = useState<Brand[]>(initialBrands);
-  const [units] = useState<Unit[]>(initialUnits);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [units, setUnits] = useState<Unit[]>([]);
   
   const [isProductModalOpen, setProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   const { toast } = useToast();
+  
+  useEffect(() => {
+    const loadData = (key: string, setter: Function, initialData: any) => {
+        const storedData = localStorage.getItem(key);
+        setter(storedData ? JSON.parse(storedData) : initialData);
+    };
+    loadData(PRODUCTS_STORAGE_KEY, setProducts, initialProducts);
+    loadData(CATEGORIES_STORAGE_KEY, setCategories, initialCategories);
+    loadData(BRANDS_STORAGE_KEY, setBrands, initialBrands);
+    loadData(UNITS_STORAGE_KEY, setUnits, initialUnits);
+  }, []);
+
+  const persistProducts = (updatedProducts: Product[]) => {
+    setProducts(updatedProducts);
+    localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(updatedProducts));
+  };
   
   useEffect(() => {
     if (!loading && !hasPermission('products:read')) {
@@ -49,7 +70,8 @@ export default function ProductsPage() {
       toast({ variant: 'destructive', title: 'Permission Denied'});
       return;
     }
-    setProducts(products.filter(p => p.id !== productId));
+    const updatedProducts = products.filter(p => p.id !== productId);
+    persistProducts(updatedProducts);
   };
 
   const handleSaveProduct = async (productData: ProductFormData) => {
@@ -81,7 +103,8 @@ export default function ProductsPage() {
           variants,
           imageUrl 
         };
-      setProducts(products.map(p => p.id === editingProduct.id ? updatedProduct : p));
+      const updatedProducts = products.map(p => p.id === editingProduct.id ? updatedProduct : p);
+      persistProducts(updatedProducts);
       toast({ title: "Product Updated" });
     } else {
       const newProduct: Product = {
@@ -90,7 +113,7 @@ export default function ProductsPage() {
         imageUrl: imageUrl,
         variants
       };
-      setProducts([newProduct, ...products]);
+      persistProducts([newProduct, ...products]);
       toast({ title: "Product Added" });
     }
   };

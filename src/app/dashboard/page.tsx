@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { OrderItem, Product, Category, Brand, Unit, Sale, Customer, ProductVariant } from '@/types';
 import { initialProducts, initialCategories, initialBrands, initialUnits, initialSales, initialCustomers } from '@/lib/data';
 import { ProductCatalog } from '@/components/pos/ProductCatalog';
@@ -12,22 +12,45 @@ import { ProductModal, ProductFormData } from '@/components/pos/ProductModal';
 import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
 
+const PRODUCTS_STORAGE_KEY = 'pos_products';
+const CATEGORIES_STORAGE_KEY = 'pos_categories';
+const BRANDS_STORAGE_KEY = 'pos_brands';
+const UNITS_STORAGE_KEY = 'pos_units';
+const CUSTOMERS_STORAGE_KEY = 'pos_customers';
+const SALES_STORAGE_KEY = 'pos_sales';
 
 export default function PosPage() {
   const { user } = useAuth();
   const { settings } = useSettings();
 
-  const [products, setProducts] = useState<Product[]>(initialProducts);
-  const [categories, setCategories] = useState<Category[]>(initialCategories);
-  const [brands, setBrands] = useState<Brand[]>(initialBrands);
-  const [units, setUnits] = useState<Unit[]>(initialUnits);
-  const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [completedSales, setCompletedSales] = useState<Sale[]>([]);
 
+  useEffect(() => {
+    const loadData = (key: string, setter: Function, initialData: any) => {
+        const storedData = localStorage.getItem(key);
+        setter(storedData ? JSON.parse(storedData) : initialData);
+    };
+    loadData(PRODUCTS_STORAGE_KEY, setProducts, initialProducts);
+    loadData(CATEGORIES_STORAGE_KEY, setCategories, initialCategories);
+    loadData(BRANDS_STORAGE_KEY, setBrands, initialBrands);
+    loadData(UNITS_STORAGE_KEY, setUnits, initialUnits);
+    loadData(CUSTOMERS_STORAGE_KEY, setCustomers, initialCustomers);
+    loadData(SALES_STORAGE_KEY, setCompletedSales, initialSales);
+  }, []);
+
+  const persistData = (key: string, data: any) => {
+    localStorage.setItem(key, JSON.stringify(data));
+  };
+  
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [currentCustomer, setCurrentCustomer] = useState<Customer | null>(null);
   const [heldOrders, setHeldOrders] = useState<{ id: number, items: OrderItem[], customer: Customer | null }[]>([]);
-  const [completedSales, setCompletedSales] = useState<Sale[]>(initialSales);
-
+  
   const [isReceiptOpen, setReceiptOpen] = useState(false);
   const [completedOrder, setCompletedOrder] = useState<ReceiptData | null>(null);
 
@@ -129,7 +152,9 @@ export default function PosPage() {
             paidAmount: total,
         }),
     };
-    setCompletedSales(prev => [newSale, ...prev]);
+    const updatedSales = [newSale, ...completedSales];
+    setCompletedSales(updatedSales);
+    persistData(SALES_STORAGE_KEY, updatedSales);
 
     setCompletedOrder({
       items: [...orderItems],
@@ -168,7 +193,9 @@ export default function PosPage() {
   };
   
   const handleDeleteProduct = (productId: string) => {
-    setProducts(products.filter(p => p.id !== productId));
+    const updatedProducts = products.filter(p => p.id !== productId);
+    setProducts(updatedProducts);
+    persistData(PRODUCTS_STORAGE_KEY, updatedProducts);
     setOrderItems(orderItems.filter(item => item.productId !== productId));
   };
 
@@ -190,20 +217,21 @@ export default function PosPage() {
       id: v.id || `${productData.name.replace(/\s+/g, '-')}-${i}`
     }));
 
+    let updatedProducts;
     if (editingProduct) {
-      // Edit existing product
       const updatedProduct: Product = { ...editingProduct, ...restData, imageUrl, variants };
-      setProducts(products.map(p => p.id === editingProduct.id ? updatedProduct : p));
+      updatedProducts = products.map(p => p.id === editingProduct.id ? updatedProduct : p);
     } else {
-      // Add new product
       const newProduct: Product = {
         ...restData,
         id: `prod_${Date.now()}`,
         imageUrl: imageUrl,
         variants,
       };
-      setProducts([newProduct, ...products]);
+      updatedProducts = [newProduct, ...products];
     }
+    setProducts(updatedProducts);
+    persistData(PRODUCTS_STORAGE_KEY, updatedProducts);
   };
   
   const productModalData = editingProduct;
@@ -238,7 +266,6 @@ export default function PosPage() {
                     onHold={handleHoldOrder}
                     onResumeOrder={handleResumeOrder}
                     onDeleteHeldOrder={handleDeleteHeldOrder}
-                    // For cash drawer, we'll need to pass sales data eventually
                     completedSalesThisSession={[]}
                  />
             </div>

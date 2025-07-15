@@ -60,18 +60,33 @@ const categorySchema = z.object({
 type CategoryFormValues = z.infer<typeof categorySchema>;
 
 const ROWS_PER_PAGE = 10;
+const CATEGORIES_STORAGE_KEY = 'pos_categories';
 
 export default function CategoriesPage() {
   const { hasPermission, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   
-  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isModalOpen, setModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [currentPage, setCurrentPage] = useState(1);
+  
+  useEffect(() => {
+    const storedCategories = localStorage.getItem(CATEGORIES_STORAGE_KEY);
+    if (storedCategories) {
+      setCategories(JSON.parse(storedCategories));
+    } else {
+      setCategories(initialCategories);
+    }
+  }, []);
+
+  const persistCategories = (updatedCategories: Category[]) => {
+    setCategories(updatedCategories);
+    localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(updatedCategories));
+  }
 
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
@@ -157,11 +172,10 @@ export default function CategoriesPage() {
     }
 
     if (editingCategory) {
-      setCategories(
-        categories.map((c) =>
+      const updatedCategories = categories.map((c) =>
           c.id === editingCategory.id ? { ...c, name: data.name, imageUrl: imageData } : c
-        )
-      );
+        );
+      persistCategories(updatedCategories);
       toast({ title: "Category Updated", description: "The category has been successfully updated." });
     } else {
       const newCategory: Category = {
@@ -169,7 +183,7 @@ export default function CategoriesPage() {
         name: data.name,
         imageUrl: imageData,
       };
-      setCategories([...categories, newCategory]);
+      persistCategories([...categories, newCategory]);
       toast({ title: "Category Added", description: "A new category has been successfully added." });
     }
     handleCloseModal();
@@ -180,7 +194,8 @@ export default function CategoriesPage() {
       toast({ variant: 'destructive', title: 'Permission Denied'});
       return;
     }
-    setCategories(categories.filter((c) => c.id !== categoryId));
+    const updatedCategories = categories.filter((c) => c.id !== categoryId);
+    persistCategories(updatedCategories);
     toast({ title: "Category Deleted", description: "The category has been successfully deleted." });
   };
   

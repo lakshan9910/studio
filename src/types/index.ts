@@ -30,6 +30,8 @@ export interface Sale {
     items: SaleItem[];
     total: number;
     paymentMethod: PaymentMethod;
+    customerId?: string;
+    customerName?: string;
 }
 
 export interface Category {

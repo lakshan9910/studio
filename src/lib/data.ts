@@ -205,6 +205,12 @@ export const initialReturns: Return[] = [
     }
 ];
 
+export const initialCustomers: Customer[] = [
+  { id: 'cust_001', name: 'Alice Johnson', email: 'alice@example.com', phone: '123-456-7890' },
+  { id: 'cust_002', name: 'Bob Williams', email: 'bob@example.com', phone: '234-567-8901' },
+  { id: 'cust_003', name: 'Charlie Brown', email: 'charlie@example.com', phone: '345-678-9012' },
+];
+
 export const initialSales: Sale[] = [
     {
         id: 'sale_001',
@@ -214,7 +220,9 @@ export const initialSales: Sale[] = [
             { productId: 'prod_003', name: 'Sourdough Bread', quantity: 1, price: 5.49 },
         ],
         total: 11.47,
-        paymentMethod: 'Card'
+        paymentMethod: 'Card',
+        customerId: 'cust_001',
+        customerName: 'Alice Johnson',
     },
     {
         id: 'sale_002',
@@ -225,7 +233,9 @@ export const initialSales: Sale[] = [
             { productId: 'prod_007', name: 'Kettle-Cooked Chips', quantity: 2, price: 4.79 },
         ],
         total: 20.46,
-        paymentMethod: 'Cash'
+        paymentMethod: 'Cash',
+        customerId: 'cust_002',
+        customerName: 'Bob Williams',
     },
     {
         id: 'sale_003',
@@ -235,7 +245,8 @@ export const initialSales: Sale[] = [
             { productId: 'prod_012', name: 'Salted Pretzels', quantity: 3, price: 3.29 },
         ],
         total: 17.32,
-        paymentMethod: 'Cash'
+        paymentMethod: 'Cash',
+        customerName: 'Walk-in Customer'
     },
     {
         id: 'sale_004',
@@ -244,14 +255,10 @@ export const initialSales: Sale[] = [
             { productId: 'prod_008', name: 'Dark Chocolate Bar', quantity: 4, price: 3.99 },
         ],
         total: 15.96,
-        paymentMethod: 'Online'
+        paymentMethod: 'Online',
+        customerId: 'cust_003',
+        customerName: 'Charlie Brown',
     }
-];
-
-export const initialCustomers: Customer[] = [
-  { id: 'cust_001', name: 'Alice Johnson', email: 'alice@example.com', phone: '123-456-7890' },
-  { id: 'cust_002', name: 'Bob Williams', email: 'bob@example.com', phone: '234-567-8901' },
-  { id: 'cust_003', name: 'Charlie Brown', email: 'charlie@example.com', phone: '345-678-9012' },
 ];
 
 export const initialExpenseCategories: ExpenseCategory[] = [

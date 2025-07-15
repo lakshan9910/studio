@@ -14,6 +14,7 @@ export interface ReceiptData {
     tax: number;
     total: number;
     cashierName: string;
+    customerName: string;
     storeName: string;
     headerText: string;
     footerText: string;
@@ -35,7 +36,7 @@ export function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalProps) {
         window.print();
     };
 
-    const { items, subtotal, tax, total, cashierName, storeName, headerText, footerText, paymentMethod, amountPaid, change } = receipt;
+    const { items, subtotal, tax, total, cashierName, customerName, storeName, headerText, footerText, paymentMethod, amountPaid, change } = receipt;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -57,6 +58,10 @@ export function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalProps) {
                 <div className="flex justify-between">
                     <span>Cashier:</span>
                     <span>{cashierName}</span>
+                </div>
+                 <div className="flex justify-between">
+                    <span>Customer:</span>
+                    <span>{customerName}</span>
                 </div>
                  <div className="flex justify-between">
                     <span>Payment:</span>

@@ -2,8 +2,8 @@
 "use client";
 
 import { useState } from 'react';
-import type { OrderItem, Product, Category, Brand, Unit, Sale, PaymentMethod } from '@/types';
-import { initialProducts, initialCategories, initialBrands, initialUnits, initialSales } from '@/lib/data';
+import type { OrderItem, Product, Category, Brand, Unit, Sale, PaymentMethod, Customer } from '@/types';
+import { initialProducts, initialCategories, initialBrands, initialUnits, initialSales, initialCustomers } from '@/lib/data';
 import { ProductCatalog } from '@/components/pos/ProductCatalog';
 import { OrderPanel } from '@/components/pos/OrderPanel';
 import { ReceiptModal, ReceiptData } from '@/components/pos/ReceiptModal';
@@ -21,9 +21,11 @@ export default function PosPage() {
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [brands, setBrands] = useState<Brand[]>(initialBrands);
   const [units, setUnits] = useState<Unit[]>(initialUnits);
+  const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
 
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
-  const [heldOrders, setHeldOrders] = useState<{ id: number, items: OrderItem[] }[]>([]);
+  const [currentCustomer, setCurrentCustomer] = useState<Customer | null>(null);
+  const [heldOrders, setHeldOrders] = useState<{ id: number, items: OrderItem[], customer: Customer | null }[]>([]);
   const [completedSales, setCompletedSales] = useState<Sale[]>(initialSales);
 
   const [isReceiptOpen, setReceiptOpen] = useState(false);
@@ -74,14 +76,16 @@ export default function PosPage() {
 
   const handleHoldOrder = () => {
     if (orderItems.length === 0) return;
-    setHeldOrders(prev => [...prev, { id: Date.now(), items: orderItems }]);
+    setHeldOrders(prev => [...prev, { id: Date.now(), items: orderItems, customer: currentCustomer }]);
     setOrderItems([]);
+    setCurrentCustomer(null);
   };
 
   const handleResumeOrder = (orderId: number) => {
     const orderToResume = heldOrders.find(o => o.id === orderId);
     if (orderToResume) {
       setOrderItems(orderToResume.items);
+      setCurrentCustomer(orderToResume.customer);
       setHeldOrders(prev => prev.filter(o => o.id !== orderId));
     }
   };
@@ -105,6 +109,8 @@ export default function PosPage() {
         })),
         total,
         paymentMethod: paymentDetails.method,
+        customerId: currentCustomer?.id,
+        customerName: currentCustomer?.name || 'Walk-in Customer',
     };
     setCompletedSales(prev => [newSale, ...prev]);
 
@@ -114,6 +120,7 @@ export default function PosPage() {
       tax,
       total,
       cashierName: user?.name || 'N/A',
+      customerName: currentCustomer?.name || 'Walk-in Customer',
       storeName: settings.storeName,
       headerText: settings.receiptHeaderText || '',
       footerText: settings.receiptFooterText || '',
@@ -128,6 +135,7 @@ export default function PosPage() {
 
   const handleNewOrder = () => {
     setOrderItems([]);
+    setCurrentCustomer(null);
     setReceiptOpen(false);
     setCompletedOrder(null);
   };
@@ -198,6 +206,9 @@ export default function PosPage() {
                     orderItems={orderItems}
                     heldOrders={heldOrders}
                     recentSales={completedSales}
+                    customers={customers}
+                    currentCustomer={currentCustomer}
+                    onSetCustomer={setCurrentCustomer}
                     onUpdateQuantity={handleUpdateQuantity}
                     onRemoveItem={handleRemoveItem}
                     onFinalize={handleOpenPayment}

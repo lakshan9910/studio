@@ -18,16 +18,24 @@ export function BarcodeModal({ isOpen, onClose, product }: BarcodeModalProps) {
 
     useEffect(() => {
         if (isOpen && product) {
-            product.variants.forEach(variant => {
-                if(variant.sku) {
-                     JsBarcode(`#barcode-${variant.id}`, variant.sku, {
-                        format: "CODE128",
-                        displayValue: true,
-                        fontSize: 14,
-                        margin: 10,
-                     });
-                }
-            });
+            try {
+                product.variants.forEach(variant => {
+                    if(variant.sku) {
+                         const element = document.getElementById(`barcode-${variant.id}`);
+                         if (element) {
+                            JsBarcode(element, variant.sku, {
+                                format: "CODE128",
+                                displayValue: true,
+                                fontSize: 14,
+                                margin: 10,
+                            });
+                         }
+                    }
+                });
+            } catch (e) {
+                // Catches potential JsBarcode errors, though the element check should prevent most.
+                console.error("Error generating barcode:", e);
+            }
         }
     }, [isOpen, product]);
     

@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 
 const systemSettingsSchema = z.object({
   storeName: z.string().min(1, "Store name is required."),
@@ -26,7 +26,12 @@ const emailSettingsSchema = z.object({
   smtpPass: z.string().optional(),
 });
 
-const settingsSchema = systemSettingsSchema.merge(emailSettingsSchema);
+const receiptSettingsSchema = z.object({
+    receiptHeaderText: z.string().optional(),
+    receiptFooterText: z.string().optional(),
+});
+
+const settingsSchema = systemSettingsSchema.merge(emailSettingsSchema).merge(receiptSettingsSchema);
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
 
@@ -41,7 +46,9 @@ export default function SettingsPage() {
     smtpHost: 'smtp.example.com',
     smtpPort: 587,
     smtpUser: 'user@example.com',
-    smtpPass: ''
+    smtpPass: '',
+    receiptHeaderText: 'Thank you for your purchase!',
+    receiptFooterText: 'Please come again!',
   });
 
   const form = useForm<SettingsFormValues>({
@@ -180,6 +187,41 @@ export default function SettingsPage() {
                                 )}
                             />
                         </div>
+                    </CardContent>
+                </Card>
+
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Receipt Settings</CardTitle>
+                        <CardDescription>Customize the template for printed receipts.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <FormField
+                            control={form.control}
+                            name="receiptHeaderText"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Header Text</FormLabel>
+                                    <FormControl>
+                                        <Textarea placeholder="Thank you for shopping with us!" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="receiptFooterText"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Footer Text</FormLabel>
+                                    <FormControl>
+                                        <Textarea placeholder="Returns accepted within 30 days with receipt." {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                     </CardContent>
                 </Card>
                 

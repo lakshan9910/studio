@@ -8,42 +8,61 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Printer } from 'lucide-react';
 
+export interface ReceiptData {
+    items: OrderItem[];
+    subtotal: number;
+    tax: number;
+    total: number;
+    cashierName: string;
+    storeName: string;
+    headerText: string;
+    footerText: string;
+}
+
 interface ReceiptModalProps {
   isOpen: boolean;
   onClose: () => void;
-  orderItems: OrderItem[];
-  total: number;
+  receipt: ReceiptData | null;
 }
 
-export function ReceiptModal({ isOpen, onClose, orderItems, total }: ReceiptModalProps) {
-    const subtotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const tax = total - subtotal;
+export function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalProps) {
+    if (!receipt) return null;
 
     const handlePrint = () => {
         window.print();
     };
 
+    const { items, subtotal, tax, total, cashierName, storeName, headerText, footerText } = receipt;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md @media print:shadow-none print:border-none">
-        <DialogHeader>
-          <DialogTitle className="text-center text-2xl">Transaction Complete</DialogTitle>
-          <DialogDescription className="text-center">
-            Thank you for your purchase!
-          </DialogDescription>
-        </DialogHeader>
-        <div id="receipt-content" className="my-4">
-            <div className="bg-muted/50 p-4 rounded-lg">
-                <p className="text-sm font-semibold text-center">Receipt</p>
-                <p className="text-xs text-muted-foreground text-center">{new Date().toLocaleString()}</p>
+        <div id="receipt-content">
+            <DialogHeader className="text-center mb-4">
+              <DialogTitle className="text-xl font-bold">{storeName}</DialogTitle>
+              <DialogDescription className="text-xs">{headerText}</DialogDescription>
+            </DialogHeader>
+            <div className="bg-muted/50 p-2 rounded-lg text-xs mb-4">
+                <div className="flex justify-between">
+                    <span>Date:</span>
+                    <span>{new Date().toLocaleDateString()}</span>
+                </div>
+                 <div className="flex justify-between">
+                    <span>Time:</span>
+                    <span>{new Date().toLocaleTimeString()}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span>Cashier:</span>
+                    <span>{cashierName}</span>
+                </div>
             </div>
-            <ScrollArea className="max-h-60 mt-4">
+            <ScrollArea className="max-h-60">
                 <div className="space-y-2 pr-4">
-                    {orderItems.map((item) => (
+                    {items.map((item) => (
                     <div key={item.id} className="flex justify-between items-center text-sm">
                         <div>
                             <p className="font-medium">{item.name}</p>
-                            <p className="text-muted-foreground">
+                            <p className="text-muted-foreground text-xs">
                                 {item.quantity} x ${item.price.toFixed(2)}
                             </p>
                         </div>
@@ -62,13 +81,14 @@ export function ReceiptModal({ isOpen, onClose, orderItems, total }: ReceiptModa
                     <span className="text-muted-foreground">Tax</span>
                     <span>${tax.toFixed(2)}</span>
                 </div>
-                 <div className="flex justify-between font-bold text-base">
+                 <div className="flex justify-between font-bold text-base mt-2 pt-2 border-t">
                     <span>Total</span>
                     <span>${total.toFixed(2)}</span>
                 </div>
             </div>
+            <p className="text-center text-xs text-muted-foreground mt-6">{footerText}</p>
         </div>
-        <DialogFooter className="print:hidden">
+        <DialogFooter className="print:hidden mt-6">
             <Button onClick={handlePrint} variant="outline" className="w-full sm:w-auto">
                 <Printer className="mr-2 h-4 w-4" />
                 Print Bill

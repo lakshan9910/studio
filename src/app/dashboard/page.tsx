@@ -6,11 +6,13 @@ import type { OrderItem, Product, Category, Brand, Unit } from '@/types';
 import { initialProducts, initialCategories, initialBrands, initialUnits } from '@/lib/data';
 import { ProductCatalog } from '@/components/pos/ProductCatalog';
 import { OrderPanel } from '@/components/pos/OrderPanel';
-import { ReceiptModal } from '@/components/pos/ReceiptModal';
+import { ReceiptModal, ReceiptData } from '@/components/pos/ReceiptModal';
 import { ProductModal, ProductFormData } from '@/components/pos/ProductModal';
-import { ShoppingCart } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+
 
 export default function PosPage() {
+  const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [brands, setBrands] = useState<Brand[]>(initialBrands);
@@ -18,8 +20,7 @@ export default function PosPage() {
 
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [isReceiptOpen, setReceiptOpen] = useState(false);
-  const [completedOrder, setCompletedOrder] = useState<OrderItem[]>([]);
-  const [completedTotal, setCompletedTotal] = useState(0);
+  const [completedOrder, setCompletedOrder] = useState<ReceiptData | null>(null);
 
   const [isProductModalOpen, setProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -54,21 +55,37 @@ export default function PosPage() {
   const calculateTotal = () => {
     const subtotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const tax = subtotal * 0.08; // 8% tax
-    return subtotal + tax;
+    return { subtotal, tax, total: subtotal + tax };
   };
 
   const handleFinalizeOrder = () => {
     if (orderItems.length === 0) return;
-    setCompletedOrder([...orderItems]);
-    setCompletedTotal(calculateTotal());
+    const { subtotal, tax, total } = calculateTotal();
+
+    // In a real app, you'd fetch this from your global settings state/context
+    const settings = {
+        storeName: 'Cashy POS',
+        receiptHeaderText: 'Thank you for your purchase!',
+        receiptFooterText: 'Please come again!',
+    }
+
+    setCompletedOrder({
+      items: [...orderItems],
+      subtotal,
+      tax,
+      total,
+      cashierName: user?.name || 'N/A',
+      storeName: settings.storeName,
+      headerText: settings.receiptHeaderText,
+      footerText: settings.receiptFooterText,
+    });
     setReceiptOpen(true);
   };
 
   const handleNewOrder = () => {
     setOrderItems([]);
     setReceiptOpen(false);
-    setCompletedOrder([]);
-    setCompletedTotal(0);
+    setCompletedOrder(null);
   };
 
   const handleOpenAddProduct = () => {
@@ -148,8 +165,7 @@ export default function PosPage() {
       <ReceiptModal
         isOpen={isReceiptOpen}
         onClose={handleNewOrder}
-        orderItems={completedOrder}
-        total={completedTotal}
+        receipt={completedOrder}
       />
       <ProductModal
         isOpen={isProductModalOpen}

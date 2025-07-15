@@ -8,6 +8,7 @@ import { ProductCatalog } from '@/components/pos/ProductCatalog';
 import { OrderPanel } from '@/components/pos/OrderPanel';
 import { ReceiptModal } from '@/components/pos/ReceiptModal';
 import { ProductModal, ProductFormData } from '@/components/pos/ProductModal';
+import { ShoppingCart } from 'lucide-react';
 
 export default function PosPage() {
   const [products, setProducts] = useState<Product[]>(initialProducts);
@@ -37,7 +38,7 @@ export default function PosPage() {
 
   const handleUpdateQuantity = (productId: string, quantity: number) => {
     setOrderItems((prevItems) => {
-      if (quantity === 0) {
+      if (quantity <= 0) {
         return prevItems.filter((item) => item.id !== productId);
       }
       return prevItems.map((item) =>
@@ -97,7 +98,7 @@ export default function PosPage() {
         id: `prod_${Date.now()}`,
         imageUrl: 'https://placehold.co/300x300.png',
       };
-      setProducts([...products, newProduct]);
+      setProducts([newProduct, ...products]);
     }
   };
   
@@ -106,14 +107,11 @@ export default function PosPage() {
     null;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] bg-background font-body antialiased">
+    <div className="flex flex-col h-[calc(100vh-4rem)]">
       <main className="flex-1 overflow-hidden p-4 sm:p-6 lg:p-8">
-        <div className="h-full max-w-7xl mx-auto grid lg:grid-cols-[2fr,1fr] gap-8">
-          <div className="h-full flex flex-col gap-4">
-             <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold tracking-tight">Point of Sale</h1>
-            </div>
-            <div className="flex-1 overflow-hidden">
+        <div className="h-full max-w-screen-2xl mx-auto grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-[2fr,1fr] gap-6">
+          <div className="h-full flex flex-col gap-4 lg:col-span-2 xl:col-span-1">
+             <div className="flex-1 overflow-hidden">
                 <ProductCatalog 
                     products={products}
                     categories={categories}
@@ -126,8 +124,8 @@ export default function PosPage() {
                 />
             </div>
           </div>
-          <div className="h-full flex flex-col gap-4">
-            <h2 className="text-2xl font-bold tracking-tight sr-only">Current Order</h2>
+          <div className="h-full flex flex-col gap-4 lg:col-span-1">
+            <h2 className="text-2xl font-bold tracking-tight hidden lg:block">Current Order</h2>
             <div className="flex-1">
                 <OrderPanel
                     items={orderItems}

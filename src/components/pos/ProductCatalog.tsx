@@ -19,6 +19,7 @@ import { Search, Plus, LoaderCircle, Frown, Edit, Trash2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreVertical } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 const formSchema = z.object({
   query: z.string(),
@@ -43,7 +44,6 @@ export function ProductCatalog({ products: initialProducts, categories, brands, 
 
   const categoryMap = new Map(categories.map(c => [c.id, c.name]));
   const brandMap = new Map(brands.map(b => [b.id, b.name]));
-  const unitMap = new Map(units.map(u => [u.id, u.name]));
 
   useEffect(() => {
     setFilteredProducts(initialProducts);
@@ -76,13 +76,14 @@ export function ProductCatalog({ products: initialProducts, categories, brands, 
   }, [debouncedSearchTerm, initialProducts, categoryMap, brandMap]);
 
   useEffect(() => {
-    if (debouncedSearchTerm.length > 2) {
+    if (debouncedSearchTerm.length > 2 && debouncedSearchTerm.length < 50) {
       startAiTransition(async () => {
         try {
           const result = await suggestItemSearchQueries({ partialInput: debouncedSearchTerm });
-          setSuggestions(result.suggestedQueries.slice(0, 5));
+          setSuggestions(result.suggestedQueries.slice(0, 3));
         } catch (error) {
           console.error("Failed to get suggestions:", error);
+          setSuggestions([]);
         }
       });
     } else {
@@ -91,70 +92,72 @@ export function ProductCatalog({ products: initialProducts, categories, brands, 
   }, [debouncedSearchTerm]);
   
   const handleAiSearch = async (values: z.infer<typeof formSchema>) => {
+    if (!values.query) return;
     setSuggestions([]);
     startAiTransition(async () => {
       try {
         const result = await searchProductsByDescription({ description: values.query });
         if (result.products && result.products.length > 0) {
-            const foundProductNames = result.products.map(p => p.name.toLowerCase());
-            const aiFiltered = initialProducts.filter(p => foundProductNames.includes(p.name.toLowerCase()));
-            setFilteredProducts(aiFiltered);
+            const foundProductIds = result.products.map(p => p.id);
+            const aiFiltered = initialProducts.filter(p => foundProductIds.includes(p.id));
+             setFilteredProducts(aiFiltered);
+             if (aiFiltered.length === 0) {
+                 toast({
+                    title: "AI Search",
+                    description: "AI found products but they don't exist in our inventory.",
+                });
+             }
         } else {
-            toast({
-                title: "AI Search",
-                description: "No products found with that description.",
-            });
+            setFilteredProducts([]);
         }
       } catch (error) {
         console.error("Failed to search products:", error);
         toast({
             variant: "destructive",
             title: "AI Search Error",
-            description: "Could not perform AI search. Displaying local results.",
+            description: "Could not perform AI search. Please try a different query.",
         });
       }
     });
   };
   
   const handleSuggestionClick = (suggestion: string) => {
-    form.setValue('query', suggestion);
-    handleAiSearch({ query: suggestion });
+    form.setValue('query', suggestion, { shouldDirty: true });
     setSuggestions([]);
+    // You can optionally trigger the search directly
+    // startAiTransition(() => handleAiSearch({ query: suggestion }));
   }
 
   return (
-    <Card className="h-full flex flex-col">
-        <CardHeader className="p-4 flex-row items-center justify-between">
+    <Card className="h-full flex flex-col shadow-lg rounded-xl">
+        <CardHeader className="p-4 sm:p-6 flex-row items-center justify-between gap-4 border-b">
             <div className="relative flex-1">
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleAiSearch)} className="flex gap-2">
+                    <form onSubmit={form.handleSubmit(handleAiSearch)}>
                         <FormField
                         control={form.control}
                         name="query"
                         render={({ field }) => (
                             <FormItem className="flex-1 relative">
                                 <FormControl>
-                                    <Input placeholder="Search products..." {...field} className="pr-10" />
+                                    <Input placeholder="Search products by name or use AI for descriptions..." {...field} className="pr-10 h-11 text-base" />
                                 </FormControl>
-                                <div className="absolute top-0 right-0 h-full flex items-center pr-3">
-                                {isAiLoading ? <LoaderCircle className="h-5 w-5 animate-spin text-muted-foreground" /> : <Search className="h-5 w-5 text-muted-foreground" />}
-                                </div>
+                                <Button size="icon" variant="ghost" type="submit" className="absolute top-1/2 right-2 -translate-y-1/2 h-8 w-8" disabled={isAiLoading}>
+                                  {isAiLoading ? <LoaderCircle className="h-5 w-5 animate-spin text-muted-foreground" /> : <Search className="h-5 w-5 text-muted-foreground" />}
+                                </Button>
                             </FormItem>
                         )}
                         />
-                         <Button type="submit" disabled={isAiLoading}>
-                            AI Search
-                        </Button>
                     </form>
                 </Form>
                  {suggestions.length > 0 && (
-                    <Card className="absolute top-full mt-2 w-full z-10 shadow-lg">
+                    <Card className="absolute top-full mt-2 w-full z-10 shadow-lg border-primary/20">
                         <CardContent className="p-2">
-                           <p className="text-xs font-semibold text-muted-foreground p-2">Suggestions</p>
-                            <ul>
+                           <p className="text-xs font-semibold text-muted-foreground px-2 py-1">AI Suggestions</p>
+                            <ul className='flex flex-col gap-1'>
                                 {suggestions.map((s, i) => (
                                     <li key={i}>
-                                        <Button onClick={() => handleSuggestionClick(s)} variant="ghost" className="w-full justify-start font-normal">
+                                        <Button onClick={() => handleSuggestionClick(s)} variant="ghost" size="sm" className="w-full justify-start font-normal h-auto py-1.5 px-2 text-left">
                                             {s}
                                         </Button>
                                     </li>
@@ -164,60 +167,62 @@ export function ProductCatalog({ products: initialProducts, categories, brands, 
                     </Card>
                 )}
             </div>
-             <Button onClick={onAddProduct} className="ml-4">
+             <Button onClick={onAddProduct} size="lg" className="h-11 hidden sm:inline-flex">
                 <Plus className="mr-2 h-4 w-4" /> Add Product
             </Button>
         </CardHeader>
         <CardContent className="p-0 flex-1">
             <ScrollArea className="h-full">
-                <div className="p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {filteredProducts.length > 0 ? filteredProducts.map((product) => (
-                    <Card key={product.id} className="flex flex-col overflow-hidden group transition-all duration-300 hover:shadow-lg hover:-translate-y-1 relative">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7 z-10 bg-black/20 hover:bg-black/50 text-white hover:text-white">
-                                    <MoreVertical className="h-4 w-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => onEditProduct(product)}>
-                                    <Edit className="mr-2 h-4 w-4" />
-                                    <span>Edit</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => onDeleteProduct(product.id)} className="text-destructive">
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    <span>Delete</span>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                    <Card key={product.id} className="flex flex-col overflow-hidden group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 relative rounded-lg">
                         <CardContent className="p-0 flex-1 flex flex-col">
-                            <div className="aspect-square w-full overflow-hidden">
-                                <Image
-                                    src={product.imageUrl}
-                                    alt={product.name}
-                                    width={300}
-                                    height={300}
-                                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                    data-ai-hint={`${categoryMap.get(product.category)} ${product.name}`}
-                                />
+                            <div className="relative">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="secondary" size="icon" className="absolute top-2 right-2 h-8 w-8 z-10 bg-black/30 hover:bg-black/60 text-white hover:text-white rounded-full">
+                                            <MoreVertical className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onClick={() => onEditProduct(product)}>
+                                            <Edit className="mr-2 h-4 w-4" />
+                                            <span>Edit</span>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => onDeleteProduct(product.id)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            <span>Delete</span>
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                                <div className="aspect-square w-full overflow-hidden">
+                                    <Image
+                                        src={product.imageUrl}
+                                        alt={product.name}
+                                        width={300}
+                                        height={300}
+                                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                        data-ai-hint={`${categoryMap.get(product.category)} ${product.name}`}
+                                    />
+                                </div>
+                                <Badge variant="secondary" className="absolute bottom-2 left-2">{categoryMap.get(product.category) || 'Uncategorized'}</Badge>
                             </div>
                             <div className="p-4 flex-1 flex flex-col">
-                                <CardTitle className="text-base font-semibold">{product.name}</CardTitle>
-                                <p className="text-sm text-muted-foreground">{brandMap.get(product.brand) || 'Unbranded'}</p>
-                                <p className="text-xs text-muted-foreground">{categoryMap.get(product.category) || 'Uncategorized'}</p>
-                                <p className="text-lg font-bold mt-2 flex-1">${product.price.toFixed(2)}</p>
+                                <CardTitle className="text-base font-bold leading-tight">{product.name}</CardTitle>
+                                <p className="text-sm text-muted-foreground flex-1">{brandMap.get(product.brand) || 'Unbranded'}</p>
                             </div>
                         </CardContent>
-                        <CardFooter className="p-2">
-                            <Button onClick={() => onAddToOrder(product)} className="w-full">
-                                <Plus className="mr-2 h-4 w-4" /> Add to Order
+                        <CardFooter className="p-2 pt-0 flex items-center justify-between">
+                             <p className="text-xl font-bold ml-2">${product.price.toFixed(2)}</p>
+                            <Button onClick={() => onAddToOrder(product)} className="w-auto font-bold">
+                                <Plus className="mr-2 h-4 w-4" /> Add
                             </Button>
                         </CardFooter>
                     </Card>
                     )) : (
                         <div className="col-span-full flex flex-col items-center justify-center h-64 text-muted-foreground">
                             <Frown className="w-16 h-16" />
-                            <p className="mt-4 text-lg">No products found</p>
+                            <p className="mt-4 text-lg font-semibold">No products found</p>
                             <p className="text-sm">Try adjusting your search or adding new products.</p>
                         </div>
                     )}

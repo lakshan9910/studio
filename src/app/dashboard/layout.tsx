@@ -16,12 +16,13 @@ import { Calendar } from '@/components/ui/calendar';
 import { 
     LogOut, Settings, Store, Users, BarChart3, ShoppingCart, Receipt, Undo2, 
     Shapes, Shield, Beaker, Truck, UserCog, Wallet, Package, Search,
-    Calculator, Bell, Menu
+    Calculator, Bell, Menu, Globe
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useToast } from "@/hooks/use-toast";
 
 function SimpleCalculator() {
     const [input, setInput] = useState('');
@@ -30,7 +31,8 @@ function SimpleCalculator() {
     const handleButtonClick = (value: string) => {
         if (value === '=') {
             try {
-                setResult(eval(input).toString());
+                // Using a safer evaluation method is recommended in a real app
+                setResult(new Function('return ' + input)());
             } catch (error) {
                 setResult('Error');
             }
@@ -164,6 +166,7 @@ export default function DashboardLayout({
   const { user, loading, logout } = useAuth();
   const { settings } = useSettings();
   const router = useRouter();
+  const { toast } = useToast();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [time, setTime] = useState<Date | null>(null);
@@ -212,6 +215,13 @@ export default function DashboardLayout({
   }
 
   const isAdmin = user.role === 'Admin';
+  
+  const handleLanguageChange = (lang: string) => {
+    toast({
+        title: "Language Switch",
+        description: `Language changed to ${lang}. (UI only)`,
+    });
+  };
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
@@ -313,6 +323,24 @@ export default function DashboardLayout({
                     <div className="text-sm font-medium text-muted-foreground">
                         {time ? time.toLocaleTimeString() : '...'}
                     </div>
+
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="icon" className="h-8 w-8">
+                                <Globe className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                             <DropdownMenuLabel>Select Language</DropdownMenuLabel>
+                             <DropdownMenuSeparator />
+                             <DropdownMenuItem onSelect={() => handleLanguageChange('English')}>English</DropdownMenuItem>
+                             <DropdownMenuItem onSelect={() => handleLanguageChange('Malagasy')}>Malagasy</DropdownMenuItem>
+                             <DropdownMenuItem onSelect={() => handleLanguageChange('Arabic')}>Arabic</DropdownMenuItem>
+                             <DropdownMenuItem onSelect={() => handleLanguageChange('Sinhala')}>Sinhala</DropdownMenuItem>
+                             <DropdownMenuItem onSelect={() => handleLanguageChange('Tamil')}>Tamil</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                         <Button variant="secondary" size="icon" className="rounded-full">

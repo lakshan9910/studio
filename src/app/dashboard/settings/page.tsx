@@ -18,6 +18,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { FileInput } from "@/components/ui/file-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Download } from "lucide-react";
+import { format } from 'date-fns';
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -133,6 +135,53 @@ export default function SettingsPage() {
         title: "Settings Saved",
         description: "Your new settings have been applied.",
     });
+  };
+
+  const handleBackup = () => {
+    try {
+        const backupData: { [key: string]: any } = {};
+        const keysToBackup = [
+            'appSettings',
+            'MOCK_USERS',
+            'pos_products',
+            'pos_categories',
+            'pos_brands',
+            'pos_units',
+            'pos_customers',
+            'pos_sales'
+        ];
+
+        keysToBackup.forEach(key => {
+            const item = localStorage.getItem(key);
+            if (item) {
+                backupData[key] = JSON.parse(item);
+            }
+        });
+        
+        const jsonString = JSON.stringify(backupData, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `pos_backup_${format(new Date(), 'yyyy-MM-dd')}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        toast({
+            title: "Backup Successful",
+            description: "Your data has been downloaded.",
+        });
+
+    } catch (error) {
+        console.error("Backup failed:", error);
+        toast({
+            variant: "destructive",
+            title: "Backup Failed",
+            description: "Could not export your data. Check the console for errors.",
+        });
+    }
   };
   
   if (!user || !hasPermission('settings:write')) {
@@ -415,6 +464,19 @@ export default function SettingsPage() {
                 </div>
             </form>
         </Form>
+        
+        <Card className="mt-8">
+            <CardHeader>
+                <CardTitle>Data Management</CardTitle>
+                <CardDescription>Export all your application data to a JSON file.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Button variant="outline" onClick={handleBackup}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Backup All Data
+                </Button>
+            </CardContent>
+        </Card>
       </div>
     </div>
   );

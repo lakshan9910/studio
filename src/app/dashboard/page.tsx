@@ -119,6 +119,15 @@ export default function PosPage() {
         paymentMethod: paymentDetails.method,
         customerId: currentCustomer?.id,
         customerName: currentCustomer?.name || 'Walk-in Customer',
+        ...(paymentDetails.method === 'Credit' && {
+            dueDate: paymentDetails.dueDate,
+            paymentStatus: 'Due',
+            paidAmount: 0,
+        }),
+        ...(paymentDetails.method !== 'Credit' && {
+            paymentStatus: 'Paid',
+            paidAmount: total,
+        }),
     };
     setCompletedSales(prev => [newSale, ...prev]);
 

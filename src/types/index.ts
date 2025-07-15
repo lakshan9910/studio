@@ -2,6 +2,7 @@
 export type UserRole = 'Admin' | 'Cashier';
 export type PaymentMethod = 'Cash' | 'Card' | 'Online' | 'Credit';
 export type StockAdjustmentType = 'Addition' | 'Subtraction';
+export type PaymentStatus = 'Paid' | 'Due' | 'Overdue';
 
 export interface ProductVariant {
   id: string; // Unique ID for the variant, e.g., prod_001-small
@@ -46,6 +47,10 @@ export interface Sale {
     paymentMethod: PaymentMethod;
     customerId?: string;
     customerName?: string;
+    // Fields for credit payments
+    dueDate?: string; // ISO date string
+    paymentStatus?: PaymentStatus;
+    paidAmount?: number;
 }
 
 export interface Category {
@@ -145,7 +150,7 @@ export interface StockAdjustmentItem {
 }
 
 export interface StockAdjustment {
-  id: string;
+  id:string;
   date: string; // ISO date string
   items: StockAdjustmentItem[];
   reason: string;

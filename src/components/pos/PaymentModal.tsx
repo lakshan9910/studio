@@ -32,19 +32,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { CreditCard, Landmark, MonitorSmartphone, Wallet } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Calendar as CalendarIcon, CreditCard, Landmark, MonitorSmartphone, Wallet } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format, addDays } from 'date-fns';
 
 
 export interface PaymentDetails {
     method: PaymentMethod;
     amountPaid: number;
     change: number;
+    dueDate?: string;
 }
 
 const paymentSchema = z.object({
   method: z.enum(['Cash', 'Card', 'Online', 'Credit']),
   amountPaid: z.coerce.number().optional(),
+  dueDate: z.date().optional(),
+}).refine(data => {
+    if (data.method === 'Credit') {
+        return !!data.dueDate;
+    }
+    return true;
+}, {
+    message: 'Due date is required for credit payments.',
+    path: ['dueDate'],
 });
 
 type PaymentFormValues = z.infer<typeof paymentSchema>;
@@ -69,6 +81,7 @@ export function PaymentModal({ isOpen, onClose, onConfirm, totalAmount }: Paymen
     defaultValues: {
       method: 'Cash',
       amountPaid: totalAmount,
+      dueDate: addDays(new Date(), 30),
     },
   });
 
@@ -88,7 +101,8 @@ export function PaymentModal({ isOpen, onClose, onConfirm, totalAmount }: Paymen
     onConfirm({
         method: data.method,
         amountPaid: data.amountPaid || totalAmount,
-        change: change > 0 ? change : 0
+        change: change > 0 ? change : 0,
+        dueDate: data.dueDate?.toISOString(),
     });
   };
 
@@ -157,6 +171,46 @@ export function PaymentModal({ isOpen, onClose, onConfirm, totalAmount }: Paymen
                 )}
               </div>
             )}
+            
+             {selectedMethod === 'Credit' && (
+                <FormField
+                    control={form.control}
+                    name="dueDate"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                        <FormLabel>Payment Due Date</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant={"outline"}
+                                className="pl-3 text-left font-normal"
+                                >
+                                {field.value ? (
+                                    format(field.value, "PPP")
+                                ) : (
+                                    <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) => date < new Date()}
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+             )}
+
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>

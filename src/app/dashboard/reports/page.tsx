@@ -3,15 +3,19 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Sale, Purchase, Return, Product, Category, Expense } from '@/types';
-import { initialSales, initialPurchases, initialReturns, initialProducts, initialCategories, initialExpenses } from '@/lib/data';
+import type { Sale, Purchase, Return, Product, Category, Expense, Customer, ProductVariant } from '@/types';
+import { initialSales, initialPurchases, initialReturns, initialProducts, initialCategories, initialExpenses, initialCustomers } from '@/lib/data';
 import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, TrendingUp, TrendingDown, Layers, Receipt } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, Layers, Receipt, ShoppingCart, Package, Users } from 'lucide-react';
 import { SalesChart } from '@/components/reports/SalesChart';
 import { CategoryPieChart } from '@/components/reports/CategoryPieChart';
 import { useToast } from "@/hooks/use-toast";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import Image from 'next/image';
+
+const LOW_STOCK_THRESHOLD = 10;
 
 export default function ReportsPage() {
     const { user, loading, hasPermission } = useAuth();
@@ -25,6 +29,7 @@ export default function ReportsPage() {
     const [products] = useState<Product[]>(initialProducts);
     const [categories] = useState<Category[]>(initialCategories);
     const [expenses] = useState<Expense[]>(initialExpenses);
+    const [customers] = useState<Customer[]>(initialCustomers);
     
     useEffect(() => {
         if (!loading && !hasPermission('reports:read')) {
@@ -39,6 +44,9 @@ export default function ReportsPage() {
 
     const reportData = useMemo(() => {
         const productMap = new Map(products.map(p => [p.id, p]));
+        const variantMap = new Map<string, {product: Product, variant: ProductVariant}>();
+        products.forEach(p => p.variants.forEach(v => variantMap.set(v.id, {product: p, variant: v})));
+        
         const categoryMap = new Map(categories.map(c => [c.id, c.name]));
         
         const productCosts = new Map<string, number>();
@@ -55,7 +63,8 @@ export default function ReportsPage() {
         const salesByDay: { [key: string]: number } = {};
         const categorySales: { [key: string]: { name: string, value: number, fill: string } } = {};
         const categoryColors = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
-        
+        const salesByVariant: { [key: string]: { name: string, variantName: string, quantity: number, revenue: number, imageUrl: string } } = {};
+
         categories.forEach((cat, index) => {
             categorySales[cat.id] = { name: cat.name, value: 0, fill: categoryColors[index % categoryColors.length] };
         });
@@ -72,6 +81,12 @@ export default function ReportsPage() {
                 if (product && categorySales[product.category]) {
                     categorySales[product.category].value += item.price * item.quantity;
                 }
+                
+                if (!salesByVariant[item.variantId]) {
+                    salesByVariant[item.variantId] = { name: item.productName, variantName: item.variantName, quantity: 0, revenue: 0, imageUrl: product?.imageUrl || '' };
+                }
+                salesByVariant[item.variantId].quantity += item.quantity;
+                salesByVariant[item.variantId].revenue += item.price * item.quantity;
             });
         });
 
@@ -94,6 +109,15 @@ export default function ReportsPage() {
 
         const categoryChartData = Object.values(categorySales).filter(c => c.value > 0);
 
+        const topSellingProducts = Object.values(salesByVariant)
+            .sort((a, b) => b.revenue - a.revenue)
+            .slice(0, 5);
+
+        const lowStockProducts = Array.from(variantMap.values())
+            .filter(({ variant }) => variant.stock < LOW_STOCK_THRESHOLD)
+            .sort((a, b) => a.variant.stock - b.variant.stock);
+
+
         return {
             totalRevenue,
             grossProfit,
@@ -101,10 +125,15 @@ export default function ReportsPage() {
             totalExpenses,
             totalLossFromReturns,
             salesChartData,
-            categoryChartData
+            categoryChartData,
+            totalSalesCount: sales.length,
+            totalProductCount: products.length,
+            totalCustomerCount: customers.length,
+            topSellingProducts,
+            lowStockProducts,
         };
 
-    }, [sales, purchases, returns, products, categories, expenses]);
+    }, [sales, purchases, returns, products, categories, expenses, customers]);
 
     if (!user || !hasPermission('reports:read')) {
         return null;
@@ -114,8 +143,8 @@ export default function ReportsPage() {
     <div className="p-4 sm:p-6 lg:p-8 space-y-8">
         <h1 className="text-3xl font-bold tracking-tight">{t('reports_dashboard_title')}</h1>
         
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-            <Card>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
+            <Card className="xl:col-span-2">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">{t('total_revenue')}</CardTitle>
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -125,17 +154,7 @@ export default function ReportsPage() {
                     <p className="text-xs text-muted-foreground">{t('total_revenue_desc')}</p>
                 </CardContent>
             </Card>
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">{t('gross_profit')}</CardTitle>
-                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">${reportData.grossProfit.toFixed(2)}</div>
-                    <p className="text-xs text-muted-foreground">{t('gross_profit_desc')}</p>
-                </CardContent>
-            </Card>
-             <Card>
+            <Card className="xl:col-span-2">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">{t('net_profit')}</CardTitle>
                     <TrendingUp className="h-4 w-4 text-green-500" />
@@ -143,6 +162,36 @@ export default function ReportsPage() {
                 <CardContent>
                     <div className="text-2xl font-bold">${reportData.netProfit.toFixed(2)}</div>
                     <p className="text-xs text-muted-foreground">{t('net_profit_desc')}</p>
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
+                    <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{reportData.totalSalesCount}</div>
+                    <p className="text-xs text-muted-foreground">Number of transactions</p>
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Products</CardTitle>
+                    <Package className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{reportData.totalProductCount}</div>
+                    <p className="text-xs text-muted-foreground">Total distinct products</p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Customers</CardTitle>
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{reportData.totalCustomerCount}</div>
+                    <p className="text-xs text-muted-foreground">Total unique customers</p>
                 </CardContent>
             </Card>
             <Card>
@@ -153,16 +202,6 @@ export default function ReportsPage() {
                 <CardContent>
                     <div className="text-2xl font-bold">${reportData.totalExpenses.toFixed(2)}</div>
                     <p className="text-xs text-muted-foreground">{t('total_expenses_desc')}</p>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">{t('loss_from_returns')}</CardTitle>
-                    <TrendingDown className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">${reportData.totalLossFromReturns.toFixed(2)}</div>
-                    <p className="text-xs text-muted-foreground">{t('loss_from_returns_desc')}</p>
                 </CardContent>
             </Card>
         </div>
@@ -183,6 +222,59 @@ export default function ReportsPage() {
                 </CardHeader>
                 <CardContent>
                      <CategoryPieChart data={reportData.categoryChartData} />
+                </CardContent>
+            </Card>
+        </div>
+
+        <div className="grid gap-8 md:grid-cols-2">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Top Selling Products</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Product</TableHead>
+                                <TableHead>Quantity Sold</TableHead>
+                                <TableHead className="text-right">Total Revenue</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {reportData.topSellingProducts.map(p => (
+                                <TableRow key={p.name + p.variantName}>
+                                    <TableCell className="font-medium">{p.name} ({p.variantName})</TableCell>
+                                    <TableCell>{p.quantity}</TableCell>
+                                    <TableCell className="text-right">${p.revenue.toFixed(2)}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader>
+                    <CardTitle>Low Stock Report</CardTitle>
+                </CardHeader>
+                <CardContent>
+                     <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Product</TableHead>
+                                <TableHead>SKU</TableHead>
+                                <TableHead className="text-right">Stock Remaining</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {reportData.lowStockProducts.map(({ product, variant }) => (
+                                <TableRow key={variant.id}>
+                                    <TableCell className="font-medium">{product.name} ({variant.name})</TableCell>
+                                    <TableCell>{variant.sku}</TableCell>
+                                    <TableCell className="text-right text-destructive font-bold">{variant.stock}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
                 </CardContent>
             </Card>
         </div>

@@ -1,4 +1,4 @@
-import type { Product, Category, Brand, Unit, Purchase, Return, Sale, Customer, Supplier, Expense } from '@/types';
+import type { Product, Category, Brand, Unit, Purchase, Return, Sale, Customer, Supplier, Expense, ExpenseCategory } from '@/types';
 
 export const initialProducts: Product[] = [
   {
@@ -249,8 +249,15 @@ export const initialCustomers: Customer[] = [
   { id: 'cust_003', name: 'Charlie Brown', email: 'charlie@example.com', phone: '345-678-9012' },
 ];
 
+export const initialExpenseCategories: ExpenseCategory[] = [
+    { id: 'exp_cat_01', name: 'Utilities', description: 'Monthly utility bills like electricity, water, internet.' },
+    { id: 'exp_cat_02', name: 'Rent', description: 'Payments for store or office space.' },
+    { id: 'exp_cat_03', name: 'Marketing', description: 'Costs for advertising and promotion.' },
+    { id: 'exp_cat_04', name: 'Salaries', description: 'Payments to employees.' },
+];
+
 export const initialExpenses: Expense[] = [
-    { id: 'exp_001', date: '2024-07-15T00:00:00Z', category: 'Utilities', description: 'Monthly electricity bill', amount: 125.50 },
-    { id: 'exp_002', date: '2024-07-20T00:00:00Z', category: 'Rent', description: 'Store rental for July', amount: 1500.00 },
-    { id: 'exp_003', date: '2024-07-22T00:00:00Z', category: 'Marketing', description: 'Social media ad campaign', amount: 75.00 },
+    { id: 'exp_001', date: '2024-07-15T00:00:00Z', categoryId: 'exp_cat_01', description: 'Monthly electricity bill', amount: 125.50 },
+    { id: 'exp_002', date: '2024-07-20T00:00:00Z', categoryId: 'exp_cat_02', description: 'Store rental for July', amount: 1500.00 },
+    { id: 'exp_003', date: '2024-07-22T00:00:00Z', categoryId: 'exp_cat_03', description: 'Social media ad campaign', amount: 75.00 },
 ];

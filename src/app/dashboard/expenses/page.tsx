@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { initialExpenses } from "@/lib/data";
-import type { Expense } from "@/types";
+import { initialExpenses, initialExpenseCategories } from "@/lib/data";
+import type { Expense, ExpenseCategory } from "@/types";
 import { useAuth } from '@/context/AuthContext';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MoreHorizontal, PlusCircle, Trash, Edit, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -42,7 +43,7 @@ import { format } from "date-fns";
 
 const expenseSchema = z.object({
   date: z.string().min(1, "Date is required."),
-  category: z.string().min(2, { message: "Category must be at least 2 characters." }),
+  categoryId: z.string().min(1, { message: "Category is required." }),
   description: z.string().min(3, { message: "Description must be at least 3 characters." }),
   amount: z.coerce.number().min(0.01, { message: "Amount must be a positive number." }),
 });
@@ -55,14 +56,17 @@ export default function ExpensesPage() {
   const { toast } = useToast();
 
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
+  const [expenseCategories] = useState<ExpenseCategory[]>(initialExpenseCategories);
   const [isModalOpen, setModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
+  const categoryMap = useMemo(() => new Map(expenseCategories.map(cat => [cat.id, cat.name])), [expenseCategories]);
+
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseSchema),
-    defaultValues: { date: format(new Date(), 'yyyy-MM-dd'), category: "", description: "", amount: 0 },
+    defaultValues: { date: format(new Date(), 'yyyy-MM-dd'), categoryId: "", description: "", amount: 0 },
   });
 
   useEffect(() => {
@@ -80,9 +84,9 @@ export default function ExpensesPage() {
     const lowercasedTerm = debouncedSearchTerm.toLowerCase();
     return expenses.filter(expense =>
       expense.description.toLowerCase().includes(lowercasedTerm) ||
-      expense.category.toLowerCase().includes(lowercasedTerm)
+      categoryMap.get(expense.categoryId)?.toLowerCase().includes(lowercasedTerm)
     );
-  }, [expenses, debouncedSearchTerm]);
+  }, [expenses, debouncedSearchTerm, categoryMap]);
 
   const handleOpenModal = (expense: Expense | null = null) => {
     setEditingExpense(expense);
@@ -92,7 +96,7 @@ export default function ExpensesPage() {
         date: format(new Date(expense.date), 'yyyy-MM-dd'),
       });
     } else {
-      form.reset({ date: format(new Date(), 'yyyy-MM-dd'), category: "", description: "", amount: 0 });
+      form.reset({ date: format(new Date(), 'yyyy-MM-dd'), categoryId: "", description: "", amount: 0 });
     }
     setModalOpen(true);
   };
@@ -100,7 +104,7 @@ export default function ExpensesPage() {
   const handleCloseModal = () => {
     setModalOpen(false);
     setEditingExpense(null);
-    form.reset({ date: format(new Date(), 'yyyy-MM-dd'), category: "", description: "", amount: 0 });
+    form.reset({ date: format(new Date(), 'yyyy-MM-dd'), categoryId: "", description: "", amount: 0 });
   };
 
   const onSubmit = (data: ExpenseFormValues) => {
@@ -176,7 +180,7 @@ export default function ExpensesPage() {
                   filteredExpenses.map((expense) => (
                     <TableRow key={expense.id}>
                       <TableCell>{format(new Date(expense.date), "PPP")}</TableCell>
-                      <TableCell>{expense.category}</TableCell>
+                      <TableCell>{categoryMap.get(expense.categoryId) || 'Uncategorized'}</TableCell>
                       <TableCell className="font-medium">{expense.description}</TableCell>
                       <TableCell>${expense.amount.toFixed(2)}</TableCell>
                       <TableCell className="text-right">
@@ -242,13 +246,22 @@ export default function ExpensesPage() {
               />
               <FormField
                 control={form.control}
-                name="category"
+                name="categoryId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., Utilities, Rent" {...field} />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select an expense category" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {expenseCategories.map(cat => (
+                                <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

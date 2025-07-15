@@ -3,11 +3,11 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Sale, Purchase, Return, Product, Category } from '@/types';
-import { initialSales, initialPurchases, initialReturns, initialProducts, initialCategories } from '@/lib/data';
+import type { Sale, Purchase, Return, Product, Category, Expense, ExpenseCategory } from '@/types';
+import { initialSales, initialPurchases, initialReturns, initialProducts, initialCategories, initialExpenses, initialExpenseCategories } from '@/lib/data';
 import { useAuth } from '@/context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, Package, TrendingUp, TrendingDown, Layers } from 'lucide-react';
+import { DollarSign, Package, TrendingUp, TrendingDown, Layers, Receipt } from 'lucide-react';
 import { SalesChart } from '@/components/reports/SalesChart';
 import { CategoryPieChart } from '@/components/reports/CategoryPieChart';
 import { useToast } from "@/hooks/use-toast";
@@ -22,6 +22,7 @@ export default function ReportsPage() {
     const [returns] = useState<Return[]>(initialReturns);
     const [products] = useState<Product[]>(initialProducts);
     const [categories] = useState<Category[]>(initialCategories);
+    const [expenses] = useState<Expense[]>(initialExpenses);
     
     useEffect(() => {
         if (!loading && user?.role !== 'Admin') {
@@ -48,7 +49,7 @@ export default function ReportsPage() {
         });
 
         let totalRevenue = 0;
-        let totalCost = 0;
+        let totalCostOfGoods = 0;
         const salesByDay: { [key: string]: number } = {};
         const categorySales: { [key: string]: { name: string, value: number, fill: string } } = {};
         const categoryColors = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
@@ -64,7 +65,7 @@ export default function ReportsPage() {
             
             sale.items.forEach(item => {
                 const cost = productCosts.get(item.productId) || 0;
-                totalCost += cost * item.quantity;
+                totalCostOfGoods += cost * item.quantity;
                 const product = productMap.get(item.productId);
                 if (product && categorySales[product.category]) {
                     categorySales[product.category].value += item.price * item.quantity;
@@ -72,14 +73,17 @@ export default function ReportsPage() {
             });
         });
 
-        const totalLoss = returns.reduce((sum, current) => {
+        const totalExpenses = expenses.reduce((sum, current) => sum + current.amount, 0);
+
+        const totalLossFromReturns = returns.reduce((sum, current) => {
             if (current.status === 'Completed') {
                 return sum + current.totalValue;
             }
             return sum;
         }, 0);
 
-        const grossProfit = totalRevenue - totalCost;
+        const grossProfit = totalRevenue - totalCostOfGoods;
+        const netProfit = grossProfit - totalExpenses - totalLossFromReturns;
         
         const salesChartData = Object.entries(salesByDay).map(([date, total]) => ({
             name: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
@@ -91,13 +95,14 @@ export default function ReportsPage() {
         return {
             totalRevenue,
             grossProfit,
-            totalCost,
-            totalLoss,
+            netProfit,
+            totalExpenses,
+            totalLossFromReturns,
             salesChartData,
             categoryChartData
         };
 
-    }, [sales, purchases, returns, products, categories]);
+    }, [sales, purchases, returns, products, categories, expenses]);
 
     if (user?.role !== 'Admin') {
         return null;
@@ -107,7 +112,7 @@ export default function ReportsPage() {
     <div className="p-4 sm:p-6 lg:p-8 space-y-8">
         <h1 className="text-3xl font-bold tracking-tight">Reports Dashboard</h1>
         
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
@@ -125,17 +130,27 @@ export default function ReportsPage() {
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">${reportData.grossProfit.toFixed(2)}</div>
-                    <p className="text-xs text-muted-foreground">Revenue minus cost of goods sold</p>
+                    <p className="text-xs text-muted-foreground">Revenue - Cost of Goods Sold</p>
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Net Profit</CardTitle>
+                    <TrendingUp className="h-4 w-4 text-green-500" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">${reportData.netProfit.toFixed(2)}</div>
+                    <p className="text-xs text-muted-foreground">Gross Profit - Expenses & Returns</p>
                 </CardContent>
             </Card>
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Costs</CardTitle>
-                    <Package className="h-4 w-4 text-muted-foreground" />
+                    <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
+                    <Receipt className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">${reportData.totalCost.toFixed(2)}</div>
-                    <p className="text-xs text-muted-foreground">Based on purchase orders</p>
+                    <div className="text-2xl font-bold">${reportData.totalExpenses.toFixed(2)}</div>
+                    <p className="text-xs text-muted-foreground">Total operational costs</p>
                 </CardContent>
             </Card>
             <Card>
@@ -144,7 +159,7 @@ export default function ReportsPage() {
                     <TrendingDown className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">${reportData.totalLoss.toFixed(2)}</div>
+                    <div className="text-2xl font-bold">${reportData.totalLossFromReturns.toFixed(2)}</div>
                     <p className="text-xs text-muted-foreground">Value of returned items</p>
                 </CardContent>
             </Card>

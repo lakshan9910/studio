@@ -85,6 +85,9 @@ export default function DashboardLayout({
               <Link href="/dashboard/expenses" className="text-muted-foreground transition-colors hover:text-foreground">
                 Expenses
               </Link>
+              <Link href="/dashboard/expense-categories" className="text-muted-foreground transition-colors hover:text-foreground">
+                Expense Categories
+              </Link>
             </>
            )}
           <Link href="/dashboard/returns" className="text-muted-foreground transition-colors hover:text-foreground">

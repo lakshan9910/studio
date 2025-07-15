@@ -100,10 +100,16 @@ export interface Supplier {
   phone?: string;
 }
 
+export interface ExpenseCategory {
+    id: string;
+    name: string;
+    description?: string;
+}
+
 export interface Expense {
     id: string;
     date: string; // ISO date string
-    category: string;
+    categoryId: string;
     description: string;
     amount: number;
 }

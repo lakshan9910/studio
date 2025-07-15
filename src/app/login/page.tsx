@@ -28,8 +28,8 @@ export default function LoginPage() {
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      email: "admin@example.com",
+      password: "password123",
     },
   });
 
@@ -62,7 +62,7 @@ export default function LoginPage() {
             <Card>
                 <CardHeader>
                 <CardTitle>Login</CardTitle>
-                <CardDescription>Enter your credentials to access your account.</CardDescription>
+                <CardDescription>Enter your credentials to access your account. <br/> Use <b>admin@example.com</b> and password <b>password123</b> to log in as an Admin.</CardDescription>
                 </CardHeader>
                 <CardContent>
                 <Form {...form}>

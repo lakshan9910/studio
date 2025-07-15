@@ -1,12 +1,14 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from 'next/navigation';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { initialCategories } from "@/lib/data";
 import type { Category } from "@/types";
+import { useAuth } from '@/context/AuthContext';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -16,7 +18,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Table,
@@ -35,6 +36,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { MoreHorizontal, PlusCircle, Trash, Edit } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const categorySchema = z.object({
   name: z.string().min(2, { message: "Category name must be at least 2 characters." }),
@@ -43,6 +45,10 @@ const categorySchema = z.object({
 type CategoryFormValues = z.infer<typeof categorySchema>;
 
 export default function CategoriesPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const { toast } = useToast();
+  
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [isModalOpen, setModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -51,6 +57,17 @@ export default function CategoriesPage() {
     resolver: zodResolver(categorySchema),
     defaultValues: { name: "" },
   });
+
+  useEffect(() => {
+    if (!loading && user?.role !== 'Admin') {
+      toast({
+        variant: 'destructive',
+        title: 'Access Denied',
+        description: 'You do not have permission to view this page.',
+      });
+      router.replace('/dashboard');
+    }
+  }, [user, loading, router, toast]);
 
   const handleOpenModal = (category: Category | null = null) => {
     setEditingCategory(category);
@@ -84,6 +101,10 @@ export default function CategoriesPage() {
   const handleDeleteCategory = (categoryId: string) => {
     setCategories(categories.filter((c) => c.id !== categoryId));
   };
+  
+  if (user?.role !== 'Admin') {
+    return null;
+  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">

@@ -1,12 +1,14 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from 'next/navigation';
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { initialPurchases, initialProducts } from "@/lib/data";
 import type { Purchase, Product } from "@/types";
+import { useAuth } from '@/context/AuthContext';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -17,6 +19,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MoreHorizontal, PlusCircle, Trash, Edit, Trash2 } from "lucide-react";
 import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
+
 
 const purchaseItemSchema = z.object({
   productId: z.string().min(1, "Product is required."),
@@ -33,6 +37,10 @@ const purchaseSchema = z.object({
 type PurchaseFormValues = z.infer<typeof purchaseSchema>;
 
 export default function PurchasesPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const { toast } = useToast();
+
   const [purchases, setPurchases] = useState<Purchase[]>(initialPurchases);
   const [products] = useState<Product[]>(initialProducts);
   const [isModalOpen, setModalOpen] = useState(false);
@@ -49,6 +57,17 @@ export default function PurchasesPage() {
     control: form.control,
     name: "items",
   });
+
+  useEffect(() => {
+    if (!loading && user?.role !== 'Admin') {
+      toast({
+        variant: 'destructive',
+        title: 'Access Denied',
+        description: 'You do not have permission to view this page.',
+      });
+      router.replace('/dashboard');
+    }
+  }, [user, loading, router, toast]);
 
   const handleOpenModal = (purchase: Purchase | null = null) => {
     setEditingPurchase(purchase);
@@ -92,6 +111,10 @@ export default function PurchasesPage() {
   const handleDeletePurchase = (purchaseId: string) => {
     setPurchases(purchases.filter((p) => p.id !== purchaseId));
   };
+
+  if (user?.role !== 'Admin') {
+    return null;
+  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">

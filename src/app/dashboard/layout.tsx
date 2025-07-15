@@ -8,7 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { LayoutDashboard, LogOut, Package, Settings, ShoppingCart, Tag, Building, Beaker, ShoppingBag, Undo2, BarChart3 } from 'lucide-react';
+import { LogOut, Settings, ShoppingCart, Users } from 'lucide-react';
 
 export default function DashboardLayout({
   children,
@@ -54,6 +54,8 @@ export default function DashboardLayout({
     );
   }
 
+  const isAdmin = user.role === 'Admin';
+
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
@@ -65,24 +67,35 @@ export default function DashboardLayout({
           <Link href="/dashboard" className="text-foreground transition-colors hover:text-foreground">
             POS
           </Link>
-           <Link href="/dashboard/reports" className="text-muted-foreground transition-colors hover:text-foreground">
-            Reports
-          </Link>
-          <Link href="/dashboard/purchases" className="text-muted-foreground transition-colors hover:text-foreground">
-            Purchases
-          </Link>
+           {isAdmin && (
+            <>
+              <Link href="/dashboard/reports" className="text-muted-foreground transition-colors hover:text-foreground">
+                Reports
+              </Link>
+              <Link href="/dashboard/purchases" className="text-muted-foreground transition-colors hover:text-foreground">
+                Purchases
+              </Link>
+            </>
+           )}
           <Link href="/dashboard/returns" className="text-muted-foreground transition-colors hover:text-foreground">
             Returns
           </Link>
-          <Link href="/dashboard/categories" className="text-muted-foreground transition-colors hover:text-foreground">
-            Categories
-          </Link>
-          <Link href="/dashboard/brands" className="text-muted-foreground transition-colors hover:text-foreground">
-            Brands
-          </Link>
-          <Link href="/dashboard/units" className="text-muted-foreground transition-colors hover:text-foreground">
-            Units
-          </Link>
+          {isAdmin && (
+            <>
+              <Link href="/dashboard/categories" className="text-muted-foreground transition-colors hover:text-foreground">
+                Categories
+              </Link>
+              <Link href="/dashboard/brands" className="text-muted-foreground transition-colors hover:text-foreground">
+                Brands
+              </Link>
+              <Link href="/dashboard/units" className="text-muted-foreground transition-colors hover:text-foreground">
+                Units
+              </Link>
+               <Link href="/dashboard/users" className="text-muted-foreground transition-colors hover:text-foreground">
+                Users
+              </Link>
+            </>
+          )}
         </nav>
         <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
             <div className='ml-auto'>
@@ -97,7 +110,7 @@ export default function DashboardLayout({
                     </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>{user.name || user.email}</DropdownMenuLabel>
+                    <DropdownMenuLabel>{user.name || user.email} <span className='text-xs text-muted-foreground'>({user.role})</span></DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem disabled>
                         <Settings className="mr-2 h-4 w-4" />

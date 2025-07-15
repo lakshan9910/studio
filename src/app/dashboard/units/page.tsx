@@ -1,12 +1,14 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from 'next/navigation';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { initialUnits } from "@/lib/data";
 import type { Unit } from "@/types";
+import { useAuth } from '@/context/AuthContext';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -34,6 +36,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { MoreHorizontal, PlusCircle, Trash, Edit } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
 
 const unitSchema = z.object({
   name: z.string().min(2, { message: "Unit name must be at least 2 characters." }),
@@ -43,6 +47,10 @@ const unitSchema = z.object({
 type UnitFormValues = z.infer<typeof unitSchema>;
 
 export default function UnitsPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const { toast } = useToast();
+
   const [units, setUnits] = useState<Unit[]>(initialUnits);
   const [isModalOpen, setModalOpen] = useState(false);
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
@@ -51,6 +59,17 @@ export default function UnitsPage() {
     resolver: zodResolver(unitSchema),
     defaultValues: { name: "", abbreviation: "" },
   });
+
+   useEffect(() => {
+    if (!loading && user?.role !== 'Admin') {
+      toast({
+        variant: 'destructive',
+        title: 'Access Denied',
+        description: 'You do not have permission to view this page.',
+      });
+      router.replace('/dashboard');
+    }
+  }, [user, loading, router, toast]);
 
   const handleOpenModal = (unit: Unit | null = null) => {
     setEditingUnit(unit);
@@ -84,6 +103,10 @@ export default function UnitsPage() {
   const handleDeleteUnit = (unitId: string) => {
     setUnits(units.filter((u) => u.id !== unitId));
   };
+  
+  if (user?.role !== 'Admin') {
+    return null;
+  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">

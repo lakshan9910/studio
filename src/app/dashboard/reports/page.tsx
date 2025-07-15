@@ -1,20 +1,38 @@
 
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import type { Sale, Purchase, Return, Product, Category } from '@/types';
 import { initialSales, initialPurchases, initialReturns, initialProducts, initialCategories } from '@/lib/data';
+import { useAuth } from '@/context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, Package, TrendingUp, TrendingDown, Layers } from 'lucide-react';
 import { SalesChart } from '@/components/reports/SalesChart';
 import { CategoryPieChart } from '@/components/reports/CategoryPieChart';
+import { useToast } from "@/hooks/use-toast";
 
 export default function ReportsPage() {
+    const { user, loading } = useAuth();
+    const router = useRouter();
+    const { toast } = useToast();
+
     const [sales] = useState<Sale[]>(initialSales);
     const [purchases] = useState<Purchase[]>(initialPurchases);
     const [returns] = useState<Return[]>(initialReturns);
     const [products] = useState<Product[]>(initialProducts);
     const [categories] = useState<Category[]>(initialCategories);
+    
+    useEffect(() => {
+        if (!loading && user?.role !== 'Admin') {
+          toast({
+            variant: 'destructive',
+            title: 'Access Denied',
+            description: 'You do not have permission to view this page.',
+          });
+          router.replace('/dashboard');
+        }
+    }, [user, loading, router, toast]);
 
     const reportData = useMemo(() => {
         const productMap = new Map(products.map(p => [p.id, p]));
@@ -24,7 +42,6 @@ export default function ReportsPage() {
         purchases.forEach(purchase => {
             if (purchase.status === 'Completed') {
                 purchase.items.forEach(item => {
-                    // Using average cost, a more complex system might use FIFO/LIFO
                     productCosts.set(item.productId, item.cost);
                 });
             }
@@ -81,6 +98,10 @@ export default function ReportsPage() {
         };
 
     }, [sales, purchases, returns, products, categories]);
+
+    if (user?.role !== 'Admin') {
+        return null;
+    }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-8">

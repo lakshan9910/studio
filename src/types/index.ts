@@ -1,3 +1,5 @@
+export type UserRole = 'Admin' | 'Cashier';
+
 export interface Product {
   id: string;
   name: string;
@@ -46,6 +48,7 @@ export interface User {
   id: string;
   email: string;
   name?: string;
+  role: UserRole;
 }
 
 export interface PurchaseItem {

@@ -1,12 +1,14 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from 'next/navigation';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { initialBrands } from "@/lib/data";
 import type { Brand } from "@/types";
+import { useAuth } from '@/context/AuthContext';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -34,6 +36,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { MoreHorizontal, PlusCircle, Trash, Edit } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
 
 const brandSchema = z.object({
   name: z.string().min(2, { message: "Brand name must be at least 2 characters." }),
@@ -42,6 +46,10 @@ const brandSchema = z.object({
 type BrandFormValues = z.infer<typeof brandSchema>;
 
 export default function BrandsPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const { toast } = useToast();
+
   const [brands, setBrands] = useState<Brand[]>(initialBrands);
   const [isModalOpen, setModalOpen] = useState(false);
   const [editingBrand, setEditingBrand] = useState<Brand | null>(null);
@@ -50,6 +58,17 @@ export default function BrandsPage() {
     resolver: zodResolver(brandSchema),
     defaultValues: { name: "" },
   });
+
+  useEffect(() => {
+    if (!loading && user?.role !== 'Admin') {
+      toast({
+        variant: 'destructive',
+        title: 'Access Denied',
+        description: 'You do not have permission to view this page.',
+      });
+      router.replace('/dashboard');
+    }
+  }, [user, loading, router, toast]);
 
   const handleOpenModal = (brand: Brand | null = null) => {
     setEditingBrand(brand);
@@ -83,6 +102,10 @@ export default function BrandsPage() {
   const handleDeleteBrand = (brandId: string) => {
     setBrands(brands.filter((b) => b.id !== brandId));
   };
+  
+  if (user?.role !== 'Admin') {
+    return null;
+  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">

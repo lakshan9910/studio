@@ -23,6 +23,7 @@ import { usePathname } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useToast } from "@/hooks/use-toast";
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 function SimpleCalculator() {
     const [input, setInput] = useState('');
@@ -134,7 +135,7 @@ const NavContent = ({ searchTerm, isAdmin, t }: { searchTerm: string, isAdmin: b
         .filter(Boolean);
 
     return (
-        <nav className="flex flex-col gap-4 p-4 text-sm font-medium overflow-y-auto">
+        <nav className="flex flex-col gap-4 p-4 text-sm font-medium">
             {filteredNavLinks.map((section, index) => (
                 section && (
                     <div key={index}>
@@ -234,7 +235,7 @@ export default function DashboardLayout({
                     <span className="">{settings.storeName}</span>
                 </Link>
             </div>
-            <div className="flex-1">
+            <div className="flex-1 flex flex-col min-h-0">
                 <div className='p-4'>
                     <div className="relative">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -247,7 +248,9 @@ export default function DashboardLayout({
                         />
                     </div>
                 </div>
-                <NavContent searchTerm={searchTerm} isAdmin={isAdmin} t={t} />
+                <ScrollArea className="flex-1">
+                    <NavContent searchTerm={searchTerm} isAdmin={isAdmin} t={t} />
+                </ScrollArea>
             </div>
         </div>
       </aside>
@@ -275,9 +278,9 @@ export default function DashboardLayout({
                             <span className="">{settings.storeName}</span>
                         </Link>
                     </div>
-                    <div className="flex-1 overflow-y-auto">
+                    <ScrollArea className="flex-1">
                         <NavContent searchTerm={searchTerm} isAdmin={isAdmin} t={t}/>
-                    </div>
+                    </ScrollArea>
                 </SheetContent>
             </Sheet>
             

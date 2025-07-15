@@ -442,5 +442,3 @@ export default function PurchasesPage() {
     </div>
   );
 }
-
-    

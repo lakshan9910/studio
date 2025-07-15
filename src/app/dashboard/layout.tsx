@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -17,7 +17,7 @@ import {
     LogOut, Settings, Store, Users, BarChart3, ShoppingCart, Receipt, Undo2, 
     Shapes, Shield, Beaker, Truck, UserCog, Wallet, Package, Search,
     Calculator, Bell, Menu, Globe, History, Wrench, Barcode, Warehouse, ArrowRightLeft,
-    Briefcase, CalendarCheck, HandCoins, DollarSign, UserRound, CaseSensitive
+    Briefcase, CalendarCheck, HandCoins, DollarSign, UserRound, CaseSensitive, AlertTriangle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
@@ -25,6 +25,10 @@ import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { initialProducts } from '@/lib/data';
+import type { Product, ProductVariant } from '@/types';
+
+const LOW_STOCK_THRESHOLD = 10;
 
 function SimpleCalculator() {
     const [input, setInput] = useState('');
@@ -191,6 +195,15 @@ export default function DashboardLayout({
   const [searchTerm, setSearchTerm] = useState('');
   const [time, setTime] = useState<Date | null>(null);
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [products] = useState<Product[]>(initialProducts);
+
+  const lowStockItems = useMemo(() => {
+    return products.flatMap(p => 
+      p.variants
+        .filter(v => v.stock > 0 && v.stock < LOW_STOCK_THRESHOLD)
+        .map(v => ({...v, productName: p.name}))
+    );
+  }, [products]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -312,12 +325,37 @@ export default function DashboardLayout({
                     </Popover>
                     <Popover>
                         <PopoverTrigger asChild>
-                            <Button variant="outline" size="icon" className="h-8 w-8">
+                            <Button variant="outline" size="icon" className="h-8 w-8 relative">
                                 <Bell className="h-4 w-4" />
+                                {lowStockItems.length > 0 && (
+                                    <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-2 w-2">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-destructive"></span>
+                                    </span>
+                                )}
                             </Button>
                         </PopoverTrigger>
-                        <PopoverContent>
-                        <p className="text-sm">{t('no_notifications')}</p>
+                        <PopoverContent className="w-80">
+                            <div className="p-2">
+                                <h4 className="font-semibold mb-2">Notifications</h4>
+                                {lowStockItems.length > 0 ? (
+                                    <div className="space-y-2">
+                                        <div className="flex items-start gap-2 p-2 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-800">
+                                            <AlertTriangle className="h-5 w-5 mt-0.5" />
+                                            <div>
+                                                <h5 className="font-semibold">Low Stock Alert</h5>
+                                                {lowStockItems.map(item => (
+                                                    <p key={item.id} className="text-xs">
+                                                        {item.productName} ({item.name}) has only {item.stock} left.
+                                                    </p>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-center text-muted-foreground py-4">{t('no_notifications')}</p>
+                                )}
+                            </div>
                         </PopoverContent>
                     </Popover>
                     <Popover>

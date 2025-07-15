@@ -39,10 +39,22 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { MoreHorizontal, PlusCircle, Trash, Edit, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/use-debounce";
+import { FileInput } from "@/components/ui/file-input";
+
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 const categorySchema = z.object({
   name: z.string().min(2, { message: "Category name must be at least 2 characters." }),
-  imageUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
+  imageUrl: z.string().optional(),
+  imageFile: z
+    .any()
+    .refine((files) => files?.length !== 1 || files[0].size <= MAX_FILE_SIZE, `Max file size is 2MB.`)
+    .refine(
+      (files) => files?.length !== 1 || ACCEPTED_IMAGE_TYPES.includes(files[0].type),
+      ".jpg, .jpeg, .png and .webp files are accepted."
+    )
+    .optional()
 });
 
 type CategoryFormValues = z.infer<typeof categorySchema>;
@@ -63,6 +75,22 @@ export default function CategoriesPage() {
     defaultValues: { name: "", imageUrl: "" },
   });
 
+  const imageFile = form.watch("imageFile");
+  const [preview, setPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (imageFile && imageFile.length > 0) {
+      const file = imageFile[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setPreview(null);
+    }
+  }, [imageFile]);
+
   useEffect(() => {
     if (!loading && user?.role !== 'Admin') {
       toast({
@@ -82,7 +110,13 @@ export default function CategoriesPage() {
 
   const handleOpenModal = (category: Category | null = null) => {
     setEditingCategory(category);
-    form.reset(category ? { name: category.name, imageUrl: category.imageUrl } : { name: "", imageUrl: "https://placehold.co/200x200.png" });
+    if (category) {
+      form.reset({ name: category.name, imageUrl: category.imageUrl });
+      setPreview(category.imageUrl);
+    } else {
+      form.reset({ name: "", imageUrl: "" });
+      setPreview(null);
+    }
     setModalOpen(true);
   };
 
@@ -90,10 +124,20 @@ export default function CategoriesPage() {
     setModalOpen(false);
     setEditingCategory(null);
     form.reset({ name: "", imageUrl: "" });
+    setPreview(null);
   };
 
-  const onSubmit = (data: CategoryFormValues) => {
-    const imageData = data.imageUrl || 'https://placehold.co/200x200.png';
+  const onSubmit = async (data: CategoryFormValues) => {
+    let imageData = editingCategory?.imageUrl || "https://placehold.co/200x200.png";
+    if (data.imageFile && data.imageFile.length > 0) {
+        const file = data.imageFile[0];
+        const reader = new FileReader();
+        imageData = await new Promise((resolve) => {
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(file);
+        });
+    }
+
     if (editingCategory) {
       setCategories(
         categories.map((c) =>
@@ -118,6 +162,8 @@ export default function CategoriesPage() {
   if (user?.role !== 'Admin') {
     return null;
   }
+  
+  const currentImageUrl = preview || editingCategory?.imageUrl;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -203,7 +249,7 @@ export default function CategoriesPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={isModalOpen} onOpenChange={setModalOpen}>
+      <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{editingCategory ? "Edit Category" : "Add New Category"}</DialogTitle>
@@ -229,18 +275,26 @@ export default function CategoriesPage() {
                 )}
               />
                <FormField
-                control={form.control}
-                name="imageUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Image URL</FormLabel>
-                    <FormControl>
-                      <Input placeholder="https://example.com/image.png" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  control={form.control}
+                  name="imageFile"
+                  render={({ field: { onChange, value, ...rest } }) => (
+                    <FormItem>
+                      <FormLabel>Category Image</FormLabel>
+                       <div className="flex items-center gap-4">
+                        {currentImageUrl && (
+                            <Image src={currentImageUrl} alt="Category preview" width={64} height={64} className="rounded-md object-cover" />
+                        )}
+                        <FormControl>
+                            <FileInput
+                              {...rest}
+                              onFileSelect={(files) => onChange(files)}
+                            />
+                        </FormControl>
+                       </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={handleCloseModal}>
                   Cancel

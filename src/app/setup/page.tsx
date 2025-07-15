@@ -147,7 +147,7 @@ export default function SetupPage() {
       <div className="w-full max-w-lg p-4">
         <div className="flex justify-center items-center gap-3 mb-6">
             <Store className="h-8 w-8 text-primary"/>
-            <h1 className="text-3xl font-bold">Welcome to Cashy POS</h1>
+            <h1 className="text-3xl font-bold">Welcome to SOLO POS</h1>
         </div>
         <Card>
           <CardHeader>

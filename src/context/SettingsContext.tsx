@@ -22,17 +22,9 @@ export interface Settings {
     taxRate: number;
 }
 
-interface SettingsContextType {
-  settings: Settings;
-  loading: boolean;
-  updateSettings: (newSettings: Partial<Settings>) => void;
-  setLanguage: (lang: string) => void;
-  t: (key: TranslationKey) => string;
-}
-
 const defaultSettings: Settings = {
     isSetupComplete: false,
-    storeName: 'Cashy',
+    storeName: 'SOLO POS',
     storeLogo: '',
     currency: 'USD',
     smtpHost: 'smtp.example.com',
@@ -49,6 +41,14 @@ const defaultSettings: Settings = {
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
+
+interface SettingsContextType {
+  settings: Settings;
+  loading: boolean;
+  updateSettings: (newSettings: Partial<Settings>) => void;
+  setLanguage: (lang: string) => void;
+  t: (key: TranslationKey) => string;
+}
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<Settings>(defaultSettings);

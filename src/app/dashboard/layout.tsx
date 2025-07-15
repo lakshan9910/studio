@@ -16,7 +16,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { 
     LogOut, Settings, Store, Users, BarChart3, ShoppingCart, Receipt, Undo2, 
     Shapes, Shield, Beaker, Truck, UserCog, Wallet, Package, Search,
-    Calculator, Bell, Menu, Globe
+    Calculator, Bell, Menu, Globe, History
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
@@ -81,6 +81,7 @@ const NavContent = ({ searchTerm, isAdmin, t }: { searchTerm: string, isAdmin: b
             adminOnly: true,
             links: [
                 { href: '/dashboard/reports', label: t('reports'), icon: BarChart3 },
+                { href: '/dashboard/payments', label: t('payments'), icon: History },
                 { href: '/dashboard/purchases', label: t('purchases'), icon: ShoppingCart },
                 { href: '/dashboard/expenses', label: t('expenses'), icon: Receipt },
                 { href: '/dashboard/expense-categories', label: t('expense_categories'), icon: Wallet },

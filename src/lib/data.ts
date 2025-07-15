@@ -1,5 +1,5 @@
 
-import type { Product, Category, Brand, Unit, Purchase, Return, Sale, Customer, Supplier, Expense, ExpenseCategory } from '@/types';
+import type { Product, Category, Brand, Unit, Purchase, Return, Sale, Customer, Supplier, Expense, ExpenseCategory, StockAdjustment } from '@/types';
 
 export const initialProducts: Product[] = [
   {
@@ -272,4 +272,25 @@ export const initialExpenses: Expense[] = [
     { id: 'exp_001', date: '2024-07-15T00:00:00Z', categoryId: 'exp_cat_01', description: 'Monthly electricity bill', amount: 125.50 },
     { id: 'exp_002', date: '2024-07-20T00:00:00Z', categoryId: 'exp_cat_02', description: 'Store rental for July', amount: 1500.00 },
     { id: 'exp_003', date: '2024-07-22T00:00:00Z', categoryId: 'exp_cat_03', description: 'Social media ad campaign', amount: 75.00 },
+];
+
+export const initialStockAdjustments: StockAdjustment[] = [
+  {
+    id: 'adj_001',
+    date: '2024-07-26T09:00:00Z',
+    items: [
+      { productId: 'prod_001', quantity: 5 },
+    ],
+    reason: 'Damaged during shipment',
+    type: 'Subtraction',
+  },
+  {
+    id: 'adj_002',
+    date: '2024-07-27T14:00:00Z',
+    items: [
+      { productId: 'prod_003', quantity: 2 },
+    ],
+    reason: 'Manual stock recount correction',
+    type: 'Addition',
+  }
 ];

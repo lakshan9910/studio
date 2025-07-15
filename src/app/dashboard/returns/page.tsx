@@ -133,7 +133,7 @@ export default function ReturnsPage() {
         <CardHeader>
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1">
-              <CardTitle>Returns</CardTitle>
+              <CardTitle>Sales Returns</CardTitle>
               <CardDescription>
                 Manage customer returns and returned stock.
               </CardDescription>

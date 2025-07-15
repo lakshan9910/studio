@@ -16,7 +16,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { 
     LogOut, Settings, Store, Users, BarChart3, ShoppingCart, Receipt, Undo2, 
     Shapes, Shield, Beaker, Truck, UserCog, Wallet, Package, Search,
-    Calculator, Bell, Menu, Globe, History
+    Calculator, Bell, Menu, Globe, History, Wrench
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
@@ -91,7 +91,7 @@ const NavContent = ({ searchTerm, isAdmin, t }: { searchTerm: string, isAdmin: b
             category: t('general'),
             adminOnly: false,
             links: [
-                 { href: '/dashboard/returns', label: t('returns'), icon: Undo2 },
+                 { href: '/dashboard/returns', label: t('sales_return'), icon: Undo2 },
                  { href: '/dashboard/customers', label: t('customers'), icon: Users },
             ]
         },
@@ -103,6 +103,7 @@ const NavContent = ({ searchTerm, isAdmin, t }: { searchTerm: string, isAdmin: b
                 { href: '/dashboard/categories', label: t('categories'), icon: Shapes },
                 { href: '/dashboard/brands', label: t('brands'), icon: Shield },
                 { href: '/dashboard/units', label: t('units'), icon: Beaker },
+                { href: '/dashboard/stock-adjustments', label: t('stock_adjustments'), icon: Wrench },
             ]
         },
         {

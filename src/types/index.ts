@@ -1,6 +1,7 @@
 
 export type UserRole = 'Admin' | 'Cashier';
 export type PaymentMethod = 'Cash' | 'Card' | 'Online' | 'Credit';
+export type StockAdjustmentType = 'Addition' | 'Subtraction';
 
 export interface Product {
   id: string;
@@ -118,4 +119,17 @@ export interface Expense {
     categoryId: string;
     description: string;
     amount: number;
+}
+
+export interface StockAdjustmentItem {
+  productId: string;
+  quantity: number;
+}
+
+export interface StockAdjustment {
+  id: string;
+  date: string; // ISO date string
+  items: StockAdjustmentItem[];
+  reason: string;
+  type: StockAdjustmentType;
 }

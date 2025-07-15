@@ -1,4 +1,5 @@
 
+
 export const translations = {
     en: {
         storefront: 'Storefront',
@@ -61,6 +62,7 @@ export const translations = {
         loans_advances: 'Loans & Advances',
         salaries: 'Salaries',
         cash_drawer: 'Cash Register',
+        quotations: 'Quotations',
     },
     mg: {
         storefront: 'Varotra',
@@ -123,6 +125,7 @@ export const translations = {
         loans_advances: 'Fampindramam-bola & Avansa',
         salaries: 'Karama',
         cash_drawer: 'Vata fandraisam-bola',
+        quotations: 'Taratasim-bidy',
     },
     ar: {
         storefront: 'واجهة المتجر',
@@ -185,6 +188,7 @@ export const translations = {
         loans_advances: 'القروض والسلف',
         salaries: 'الرواتب',
         cash_drawer: 'درج النقود',
+        quotations: 'عروض الأسعار',
     },
     si: {
         storefront: 'වෙළඳසැල',
@@ -247,6 +251,7 @@ export const translations = {
         loans_advances: 'ණය සහ අත්තිකාරම්',
         salaries: 'වැටුප්',
         cash_drawer: 'මුදල් ලාච්චුව',
+        quotations: 'මිල ගණන්',
     },
     ta: {
         storefront: 'கடை முகப்பு',
@@ -309,9 +314,8 @@ export const translations = {
         loans_advances: 'கடன்கள் மற்றும் முன்பணங்கள்',
         salaries: 'சம்பளம்',
         cash_drawer: 'பண ящик',
+        quotations: 'மேற்கோள்கள்',
     },
 };
 
 export type TranslationKey = keyof typeof translations.en;
-
-    

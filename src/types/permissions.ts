@@ -24,6 +24,8 @@ export const permissionGroups = [
       { id: 'purchases:write', label: 'Create/edit purchase orders' },
       { id: 'returns:read', label: 'View sales returns' },
       { id: 'returns:write', label: 'Create/edit sales returns' },
+      { id: 'quotations:read', label: 'View quotations' },
+      { id: 'quotations:write', label: 'Create/edit quotations' },
     ],
   },
   {
@@ -71,5 +73,3 @@ export const permissionGroups = [
 const allPermissionIds = permissionGroups.flatMap(group => group.permissions.map(p => p.id));
 export const allPermissions = [...allPermissionIds] as const;
 export type Permission = typeof allPermissions[number];
-
-    

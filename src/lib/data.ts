@@ -1,6 +1,7 @@
 
-import type { Product, Category, Brand, Unit, Purchase, Return, Sale, Customer, Supplier, Expense, ExpenseCategory, StockAdjustment, Warehouse, StockTransfer, EmployeeSalary, Attendance, Loan, CashDrawerSession } from '@/types';
-import { subDays, subMonths } from 'date-fns';
+
+import type { Product, Category, Brand, Unit, Purchase, Return, Sale, Customer, Supplier, Expense, ExpenseCategory, StockAdjustment, Warehouse, StockTransfer, EmployeeSalary, Attendance, Loan, CashDrawerSession, Quotation } from '@/types';
+import { subDays, subMonths, addDays } from 'date-fns';
 
 export const initialWarehouses: Warehouse[] = [
     { id: 'wh_01', name: 'Main Warehouse', location: '123 Warehouse St, Big City' },
@@ -231,6 +232,23 @@ export const initialStockTransfers: StockTransfer[] = [
         ],
         status: 'Completed',
         notes: 'Restocking for downtown store weekly.',
+    }
+];
+
+export const initialQuotations: Quotation[] = [
+    {
+        id: 'quote_001',
+        date: subDays(new Date(), 5).toISOString(),
+        expiryDate: addDays(new Date(), 25).toISOString(),
+        customerId: 'cust_003',
+        customerName: 'Charlie Brown',
+        items: [
+            { productId: 'prod_001', variantId: 'prod_001-kg', quantity: 10, price: 2.99 },
+            { productId: 'prod_007', variantId: 'prod_007-reg', quantity: 20, price: 4.50 },
+        ],
+        total: 119.90,
+        status: 'Sent',
+        notes: 'Bulk order discount to be applied upon acceptance.',
     }
 ];
 

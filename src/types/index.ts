@@ -10,6 +10,7 @@ export type AttendanceStatus = 'Present' | 'Absent' | 'Leave';
 export type PayrollStatus = 'Pending' | 'Completed' | 'Paid';
 export type LoanStatus = 'Active' | 'Paid Off';
 export type CashDrawerEntryType = 'IN' | 'OUT';
+export type QuotationStatus = 'Draft' | 'Sent' | 'Accepted' | 'Expired';
 
 export interface Warehouse {
     id: string;
@@ -188,6 +189,26 @@ export interface StockTransfer {
     notes?: string;
 }
 
+export interface QuotationItem {
+  productId: string;
+  variantId: string;
+  quantity: number;
+  price: number; // Price per unit at time of quotation
+}
+
+export interface Quotation {
+  id: string;
+  date: string; // ISO date string
+  expiryDate: string; // ISO date string
+  customerId: string;
+  customerName: string;
+  items: QuotationItem[];
+  total: number;
+  status: QuotationStatus;
+  notes?: string;
+}
+
+
 export interface Attendance {
     id: string;
     userId: string;
@@ -281,5 +302,3 @@ export interface CashDrawerSession {
     status: 'Active' | 'Closed';
     variance?: number;
 }
-
-    

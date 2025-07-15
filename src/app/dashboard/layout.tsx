@@ -17,7 +17,7 @@ import {
     LogOut, Settings, Store, Users, BarChart3, ShoppingCart, Receipt, Undo2, 
     Shapes, Shield, Beaker, Truck, UserCog, Wallet, Package, Search,
     Calculator, Bell, Menu, Globe, History, Wrench, Barcode, Warehouse, ArrowRightLeft,
-    Briefcase, CalendarCheck, HandCoins, DollarSign, UserRound, CaseSensitive, AlertTriangle
+    Briefcase, CalendarCheck, HandCoins, DollarSign, UserRound, CaseSensitive, AlertTriangle, FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
@@ -96,10 +96,11 @@ const NavContent = ({ searchTerm, hasPermission, t, settings }: { searchTerm: st
         },
         {
             category: t('general'),
-            permissions: ['returns:read', 'customers:read'],
+            permissions: ['returns:read', 'customers:read', 'quotations:read'],
             links: [
                  { href: '/dashboard/returns', label: t('sales_return'), icon: Undo2, permission: 'returns:read' },
                  { href: '/dashboard/customers', label: t('customers'), icon: Users, permission: 'customers:read' },
+                 { href: '/dashboard/quotations', label: 'Quotations', icon: FileText, permission: 'quotations:read' },
             ]
         },
         {
@@ -442,5 +443,3 @@ export default function DashboardLayout({
     </div>
   );
 }
-
-    

@@ -84,7 +84,7 @@ export default function QuotationsPage() {
     name: "items",
   });
   
-  const watchedItems = watch();
+  const watchedItems = watch("items");
 
   useEffect(() => {
     if (!loading && !hasPermission('quotations:read')) {
@@ -112,6 +112,20 @@ export default function QuotationsPage() {
   }, [filteredQuotations, currentPage]);
 
   useEffect(() => { setCurrentPage(1); }, [debouncedSearchTerm]);
+
+  // Effect to update price when a variant is selected
+  useEffect(() => {
+    watchedItems.forEach((item, index) => {
+        if (item.variantId) {
+            const product = products.find(p => p.id === item.productId);
+            const variant = product?.variants.find(v => v.id === item.variantId);
+            if (variant && form.getValues(`items.${index}.price`) !== variant.price) {
+                form.setValue(`items.${index}.price`, variant.price);
+            }
+        }
+    });
+  }, [watchedItems, products, form]);
+
 
   const handleOpenModal = (quotation: Quotation | null = null) => {
     setEditingQuotation(quotation);
@@ -305,17 +319,8 @@ export default function QuotationsPage() {
                 {fields.map((field, index) => {
                    const selectedProductId = watchedItems.items[index]?.productId;
                    const availableVariants = products.find(p => p.id === selectedProductId)?.variants || [];
-                   const selectedVariantId = watchedItems.items[index]?.variantId;
-                   const selectedVariant = availableVariants.find(v => v.id === selectedVariantId);
-
-                   useEffect(() => {
-                        if (selectedVariant) {
-                            form.setValue(`items.${index}.price`, selectedVariant.price);
-                        }
-                   }, [selectedVariant, index, form]);
-
                    return (
-                     <div key={field.id} className="grid grid-cols-[2fr,1fr,1fr,1fr,auto] items-end gap-2 p-3 border rounded-md">
+                     <div key={field.id} className="grid grid-cols-[2fr,1fr,1fr,1fr,auto] items-end gap-2 p-3 border rounded-lg">
                        <FormField control={form.control} name={`items.${index}.productId`} render={({ field }) => (
                            <FormItem><FormLabel className="text-xs">Product</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select product" /></SelectTrigger></FormControl><SelectContent>{products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
                        )}/>
@@ -350,3 +355,5 @@ export default function QuotationsPage() {
     </div>
   );
 }
+
+    

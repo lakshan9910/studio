@@ -24,6 +24,8 @@ export interface Settings {
     themePrimary: HSLColor;
     themeBackground: HSLColor;
     themeAccent: HSLColor;
+    themeSidebarBackground: HSLColor;
+    themeSidebarForeground: HSLColor;
 }
 
 interface SettingsContextType {
@@ -48,6 +50,8 @@ const defaultSettings: Settings = {
     themePrimary: { h: 200, s: 95, l: 74 },
     themeBackground: { h: 220, s: 13, l: 95 },
     themeAccent: { h: 170, s: 65, l: 53 },
+    themeSidebarBackground: { h: 0, s: 0, l: 100 },
+    themeSidebarForeground: { h: 222.2, s: 84, l: 4.9 },
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);

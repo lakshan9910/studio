@@ -60,13 +60,15 @@ const themeSettingsSchema = z.object({
     themePrimary: themeColorSchema,
     themeBackground: themeColorSchema,
     themeAccent: themeColorSchema,
+    themeSidebarBackground: themeColorSchema,
+    themeSidebarForeground: themeColorSchema,
 });
 
 const settingsSchema = systemSettingsSchema.merge(brandingSettingsSchema).merge(emailSettingsSchema).merge(receiptSettingsSchema).merge(themeSettingsSchema);
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
 
-function ColorPicker({ form, name, label }: { form: any, name: `themePrimary` | `themeBackground` | `themeAccent`, label: string }) {
+function ColorPicker({ form, name, label }: { form: any, name: `themePrimary` | `themeBackground` | `themeAccent` | `themeSidebarBackground` | `themeSidebarForeground`, label: string }) {
     const hsl = form.watch(name);
     const colorString = `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
     return (
@@ -225,6 +227,17 @@ export default function SettingsPage() {
                         <ColorPicker form={form} name="themePrimary" label="Primary Color" />
                         <ColorPicker form={form} name="themeBackground" label="Background Color" />
                         <ColorPicker form={form} name="themeAccent" label="Accent Color" />
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Sidebar Theme</CardTitle>
+                        <CardDescription>Customize the sidebar colors.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <ColorPicker form={form} name="themeSidebarBackground" label="Sidebar Background" />
+                        <ColorPicker form={form} name="themeSidebarForeground" label="Sidebar Foreground" />
                     </CardContent>
                 </Card>
 

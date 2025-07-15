@@ -16,7 +16,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { 
     LogOut, Settings, Store, Users, BarChart3, ShoppingCart, Receipt, Undo2, 
     Shapes, Shield, Beaker, Truck, UserCog, Wallet, Package, Search,
-    Calculator, Bell, Menu, Globe, History, Wrench
+    Calculator, Bell, Menu, Globe, History, Wrench, Barcode
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
@@ -104,6 +104,7 @@ const NavContent = ({ searchTerm, isAdmin, t }: { searchTerm: string, isAdmin: b
                 { href: '/dashboard/brands', label: t('brands'), icon: Shield },
                 { href: '/dashboard/units', label: t('units'), icon: Beaker },
                 { href: '/dashboard/stock-adjustments', label: t('stock_adjustments'), icon: Wrench },
+                { href: '/dashboard/print/barcodes', label: 'Print Barcodes', icon: Barcode },
             ]
         },
         {
@@ -380,3 +381,5 @@ export default function DashboardLayout({
     </div>
   );
 }
+
+    

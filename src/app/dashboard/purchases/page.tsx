@@ -62,8 +62,10 @@ export default function PurchasesPage() {
     defaultValues: { supplierId: "", date: format(new Date(), 'yyyy-MM-dd'), items: [] },
   });
 
-  const { fields, append, remove, watch } = useFieldArray({
-    control: form.control,
+  const { control, watch } = form;
+
+  const { fields, append, remove } = useFieldArray({
+    control,
     name: "items",
   });
   

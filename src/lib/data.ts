@@ -1,6 +1,6 @@
 
-import type { Product, Category, Brand, Unit, Purchase, Return, Sale, Customer, Supplier, Expense, ExpenseCategory, StockAdjustment, Warehouse, StockTransfer, EmployeeSalary, Attendance } from '@/types';
-import { subDays } from 'date-fns';
+import type { Product, Category, Brand, Unit, Purchase, Return, Sale, Customer, Supplier, Expense, ExpenseCategory, StockAdjustment, Warehouse, StockTransfer, EmployeeSalary, Attendance, Loan } from '@/types';
+import { subDays, subMonths } from 'date-fns';
 
 export const initialWarehouses: Warehouse[] = [
     { id: 'wh_01', name: 'Main Warehouse', location: '123 Warehouse St, Big City' },
@@ -176,6 +176,8 @@ export const initialSales: Sale[] = [
         paymentMethod: 'Card',
         customerId: 'cust_001',
         customerName: 'Alice Johnson',
+        paymentStatus: 'Paid',
+        paidAmount: 11.47,
     },
 ];
 
@@ -229,4 +231,32 @@ export const initialAttendance: Attendance[] = [
     { id: 'att_02', userId: 'user_cashier_1', date: subDays(new Date(), 2).toISOString().split('T')[0], status: 'Present' },
     { id: 'att_03', userId: 'user_admin_1', date: subDays(new Date(), 1).toISOString().split('T')[0], status: 'Present' },
     { id: 'att_04', userId: 'user_cashier_1', date: subDays(new Date(), 1).toISOString().split('T')[0], status: 'Absent' },
+];
+
+export const initialLoans: Loan[] = [
+    {
+        id: 'loan_01',
+        userId: 'user_cashier_1',
+        amount: 1000,
+        reason: 'Personal emergency',
+        issueDate: subMonths(new Date(), 2).toISOString(),
+        monthlyInstallment: 250,
+        status: 'Active',
+        repayments: [
+            { id: 'rep_01', date: subMonths(new Date(), 1).toISOString(), amount: 250, method: 'Payroll' },
+            { id: 'rep_02', date: new Date().toISOString(), amount: 250, method: 'Payroll' },
+        ]
+    },
+     {
+        id: 'loan_02',
+        userId: 'user_admin_1',
+        amount: 500,
+        reason: 'Salary Advance',
+        issueDate: subDays(new Date(), 10).toISOString(),
+        monthlyInstallment: 500,
+        status: 'Paid Off',
+        repayments: [
+            { id: 'rep_03', date: new Date().toISOString(), amount: 500, method: 'Payroll' },
+        ]
+    }
 ];

@@ -46,7 +46,11 @@ function PaySlipContent() {
             </header>
             <main className="p-4 md:p-8" id="printable-area">
                 <div className="space-y-8">
-                    {payrollRun.items.map(item => (
+                    {payrollRun.items.map(item => {
+                        const totalEarnings = item.salaryPayable + item.bonus;
+                        const totalDeductions = item.deductions.reduce((sum, d) => sum + d.amount, 0);
+
+                        return (
                         <div key={item.userId} className="p-6 bg-white rounded-lg shadow-md page-break-after">
                             <header className="flex justify-between items-center border-b pb-4 mb-4">
                                 <div>
@@ -77,15 +81,19 @@ function PaySlipContent() {
                                             <div className="flex justify-between"><p>Base Salary:</p> <p>${item.baseSalary.toFixed(2)}</p></div>
                                             <div className="flex justify-between"><p>Salary Payable ({item.daysWorked} days):</p> <p>${item.salaryPayable.toFixed(2)}</p></div>
                                             <div className="flex justify-between"><p>Bonus:</p> <p>${item.bonus.toFixed(2)}</p></div>
-                                            <div className="flex justify-between font-bold border-t pt-1 mt-1"><p>Total Earnings:</p> <p>${(item.salaryPayable + item.bonus).toFixed(2)}</p></div>
+                                            <div className="flex justify-between font-bold border-t pt-1 mt-1"><p>Total Earnings:</p> <p>${totalEarnings.toFixed(2)}</p></div>
                                         </div>
                                     </div>
                                     <div>
                                          <h3 className="font-semibold text-lg mb-2 border-b pb-1">Deductions</h3>
                                          <div className="space-y-1 text-sm">
-                                            <div className="flex justify-between"><p>Absence ({item.daysAbsent} days):</p> <p>${(item.baseSalary - item.salaryPayable).toFixed(2)}</p></div>
-                                            <div className="flex justify-between"><p>Other Deductions:</p> <p>${item.deductions.toFixed(2)}</p></div>
-                                            <div className="flex justify-between font-bold border-t pt-1 mt-1"><p>Total Deductions:</p> <p>${(item.baseSalary - item.salaryPayable + item.deductions).toFixed(2)}</p></div>
+                                            {item.deductions.map(deduction => (
+                                                 <div key={deduction.id} className="flex justify-between">
+                                                    <p>{deduction.description}:</p>
+                                                    <p>${deduction.amount.toFixed(2)}</p>
+                                                 </div>
+                                            ))}
+                                            <div className="flex justify-between font-bold border-t pt-1 mt-1"><p>Total Deductions:</p> <p>${totalDeductions.toFixed(2)}</p></div>
                                         </div>
                                     </div>
                                 </div>
@@ -96,7 +104,7 @@ function PaySlipContent() {
                                 <p className="text-xs text-muted-foreground mt-4">{settings.receiptFooterText}</p>
                             </footer>
                         </div>
-                    ))}
+                    )})}
                 </div>
             </main>
              <style jsx global>{`

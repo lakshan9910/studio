@@ -17,7 +17,7 @@ import {
     LogOut, Settings, Store, Users, BarChart3, ShoppingCart, Receipt, Undo2, 
     Shapes, Shield, Beaker, Truck, UserCog, Wallet, Package, Search,
     Calculator, Bell, Menu, Globe, History, Wrench, Barcode, Warehouse, ArrowRightLeft,
-    Briefcase, CalendarCheck
+    Briefcase, CalendarCheck, HandCoins
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
@@ -125,6 +125,7 @@ const NavContent = ({ searchTerm, hasPermission, t }: { searchTerm: string, hasP
             links: [
                 { href: '/dashboard/hr/attendance', label: t('attendance'), icon: CalendarCheck, permission: 'hr:read' },
                 { href: '/dashboard/hr/payroll', label: t('payroll'), icon: Briefcase, permission: 'hr:read' },
+                { href: '/dashboard/hr/loans', label: t('loans_advances'), icon: HandCoins, permission: 'hr:read' },
             ]
         },
     ];

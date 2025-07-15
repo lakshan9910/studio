@@ -4,8 +4,8 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import type { Payroll, PayrollItem, Attendance, EmployeeSalary } from "@/types";
-import { initialAttendance, initialSalaries } from "@/lib/data";
+import type { Payroll, PayrollItem, Attendance, EmployeeSalary, Loan } from "@/types";
+import { initialAttendance, initialSalaries, initialLoans } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,11 +18,21 @@ import { Calendar as CalendarIcon, Briefcase, PlusCircle, Printer, ChevronsRight
 import { Calendar } from "@/components/ui/calendar";
 import { addDays, format, differenceInDays, isWithinInterval } from "date-fns";
 import Link from "next/link";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm, useFieldArray } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from 'zod';
 
 const initialDateRange: DateRange = {
     from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
     to: addDays(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0), 0),
 }
+
+const bonusDeductionSchema = z.object({
+  bonus: z.coerce.number().min(0).optional(),
+  otherDeductions: z.coerce.number().min(0).optional(),
+});
+type BonusDeductionValues = z.infer<typeof bonusDeductionSchema>;
 
 export default function PayrollPage() {
     const { user: currentUser, users, loading, hasPermission } = useAuth();
@@ -32,6 +42,7 @@ export default function PayrollPage() {
     const [payrollRuns, setPayrollRuns] = useState<Payroll[]>([]);
     const [attendanceRecords] = useState<Attendance[]>(initialAttendance);
     const [salaries] = useState<EmployeeSalary[]>(initialSalaries);
+    const [loans, setLoans] = useState<Loan[]>(initialLoans);
     
     const [date, setDate] = useState<DateRange | undefined>(initialDateRange);
 
@@ -73,6 +84,18 @@ export default function PayrollPage() {
             const dailySalary = baseSalary / totalDaysInPeriod;
             const salaryPayable = dailySalary * daysWorked;
 
+            const userLoans = loans.filter(l => l.userId === user.id && l.status === 'Active');
+            const loanDeductions = userLoans.map(loan => ({
+                id: `deduct_${loan.id}_${Date.now()}`,
+                type: 'Loan' as const,
+                description: `Installment for loan ${loan.id.slice(-4)}`,
+                amount: loan.monthlyInstallment,
+                loanId: loan.id
+            }));
+
+            const totalDeductions = loanDeductions.reduce((sum, d) => sum + d.amount, 0);
+            const netPay = salaryPayable - totalDeductions;
+
             return {
                 userId: user.id,
                 userName: user.name || user.email,
@@ -81,8 +104,8 @@ export default function PayrollPage() {
                 daysAbsent,
                 salaryPayable,
                 bonus: 0,
-                deductions: 0,
-                netPay: salaryPayable,
+                deductions: loanDeductions,
+                netPay,
             };
         });
         
@@ -99,7 +122,7 @@ export default function PayrollPage() {
         toast({ title: "Payroll Generated", description: `Payroll for ${period} has been created.` });
     };
 
-    const handleUpdatePayrollItem = (payrollId: string, userId: string, field: 'bonus' | 'deductions', value: number) => {
+    const handleUpdatePayrollItem = (payrollId: string, userId: string, field: 'bonus' | 'otherDeductions', value: number) => {
          if (!canWrite) {
              toast({ variant: 'destructive', title: 'Permission Denied' });
              return;
@@ -108,8 +131,29 @@ export default function PayrollPage() {
             if (pr.id === payrollId) {
                 const newItems = pr.items.map(item => {
                     if (item.userId === userId) {
-                        const newItem = { ...item, [field]: value };
-                        newItem.netPay = newItem.salaryPayable + newItem.bonus - newItem.deductions;
+                        const newItem = { ...item };
+                        if (field === 'bonus') {
+                            newItem.bonus = value;
+                        } else {
+                            const otherDeductionIndex = newItem.deductions.findIndex(d => d.type === 'Other');
+                            if (otherDeductionIndex > -1) {
+                                if (value > 0) {
+                                    newItem.deductions[otherDeductionIndex].amount = value;
+                                } else {
+                                    newItem.deductions.splice(otherDeductionIndex, 1);
+                                }
+                            } else if (value > 0) {
+                                newItem.deductions.push({
+                                    id: `deduct_other_${Date.now()}`,
+                                    type: 'Other',
+                                    description: 'Manual Deduction',
+                                    amount: value
+                                });
+                            }
+                        }
+                        
+                        const totalDeductions = newItem.deductions.reduce((sum, d) => sum + d.amount, 0);
+                        newItem.netPay = newItem.salaryPayable + newItem.bonus - totalDeductions;
                         return newItem;
                     }
                     return item;
@@ -196,9 +240,7 @@ export default function PayrollPage() {
                                 <TableRow>
                                     <TableHead>Employee</TableHead>
                                     <TableHead>Base Salary</TableHead>
-                                    <TableHead>Worked</TableHead>
-                                    <TableHead>Absent</TableHead>
-                                    <TableHead>Salary Payable</TableHead>
+                                    <TableHead>Payable</TableHead>
                                     <TableHead>Bonus</TableHead>
                                     <TableHead>Deductions</TableHead>
                                     <TableHead>Net Pay</TableHead>
@@ -209,26 +251,27 @@ export default function PayrollPage() {
                                     <TableRow key={item.userId}>
                                         <TableCell>{item.userName}</TableCell>
                                         <TableCell>${item.baseSalary.toFixed(2)}</TableCell>
-                                        <TableCell>{item.daysWorked}</TableCell>
-                                        <TableCell>{item.daysAbsent}</TableCell>
                                         <TableCell>${item.salaryPayable.toFixed(2)}</TableCell>
                                         <TableCell>
                                             <Input 
                                                 type="number" 
-                                                value={item.bonus} 
-                                                onChange={e => handleUpdatePayrollItem(pr.id, item.userId, 'bonus', parseFloat(e.target.value) || 0)}
+                                                defaultValue={item.bonus} 
+                                                onBlur={e => handleUpdatePayrollItem(pr.id, item.userId, 'bonus', parseFloat(e.target.value) || 0)}
                                                 className="w-24 h-8"
                                                 disabled={!canWrite}
                                             />
                                         </TableCell>
                                         <TableCell>
-                                            <Input 
+                                             <Input 
                                                 type="number" 
-                                                value={item.deductions} 
-                                                onChange={e => handleUpdatePayrollItem(pr.id, item.userId, 'deductions', parseFloat(e.target.value) || 0)}
+                                                defaultValue={item.deductions.find(d => d.type === 'Other')?.amount || 0}
+                                                onBlur={e => handleUpdatePayrollItem(pr.id, item.userId, 'otherDeductions', parseFloat(e.target.value) || 0)}
                                                 className="w-24 h-8"
                                                 disabled={!canWrite}
                                             />
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                Loan: ${item.deductions.filter(d => d.type === 'Loan').reduce((sum, d) => sum + d.amount, 0).toFixed(2)}
+                                            </p>
                                         </TableCell>
                                         <TableCell className="font-bold">${item.netPay.toFixed(2)}</TableCell>
                                     </TableRow>

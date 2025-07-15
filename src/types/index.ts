@@ -8,6 +8,7 @@ export type PaymentStatus = 'Paid' | 'Due' | 'Overdue';
 export type TransferStatus = 'Pending' | 'In Transit' | 'Completed' | 'Cancelled';
 export type AttendanceStatus = 'Present' | 'Absent' | 'Leave';
 export type PayrollStatus = 'Pending' | 'Completed' | 'Paid';
+export type LoanStatus = 'Active' | 'Paid Off';
 
 export interface Warehouse {
     id: string;
@@ -196,6 +197,14 @@ export interface EmployeeSalary {
     baseSalary: number; // Monthly
 }
 
+export interface PayrollDeduction {
+    id: string;
+    type: 'Loan' | 'Advance' | 'Other';
+    description: string;
+    amount: number;
+    loanId?: string; // Link to the loan if applicable
+}
+
 export interface PayrollItem {
     userId: string;
     userName: string;
@@ -204,7 +213,7 @@ export interface PayrollItem {
     daysAbsent: number;
     salaryPayable: number;
     bonus: number;
-    deductions: number;
+    deductions: PayrollDeduction[];
     netPay: number;
 }
 
@@ -215,4 +224,23 @@ export interface Payroll {
     dateTo: string; // ISO date
     status: PayrollStatus;
     items: PayrollItem[];
+}
+
+export interface LoanRepayment {
+    id: string;
+    date: string; // ISO date string
+    amount: number;
+    method: 'Payroll' | 'Manual';
+    payrollId?: string; // Link to the payroll run if deducted
+}
+
+export interface Loan {
+    id: string;
+    userId: string;
+    amount: number;
+    reason: string;
+    issueDate: string; // ISO date string
+    monthlyInstallment: number;
+    status: LoanStatus;
+    repayments: LoanRepayment[];
 }

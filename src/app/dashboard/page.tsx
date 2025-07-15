@@ -2,9 +2,8 @@
 "use client";
 
 import { useState } from 'react';
-import type { OrderItem, Product, Category } from '@/types';
-import { initialProducts } from '@/lib/data';
-import { initialCategories } from '@/lib/data';
+import type { OrderItem, Product, Category, Brand, Unit } from '@/types';
+import { initialProducts, initialCategories, initialBrands, initialUnits } from '@/lib/data';
 import { ProductCatalog } from '@/components/pos/ProductCatalog';
 import { OrderPanel } from '@/components/pos/OrderPanel';
 import { ReceiptModal } from '@/components/pos/ReceiptModal';
@@ -13,6 +12,9 @@ import { ProductModal, ProductFormData } from '@/components/pos/ProductModal';
 export default function PosPage() {
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const [brands, setBrands] = useState<Brand[]>(initialBrands);
+  const [units, setUnits] = useState<Unit[]>(initialUnits);
+
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [isReceiptOpen, setReceiptOpen] = useState(false);
   const [completedOrder, setCompletedOrder] = useState<OrderItem[]>([]);
@@ -100,7 +102,7 @@ export default function PosPage() {
   };
   
   const productModalData = editingProduct ? 
-    { name: editingProduct.name, category: editingProduct.category, price: editingProduct.price, stock: editingProduct.stock } : 
+    { name: editingProduct.name, category: editingProduct.category, brand: editingProduct.brand, unit: editingProduct.unit, price: editingProduct.price, stock: editingProduct.stock } : 
     null;
 
   return (
@@ -115,6 +117,8 @@ export default function PosPage() {
                 <ProductCatalog 
                     products={products}
                     categories={categories}
+                    brands={brands}
+                    units={units}
                     onAddToOrder={handleAddToOrder} 
                     onAddProduct={handleOpenAddProduct}
                     onEditProduct={handleOpenEditProduct}
@@ -147,6 +151,8 @@ export default function PosPage() {
         onSave={handleSaveProduct}
         product={productModalData}
         categories={categories}
+        brands={brands}
+        units={units}
       />
     </div>
   );

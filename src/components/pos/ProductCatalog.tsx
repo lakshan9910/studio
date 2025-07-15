@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import type { Product, Category } from '@/types';
+import type { Product, Category, Brand, Unit } from '@/types';
 import { suggestItemSearchQueries } from '@/ai/flows/suggest-item-search-queries';
 import { searchProductsByDescription } from '@/ai/flows/search-products-by-description';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -27,19 +27,23 @@ const formSchema = z.object({
 interface ProductCatalogProps {
   products: Product[];
   categories: Category[];
+  brands: Brand[];
+  units: Unit[];
   onAddToOrder: (product: Product) => void;
   onAddProduct: () => void;
   onEditProduct: (product: Product) => void;
   onDeleteProduct: (productId: string) => void;
 }
 
-export function ProductCatalog({ products: initialProducts, categories, onAddToOrder, onAddProduct, onEditProduct, onDeleteProduct }: ProductCatalogProps) {
+export function ProductCatalog({ products: initialProducts, categories, brands, units, onAddToOrder, onAddProduct, onEditProduct, onDeleteProduct }: ProductCatalogProps) {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(initialProducts);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isAiLoading, startAiTransition] = useTransition();
   const { toast } = useToast();
 
   const categoryMap = new Map(categories.map(c => [c.id, c.name]));
+  const brandMap = new Map(brands.map(b => [b.id, b.name]));
+  const unitMap = new Map(units.map(u => [u.id, u.name]));
 
   useEffect(() => {
     setFilteredProducts(initialProducts);
@@ -63,12 +67,13 @@ export function ProductCatalog({ products: initialProducts, categories, onAddToO
         const query = debouncedSearchTerm.toLowerCase();
         const localFiltered = initialProducts.filter(p => 
             p.name.toLowerCase().includes(query) || 
-            categoryMap.get(p.category)?.toLowerCase().includes(query)
+            categoryMap.get(p.category)?.toLowerCase().includes(query) ||
+            brandMap.get(p.brand)?.toLowerCase().includes(query)
         );
         setFilteredProducts(localFiltered);
     };
     performSearch();
-  }, [debouncedSearchTerm, initialProducts, categoryMap]);
+  }, [debouncedSearchTerm, initialProducts, categoryMap, brandMap]);
 
   useEffect(() => {
     if (debouncedSearchTerm.length > 2) {
@@ -198,7 +203,8 @@ export function ProductCatalog({ products: initialProducts, categories, onAddToO
                             </div>
                             <div className="p-4 flex-1 flex flex-col">
                                 <CardTitle className="text-base font-semibold">{product.name}</CardTitle>
-                                <p className="text-sm text-muted-foreground">{categoryMap.get(product.category) || 'Uncategorized'}</p>
+                                <p className="text-sm text-muted-foreground">{brandMap.get(product.brand) || 'Unbranded'}</p>
+                                <p className="text-xs text-muted-foreground">{categoryMap.get(product.category) || 'Uncategorized'}</p>
                                 <p className="text-lg font-bold mt-2 flex-1">${product.price.toFixed(2)}</p>
                             </div>
                         </CardContent>

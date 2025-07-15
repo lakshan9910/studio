@@ -5,6 +5,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { translations, TranslationKey } from '@/lib/i18n';
 
 export interface Settings {
+    isSetupComplete: boolean;
     storeName: string;
     storeLogo?: string;
     currency: string;
@@ -30,6 +31,7 @@ interface SettingsContextType {
 }
 
 const defaultSettings: Settings = {
+    isSetupComplete: false,
     storeName: 'Cashy',
     storeLogo: '',
     currency: 'USD',

@@ -4,20 +4,26 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useSettings } from '@/context/SettingsContext';
 
 export default function HomePage() {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const { settings, loading: settingsLoading } = useSettings();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading) {
-      if (user) {
-        router.replace('/dashboard');
-      } else {
-        router.replace('/login');
-      }
+    if (authLoading || settingsLoading) {
+      return; // Wait for both contexts to load
     }
-  }, [user, loading, router]);
+
+    if (!settings.isSetupComplete) {
+      router.replace('/setup');
+    } else if (user) {
+      router.replace('/dashboard');
+    } else {
+      router.replace('/login');
+    }
+  }, [user, authLoading, settings, settingsLoading, router]);
 
   return (
     <div className="flex h-screen items-center justify-center bg-background">

@@ -20,33 +20,13 @@ interface AuthContextType {
   deleteUser: (userId: string) => Promise<void>;
   updateUserPassword: (userId: string, newPass: string) => Promise<void>;
   hasPermission: (permission: Permission) => boolean;
+  hasUsers: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock user database
-let MOCK_USERS: { [key: string]: User & { password_hash: string } } = {
-  "admin@example.com": {
-    id: "user_admin_1",
-    email: "admin@example.com",
-    name: "Admin User",
-    phone: "111-222-3333",
-    imageUrl: "https://placehold.co/100x100.png",
-    permissions: allPermissions,
-    password_hash: "password123",
-    twoFactorEnabled: false,
-  },
-  "cashier@example.com": {
-    id: "user_cashier_1",
-    email: "cashier@example.com",
-    name: "Cashier User",
-    phone: "444-555-6666",
-    imageUrl: "https://placehold.co/100x100.png",
-    permissions: ['pos:read', 'pos:write'],
-    password_hash: "password123",
-    twoFactorEnabled: false,
-  }
-};
+// Mock user database - starts empty and is populated by the setup screen
+let MOCK_USERS: { [key: string]: User & { password_hash: string } } = {};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -65,6 +45,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (storedUser) {
         setUser(JSON.parse(storedUser));
       }
+      const storedMockUsers = localStorage.getItem('MOCK_USERS');
+      if (storedMockUsers) {
+        MOCK_USERS = JSON.parse(storedMockUsers);
+      }
     } catch (error) {
       console.error("Failed to parse user from session storage", error);
     } finally {
@@ -72,6 +56,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     }
   }, []);
+
+  const persistMockUsers = () => {
+    localStorage.setItem('MOCK_USERS', JSON.stringify(MOCK_USERS));
+  };
+  
+  const hasUsers = () => {
+      return Object.keys(MOCK_USERS).length > 0;
+  }
 
   const login = async (email: string, pass: string): Promise<User> => {
     setLoading(true);
@@ -139,6 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     twoFactorEnabled: false,
                 };
                 MOCK_USERS[email] = { ...newUser, password_hash: pass };
+                persistMockUsers();
                 syncUsersState();
                 resolve(newUser);
             }
@@ -161,6 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             sessionStorage.setItem('user', JSON.stringify(userToStore));
           }
           
+          persistMockUsers();
           syncUsersState();
           const { password_hash, ...publicUser } = updatedUser;
           resolve(publicUser);
@@ -178,6 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               if (userEntry) {
                   const [email, userToUpdate] = userEntry;
                   MOCK_USERS[email] = { ...userToUpdate, password_hash: newPass };
+                  persistMockUsers();
                   syncUsersState();
                   resolve();
               } else {
@@ -194,6 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (userEntry) {
           const [email] = userEntry;
           delete MOCK_USERS[email];
+          persistMockUsers();
           syncUsersState();
           resolve();
         } else {
@@ -215,7 +211,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/login');
   };
 
-  const value = { user, users, loading, login, verifyTwoFactor, signup, logout, addUser, updateUser, deleteUser, updateUserPassword, hasPermission };
+  const value = { user, users, loading, login, verifyTwoFactor, signup, logout, addUser, updateUser, deleteUser, updateUserPassword, hasPermission, hasUsers };
 
   return (
     <AuthContext.Provider value={value}>

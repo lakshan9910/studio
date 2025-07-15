@@ -108,21 +108,19 @@ export default function PosPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
-      <main className="flex-1 overflow-hidden p-4 sm:p-6 lg:p-8">
-        <div className="h-full max-w-screen-2xl mx-auto grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-[2fr,1fr] gap-6">
+      <main className="flex-1 overflow-hidden">
+        <div className="h-full max-w-screen-2xl mx-auto grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-[2fr,1fr] gap-6 p-4 sm:p-6 lg:p-8">
           <div className="h-full flex flex-col gap-4 lg:col-span-2 xl:col-span-1">
-             <div className="flex-1 overflow-hidden">
-                <ProductCatalog 
-                    products={products}
-                    categories={categories}
-                    brands={brands}
-                    units={units}
-                    onAddToOrder={handleAddToOrder} 
-                    onAddProduct={handleOpenAddProduct}
-                    onEditProduct={handleOpenEditProduct}
-                    onDeleteProduct={handleDeleteProduct}
-                />
-            </div>
+            <ProductCatalog 
+                products={products}
+                categories={categories}
+                brands={brands}
+                units={units}
+                onAddToOrder={handleAddToOrder} 
+                onAddProduct={handleOpenAddProduct}
+                onEditProduct={handleOpenEditProduct}
+                onDeleteProduct={handleDeleteProduct}
+            />
           </div>
           <div className="h-full flex flex-col gap-4 lg:col-span-1">
             <h2 className="text-2xl font-bold tracking-tight hidden lg:block">Current Order</h2>

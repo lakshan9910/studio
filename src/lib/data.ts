@@ -1,5 +1,5 @@
 
-import type { Product, Category, Brand, Unit, Purchase, Return, Sale, Customer, Supplier, Expense, ExpenseCategory, StockAdjustment, Warehouse, StockTransfer, EmployeeSalary, Attendance, Loan } from '@/types';
+import type { Product, Category, Brand, Unit, Purchase, Return, Sale, Customer, Supplier, Expense, ExpenseCategory, StockAdjustment, Warehouse, StockTransfer, EmployeeSalary, Attendance, Loan, CashDrawerSession } from '@/types';
 import { subDays, subMonths } from 'date-fns';
 
 export const initialWarehouses: Warehouse[] = [
@@ -179,6 +179,19 @@ export const initialSales: Sale[] = [
         paymentStatus: 'Paid',
         paidAmount: 11.47,
     },
+     {
+        id: 'sale_002',
+        date: subDays(new Date(), 1).toISOString(),
+        items: [
+            { productId: 'prod_005', productName: 'Whole Milk', variantId: 'prod_005-1l', variantName: '1 Liter', quantity: 1, price: 3.89 },
+        ],
+        total: 4.20, // with tax
+        paymentMethod: 'Cash',
+        customerId: 'cust_002',
+        customerName: 'Bob Williams',
+        paymentStatus: 'Paid',
+        paidAmount: 4.20,
+    },
 ];
 
 export const initialExpenseCategories: ExpenseCategory[] = [
@@ -278,3 +291,31 @@ export const initialLoans: Loan[] = [
         ]
     }
 ];
+
+export const initialCashDrawerSessions: CashDrawerSession[] = [
+    {
+        id: 'session_01',
+        startTime: subDays(new Date(), 2).toISOString(),
+        endTime: subDays(new Date(), 2).toISOString(),
+        openingFloat: 100,
+        closingFloat: 520,
+        cashSales: 420.50,
+        entries: [],
+        status: 'Closed',
+        variance: -0.50,
+    },
+     {
+        id: 'session_02',
+        startTime: subDays(new Date(), 1).toISOString(),
+        endTime: subDays(new Date(), 1).toISOString(),
+        openingFloat: 100,
+        closingFloat: 650,
+        cashSales: 540.75,
+        entries: [
+            { id: 'entry_01', type: 'IN', amount: 20, reason: 'Change', timestamp: subDays(new Date(), 1).toISOString()},
+            { id: 'entry_02', type: 'OUT', amount: 10, reason: 'Supplies', timestamp: subDays(new Date(), 1).toISOString()},
+        ],
+        status: 'Closed',
+        variance: -0.75,
+    }
+]

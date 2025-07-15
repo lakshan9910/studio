@@ -3,12 +3,12 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Sale, Purchase, Return, Product, Category, Expense, Customer, ProductVariant, Attendance, User, Payroll } from '@/types';
-import { initialSales, initialPurchases, initialReturns, initialProducts, initialCategories, initialExpenses, initialCustomers, initialAttendance } from '@/lib/data';
+import type { Sale, Purchase, Return, Product, Category, Expense, Customer, ProductVariant, Attendance, User, Payroll, CashDrawerSession } from '@/types';
+import { initialSales, initialPurchases, initialReturns, initialProducts, initialCategories, initialExpenses, initialCustomers, initialAttendance, initialCashDrawerSessions } from '@/lib/data';
 import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { DollarSign, TrendingUp, TrendingDown, Layers, Receipt, ShoppingCart, Package, Users, UserCheck, UserX, Coffee, Briefcase, Calendar as CalendarIcon } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, Layers, Receipt, ShoppingCart, Package, Users, UserCheck, UserX, Coffee, Briefcase, Calendar as CalendarIcon, CaseSensitive } from 'lucide-react';
 import { SalesChart } from '@/components/reports/SalesChart';
 import { CategoryPieChart } from '@/components/reports/CategoryPieChart';
 import { useToast } from "@/hooks/use-toast";
@@ -18,7 +18,8 @@ import { DateRange } from "react-day-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { format, startOfMonth, endOfMonth, isWithinInterval, eachDayOfInterval } from 'date-fns';
+import { format, startOfMonth, endOfMonth, isWithinInterval, eachDayOfInterval, parseISO } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
 
 const LOW_STOCK_THRESHOLD = 10;
 
@@ -43,6 +44,7 @@ export default function ReportsPage() {
     const [customers] = useState<Customer[]>(initialCustomers);
     const [attendance] = useState<Attendance[]>(initialAttendance);
     const [payrolls] = useState<Payroll[]>([]); // Assuming payrolls are generated, not pre-filled
+    const [cashDrawerSessions] = useState<CashDrawerSession[]>(initialCashDrawerSessions);
     
     useEffect(() => {
         if (!authLoading && !hasPermission('reports:read')) {
@@ -61,7 +63,8 @@ export default function ReportsPage() {
             return {
                 totalRevenue: 0, grossProfit: 0, netProfit: 0, totalSalesCount: 0,
                 salesChartData: [], categoryChartData: [], topSellingProducts: [],
-                topCustomers: [], lowStockProducts: [], attendanceSummary: [], payrollSummary: { totalNetPay: 0, totalBonuses: 0, totalDeductions: 0 }
+                topCustomers: [], lowStockProducts: [], attendanceSummary: [], payrollSummary: { totalNetPay: 0, totalBonuses: 0, totalDeductions: 0 },
+                filteredCashDrawerSessions: []
             };
         }
         
@@ -71,6 +74,7 @@ export default function ReportsPage() {
         const filteredExpenses = expenses.filter(e => isWithinInterval(new Date(e.date), { start: from, end: to }));
         const filteredAttendance = attendance.filter(a => isWithinInterval(new Date(a.date), { start: from, end: to }));
         const filteredPayrolls = payrolls.filter(p => isWithinInterval(new Date(p.dateFrom), { start: from, end: to }));
+        const filteredCashDrawerSessions = cashDrawerSessions.filter(s => isWithinInterval(parseISO(s.startTime), { start: from, end: to }));
         
         const productMap = new Map(products.map(p => [p.id, p]));
         const variantMap = new Map<string, {product: Product, variant: ProductVariant}>();
@@ -166,10 +170,10 @@ export default function ReportsPage() {
         return {
             totalRevenue, grossProfit, netProfit, totalSalesCount: filteredSales.length,
             salesChartData, categoryChartData, topSellingProducts, topCustomers, lowStockProducts,
-            attendanceSummary, payrollSummary
+            attendanceSummary, payrollSummary, filteredCashDrawerSessions
         };
 
-    }, [sales, purchases, returns, products, categories, expenses, customers, users, attendance, payrolls, dateRange]);
+    }, [sales, purchases, returns, products, categories, expenses, customers, users, attendance, payrolls, cashDrawerSessions, dateRange]);
 
     if (authLoading || !hasPermission('reports:read')) {
         return null;
@@ -311,6 +315,43 @@ export default function ReportsPage() {
                         {reportData.lowStockProducts.map(({ product, variant }) => (
                             <TableRow key={variant.id}><TableCell>{product.name} ({variant.name})</TableCell><TableCell>{variant.sku}</TableCell><TableCell className="text-right text-destructive font-bold">{variant.stock}</TableCell></TableRow>
                         ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+
+        <h2 className="text-xl font-semibold tracking-tight">Financial Reports</h2>
+         <Card>
+            <CardHeader><CardTitle>Cash Register Report</CardTitle><CardDescription>Summary of cash drawer sessions in this period.</CardDescription></CardHeader>
+            <CardContent>
+                 <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Start Time</TableHead>
+                            <TableHead>End Time</TableHead>
+                            <TableHead>Opening</TableHead>
+                            <TableHead>Closing</TableHead>
+                            <TableHead>Variance</TableHead>
+                            <TableHead>Status</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {reportData.filteredCashDrawerSessions.length > 0 ? reportData.filteredCashDrawerSessions.map(s => (
+                            <TableRow key={s.id}>
+                                <TableCell>{format(parseISO(s.startTime), "PPp")}</TableCell>
+                                <TableCell>{s.endTime ? format(parseISO(s.endTime), "PPp") : 'N/A'}</TableCell>
+                                <TableCell>${s.openingFloat.toFixed(2)}</TableCell>
+                                <TableCell>{s.closingFloat ? `$${s.closingFloat.toFixed(2)}` : 'N/A'}</TableCell>
+                                <TableCell className={s.variance && s.variance !== 0 ? 'text-destructive font-bold' : ''}>
+                                    {s.variance ? `$${s.variance.toFixed(2)}` : 'N/A'}
+                                </TableCell>
+                                <TableCell><Badge variant={s.status === 'Active' ? 'default' : 'secondary'}>{s.status}</Badge></TableCell>
+                            </TableRow>
+                        )) : (
+                            <TableRow>
+                                <TableCell colSpan={6} className="h-24 text-center">No session history found for this period.</TableCell>
+                            </TableRow>
+                        )}
                     </TableBody>
                 </Table>
             </CardContent>

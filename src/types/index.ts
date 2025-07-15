@@ -1,9 +1,12 @@
 
+
 export type UserRole = 'Admin' | 'Cashier';
 export type PaymentMethod = 'Cash' | 'Card' | 'Online' | 'Credit';
 export type StockAdjustmentType = 'Addition' | 'Subtraction';
 export type PaymentStatus = 'Paid' | 'Due' | 'Overdue';
 export type TransferStatus = 'Pending' | 'In Transit' | 'Completed' | 'Cancelled';
+export type AttendanceStatus = 'Present' | 'Absent' | 'Leave';
+export type PayrollStatus = 'Pending' | 'Completed' | 'Paid';
 
 export interface Warehouse {
     id: string;
@@ -178,4 +181,37 @@ export interface StockTransfer {
     items: StockTransferItem[];
     status: TransferStatus;
     notes?: string;
+}
+
+export interface Attendance {
+    id: string;
+    userId: string;
+    date: string; // YYYY-MM-DD
+    status: AttendanceStatus;
+}
+
+export interface EmployeeSalary {
+    userId: string;
+    baseSalary: number; // Monthly
+}
+
+export interface PayrollItem {
+    userId: string;
+    userName: string;
+    baseSalary: number;
+    daysWorked: number;
+    daysAbsent: number;
+    salaryPayable: number;
+    bonus: number;
+    deductions: number;
+    netPay: number;
+}
+
+export interface Payroll {
+    id: string;
+    period: string; // e.g., "July 2024"
+    dateFrom: string; // ISO date
+    dateTo: string; // ISO date
+    status: PayrollStatus;
+    items: PayrollItem[];
 }

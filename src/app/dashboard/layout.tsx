@@ -16,7 +16,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { 
     LogOut, Settings, Store, Users, BarChart3, ShoppingCart, Receipt, Undo2, 
     Shapes, Shield, Beaker, Truck, UserCog, Wallet, Package, Search,
-    Calculator, Bell, Menu, Globe, History, Wrench, Barcode, Warehouse, ArrowRightLeft
+    Calculator, Bell, Menu, Globe, History, Wrench, Barcode, Warehouse, ArrowRightLeft,
+    Briefcase, CalendarCheck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
@@ -116,6 +117,14 @@ const NavContent = ({ searchTerm, isAdmin, t }: { searchTerm: string, isAdmin: b
             links: [
                 { href: '/dashboard/suppliers', label: t('suppliers'), icon: Truck },
                 { href: '/dashboard/users', label: t('users'), icon: UserCog },
+            ]
+        },
+        {
+            category: t('hr_management'),
+            adminOnly: true,
+            links: [
+                { href: '/dashboard/hr/attendance', label: t('attendance'), icon: CalendarCheck },
+                { href: '/dashboard/hr/payroll', label: t('payroll'), icon: Briefcase },
             ]
         },
     ];

@@ -1,5 +1,6 @@
 
-import type { Product, Category, Brand, Unit, Purchase, Return, Sale, Customer, Supplier, Expense, ExpenseCategory, StockAdjustment, Warehouse, StockTransfer } from '@/types';
+import type { Product, Category, Brand, Unit, Purchase, Return, Sale, Customer, Supplier, Expense, ExpenseCategory, StockAdjustment, Warehouse, StockTransfer, EmployeeSalary, Attendance } from '@/types';
+import { subDays } from 'date-fns';
 
 export const initialWarehouses: Warehouse[] = [
     { id: 'wh_01', name: 'Main Warehouse', location: '123 Warehouse St, Big City' },
@@ -216,4 +217,16 @@ export const initialStockTransfers: StockTransfer[] = [
         status: 'Completed',
         notes: 'Restocking for downtown store weekly.',
     }
+];
+
+export const initialSalaries: EmployeeSalary[] = [
+    { userId: 'user_admin_1', baseSalary: 5000 },
+    { userId: 'user_cashier_1', baseSalary: 3000 },
+];
+
+export const initialAttendance: Attendance[] = [
+    { id: 'att_01', userId: 'user_admin_1', date: subDays(new Date(), 2).toISOString().split('T')[0], status: 'Present' },
+    { id: 'att_02', userId: 'user_cashier_1', date: subDays(new Date(), 2).toISOString().split('T')[0], status: 'Present' },
+    { id: 'att_03', userId: 'user_admin_1', date: subDays(new Date(), 1).toISOString().split('T')[0], status: 'Present' },
+    { id: 'att_04', userId: 'user_cashier_1', date: subDays(new Date(), 1).toISOString().split('T')[0], status: 'Absent' },
 ];

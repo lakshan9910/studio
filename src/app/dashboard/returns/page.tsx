@@ -59,8 +59,10 @@ export default function ReturnsPage() {
     defaultValues: { customerName: "", date: format(new Date(), 'yyyy-MM-dd'), items: [] },
   });
 
-  const { fields, append, remove, watch } = useFieldArray({
-    control: form.control,
+  const { control, watch } = form;
+
+  const { fields, append, remove } = useFieldArray({
+    control: control,
     name: "items",
   });
 

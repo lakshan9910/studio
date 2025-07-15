@@ -7,7 +7,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { initialStockAdjustments, initialProducts } from "@/lib/data";
-import type { StockAdjustment, Product } from "@/types";
+import type { StockAdjustment, Product, ProductVariant } from "@/types";
 import { useAuth } from '@/context/AuthContext';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -55,7 +55,7 @@ export default function StockAdjustmentsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   
   const productMap = useMemo(() => {
-    const map = new Map<string, { product: Product, variant: any }>();
+    const map = new Map<string, { product: Product, variant: ProductVariant }>();
     products.forEach(p => {
         p.variants.forEach(v => {
             map.set(v.id, { product: p, variant: v });
@@ -69,8 +69,10 @@ export default function StockAdjustmentsPage() {
     defaultValues: { date: format(new Date(), 'yyyy-MM-dd'), reason: "", type: "Subtraction", items: [] },
   });
 
-  const { fields, append, remove, watch } = useFieldArray({
-    control: form.control,
+  const { control, watch } = form;
+
+  const { fields, append, remove } = useFieldArray({
+    control: control,
     name: "items",
   });
   
@@ -130,7 +132,7 @@ export default function StockAdjustmentsPage() {
         data.items.forEach(item => {
             const product = newProducts.find((p: Product) => p.id === item.productId);
             if (product) {
-                const variant = product.variants.find((v: any) => v.id === item.variantId);
+                const variant = product.variants.find((v: ProductVariant) => v.id === item.variantId);
                 if (variant) {
                     if (data.type === 'Addition') {
                         variant.stock += item.quantity;

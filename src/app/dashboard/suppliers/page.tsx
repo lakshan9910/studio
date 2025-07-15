@@ -51,7 +51,7 @@ type SupplierFormValues = z.infer<typeof supplierSchema>;
 const ROWS_PER_PAGE = 10;
 
 export default function SuppliersPage() {
-  const { user, loading } = useAuth();
+  const { hasPermission, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -68,7 +68,7 @@ export default function SuppliersPage() {
   });
 
   useEffect(() => {
-    if (!loading && user?.role !== 'Admin') {
+    if (!loading && !hasPermission('suppliers:read')) {
       toast({
         variant: 'destructive',
         title: 'Access Denied',
@@ -76,7 +76,7 @@ export default function SuppliersPage() {
       });
       router.replace('/dashboard');
     }
-  }, [user, loading, router, toast]);
+  }, [loading, hasPermission, router, toast]);
 
   const filteredSuppliers = useMemo(() => {
     return suppliers.filter(supplier =>
@@ -110,6 +110,10 @@ export default function SuppliersPage() {
   };
 
   const onSubmit = (data: SupplierFormValues) => {
+    if (!hasPermission('suppliers:write')) {
+      toast({ variant: 'destructive', title: 'Permission Denied'});
+      return;
+    }
     if (editingSupplier) {
       setSuppliers(
         suppliers.map((s) =>
@@ -129,13 +133,19 @@ export default function SuppliersPage() {
   };
 
   const handleDeleteSupplier = (supplierId: string) => {
+    if (!hasPermission('suppliers:write')) {
+      toast({ variant: 'destructive', title: 'Permission Denied'});
+      return;
+    }
     setSuppliers(suppliers.filter((s) => s.id !== supplierId));
     toast({ title: "Supplier Deleted" });
   };
   
-  if (user?.role !== 'Admin') {
+  if (loading || !hasPermission('suppliers:read')) {
     return null;
   }
+  
+  const canWrite = hasPermission('suppliers:write');
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -159,7 +169,7 @@ export default function SuppliersPage() {
                     />
                 </div>
             </div>
-            <Button onClick={() => handleOpenModal()}>
+            <Button onClick={() => handleOpenModal()} disabled={!canWrite}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Supplier
             </Button>
@@ -194,13 +204,14 @@ export default function SuppliersPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleOpenModal(supplier)}>
+                            <DropdownMenuItem onClick={() => handleOpenModal(supplier)} disabled={!canWrite}>
                               <Edit className="mr-2 h-4 w-4" />
                               <span>Edit</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => handleDeleteSupplier(supplier.id)}
                               className="text-destructive"
+                              disabled={!canWrite}
                             >
                               <Trash className="mr-2 h-4 w-4" />
                               <span>Delete</span>
@@ -316,7 +327,7 @@ export default function SuppliersPage() {
                 <Button type="button" variant="outline" onClick={handleCloseModal}>
                   Cancel
                 </Button>
-                <Button type="submit">Save Supplier</Button>
+                <Button type="submit" disabled={!canWrite}>Save Supplier</Button>
               </DialogFooter>
             </form>
           </Form>

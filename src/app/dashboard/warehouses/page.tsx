@@ -49,7 +49,7 @@ type WarehouseFormValues = z.infer<typeof warehouseSchema>;
 const ROWS_PER_PAGE = 10;
 
 export default function WarehousesPage() {
-  const { user, loading } = useAuth();
+  const { hasPermission, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -66,7 +66,7 @@ export default function WarehousesPage() {
   });
 
   useEffect(() => {
-    if (!loading && user?.role !== 'Admin') {
+    if (!loading && !hasPermission('stock:read')) {
       toast({
         variant: 'destructive',
         title: 'Access Denied',
@@ -74,7 +74,7 @@ export default function WarehousesPage() {
       });
       router.replace('/dashboard');
     }
-  }, [user, loading, router, toast]);
+  }, [loading, hasPermission, router, toast]);
 
   const filteredWarehouses = useMemo(() => {
     return warehouses.filter(warehouse =>
@@ -111,6 +111,10 @@ export default function WarehousesPage() {
   };
 
   const onSubmit = (data: WarehouseFormValues) => {
+    if (!hasPermission('stock:write')) {
+      toast({ variant: 'destructive', title: 'Permission Denied'});
+      return;
+    }
     if (editingWarehouse) {
       setWarehouses(
         warehouses.map((w) =>
@@ -131,13 +135,19 @@ export default function WarehousesPage() {
   };
 
   const handleDeleteWarehouse = (warehouseId: string) => {
+    if (!hasPermission('stock:write')) {
+      toast({ variant: 'destructive', title: 'Permission Denied'});
+      return;
+    }
     setWarehouses(warehouses.filter((w) => w.id !== warehouseId));
     toast({ title: "Warehouse Deleted", description: "The warehouse has been successfully deleted." });
   };
   
-  if (user?.role !== 'Admin') {
+  if (loading || !hasPermission('stock:read')) {
     return null;
   }
+  
+  const canWrite = hasPermission('stock:write');
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -161,7 +171,7 @@ export default function WarehousesPage() {
                     />
                 </div>
             </div>
-            <Button onClick={() => handleOpenModal()}>
+            <Button onClick={() => handleOpenModal()} disabled={!canWrite}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Warehouse
             </Button>
@@ -192,13 +202,14 @@ export default function WarehousesPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleOpenModal(warehouse)}>
+                            <DropdownMenuItem onClick={() => handleOpenModal(warehouse)} disabled={!canWrite}>
                               <Edit className="mr-2 h-4 w-4" />
                               <span>Edit</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => handleDeleteWarehouse(warehouse.id)}
                               className="text-destructive"
+                              disabled={!canWrite}
                             >
                               <Trash className="mr-2 h-4 w-4" />
                               <span>Delete</span>
@@ -288,7 +299,7 @@ export default function WarehousesPage() {
                 <Button type="button" variant="outline" onClick={handleCloseModal}>
                   Cancel
                 </Button>
-                <Button type="submit">Save Warehouse</Button>
+                <Button type="submit" disabled={!canWrite}>Save Warehouse</Button>
               </DialogFooter>
             </form>
           </Form>

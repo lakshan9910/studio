@@ -43,7 +43,7 @@ type PurchaseFormValues = z.infer<typeof purchaseSchema>;
 const ROWS_PER_PAGE = 10;
 
 export default function PurchasesPage() {
-  const { user, loading } = useAuth();
+  const { hasPermission, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -83,7 +83,7 @@ export default function PurchasesPage() {
   const watchedItems = watch();
 
   useEffect(() => {
-    if (!loading && user?.role !== 'Admin') {
+    if (!loading && !hasPermission('purchases:read')) {
       toast({
         variant: 'destructive',
         title: 'Access Denied',
@@ -91,7 +91,7 @@ export default function PurchasesPage() {
       });
       router.replace('/dashboard');
     }
-  }, [user, loading, router, toast]);
+  }, [loading, hasPermission, router, toast]);
 
   const filteredPurchases = useMemo(() => {
     return purchases.filter(purchase =>
@@ -131,6 +131,10 @@ export default function PurchasesPage() {
   };
 
   const onSubmit = (data: PurchaseFormValues) => {
+    if (!hasPermission('purchases:write')) {
+      toast({ variant: 'destructive', title: 'Permission Denied'});
+      return;
+    }
     const totalCost = data.items.reduce((sum, item) => sum + item.quantity * item.cost, 0);
 
      setProducts(prevProducts => {
@@ -168,13 +172,19 @@ export default function PurchasesPage() {
   };
 
   const handleDeletePurchase = (purchaseId: string) => {
+    if (!hasPermission('purchases:write')) {
+      toast({ variant: 'destructive', title: 'Permission Denied'});
+      return;
+    }
     setPurchases(purchases.filter((p) => p.id !== purchaseId));
     toast({ title: "Purchase Deleted" });
   };
 
-  if (user?.role !== 'Admin') {
+  if (loading || !hasPermission('purchases:read')) {
     return null;
   }
+  
+  const canWrite = hasPermission('purchases:write');
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -198,7 +208,7 @@ export default function PurchasesPage() {
                     />
                 </div>
             </div>
-            <Button onClick={() => handleOpenModal()}>
+            <Button onClick={() => handleOpenModal()} disabled={!canWrite}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Purchase
             </Button>
@@ -270,11 +280,11 @@ export default function PurchasesPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleOpenModal(purchase)}>
+                            <DropdownMenuItem onClick={() => handleOpenModal(purchase)} disabled={!canWrite}>
                               <Edit className="mr-2 h-4 w-4" />
                               <span>Edit</span>
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDeletePurchase(purchase.id)} className="text-destructive">
+                            <DropdownMenuItem onClick={() => handleDeletePurchase(purchase.id)} className="text-destructive" disabled={!canWrite}>
                               <Trash className="mr-2 h-4 w-4" />
                               <span>Delete</span>
                             </DropdownMenuItem>
@@ -321,7 +331,7 @@ export default function PurchasesPage() {
         </CardFooter>
       </Card>
 
-      <Dialog open={isModalOpen} onOpenChange={setModalOpen}>
+      <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingPurchase ? "Edit Purchase Order" : "Add New Purchase Order"}</DialogTitle>
@@ -433,7 +443,7 @@ export default function PurchasesPage() {
               
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={handleCloseModal}>Cancel</Button>
-                <Button type="submit">Save Purchase</Button>
+                <Button type="submit" disabled={!canWrite}>Save Purchase</Button>
               </DialogFooter>
             </form>
           </Form>

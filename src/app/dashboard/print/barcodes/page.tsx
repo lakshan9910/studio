@@ -38,7 +38,7 @@ const paperSizes = {
 type PaperSize = keyof typeof paperSizes;
 
 export default function BarcodePrintingPage() {
-  const { user, loading } = useAuth();
+  const { hasPermission, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -50,7 +50,7 @@ export default function BarcodePrintingPage() {
   const [paperSize, setPaperSize] = useState<PaperSize>('A4');
 
   useEffect(() => {
-    if (!loading && user?.role !== 'Admin') {
+    if (!loading && !hasPermission('products:read')) {
       toast({
         variant: 'destructive',
         title: 'Access Denied',
@@ -58,7 +58,7 @@ export default function BarcodePrintingPage() {
       });
       router.replace('/dashboard');
     }
-  }, [user, loading, router, toast]);
+  }, [loading, hasPermission, router, toast]);
 
   useEffect(() => {
     if (debouncedSearchTerm) {
@@ -129,7 +129,7 @@ export default function BarcodePrintingPage() {
     window.print();
   };
 
-  if (user?.role !== 'Admin') {
+  if (loading || !hasPermission('products:read')) {
     return null;
   }
 
@@ -286,5 +286,3 @@ export default function BarcodePrintingPage() {
     </div>
   );
 }
-
-    

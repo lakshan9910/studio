@@ -62,7 +62,7 @@ type BrandFormValues = z.infer<typeof brandSchema>;
 const ROWS_PER_PAGE = 10;
 
 export default function BrandsPage() {
-  const { user, loading } = useAuth();
+  const { hasPermission, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -96,7 +96,7 @@ export default function BrandsPage() {
 
 
   useEffect(() => {
-    if (!loading && user?.role !== 'Admin') {
+    if (!loading && !hasPermission('products:read')) {
       toast({
         variant: 'destructive',
         title: 'Access Denied',
@@ -104,7 +104,7 @@ export default function BrandsPage() {
       });
       router.replace('/dashboard');
     }
-  }, [user, loading, router, toast]);
+  }, [loading, hasPermission, router, toast]);
 
   const filteredBrands = useMemo(() => {
     return brands.filter(brand =>
@@ -143,6 +143,10 @@ export default function BrandsPage() {
   };
 
   const onSubmit = async (data: BrandFormValues) => {
+    if (!hasPermission('products:write')) {
+      toast({ variant: 'destructive', title: 'Permission Denied'});
+      return;
+    }
     let imageData = editingBrand?.imageUrl || "https://placehold.co/200x200.png";
     if (data.imageFile && data.imageFile.length > 0) {
         const file = data.imageFile[0];
@@ -173,14 +177,19 @@ export default function BrandsPage() {
   };
 
   const handleDeleteBrand = (brandId: string) => {
+    if (!hasPermission('products:write')) {
+      toast({ variant: 'destructive', title: 'Permission Denied'});
+      return;
+    }
     setBrands(brands.filter((b) => b.id !== brandId));
     toast({ title: "Brand Deleted", description: "The brand has been successfully deleted." });
   };
   
-  if (user?.role !== 'Admin') {
+  if (loading || !hasPermission('products:read')) {
     return null;
   }
 
+  const canWrite = hasPermission('products:write');
   const currentImageUrl = preview || editingBrand?.imageUrl;
 
   return (
@@ -205,7 +214,7 @@ export default function BrandsPage() {
                     />
                 </div>
             </div>
-            <Button onClick={() => handleOpenModal()}>
+            <Button onClick={() => handleOpenModal()} disabled={!canWrite}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Brand
             </Button>
@@ -238,13 +247,14 @@ export default function BrandsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleOpenModal(brand)}>
+                            <DropdownMenuItem onClick={() => handleOpenModal(brand)} disabled={!canWrite}>
                               <Edit className="mr-2 h-4 w-4" />
                               <span>Edit</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => handleDeleteBrand(brand.id)}
                               className="text-destructive"
+                              disabled={!canWrite}
                             >
                               <Trash className="mr-2 h-4 w-4" />
                               <span>Delete</span>
@@ -342,7 +352,7 @@ export default function BrandsPage() {
                 <Button type="button" variant="outline" onClick={handleCloseModal}>
                   Cancel
                 </Button>
-                <Button type="submit">Save Brand</Button>
+                <Button type="submit" disabled={!canWrite}>Save Brand</Button>
               </DialogFooter>
             </form>
           </Form>

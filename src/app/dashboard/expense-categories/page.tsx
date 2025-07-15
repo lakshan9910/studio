@@ -50,7 +50,7 @@ type ExpenseCategoryFormValues = z.infer<typeof expenseCategorySchema>;
 const ROWS_PER_PAGE = 10;
 
 export default function ExpenseCategoriesPage() {
-  const { user, loading } = useAuth();
+  const { hasPermission, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   
@@ -67,7 +67,7 @@ export default function ExpenseCategoriesPage() {
   });
 
   useEffect(() => {
-    if (!loading && user?.role !== 'Admin') {
+    if (!loading && !hasPermission('expenses:read')) {
       toast({
         variant: 'destructive',
         title: 'Access Denied',
@@ -75,7 +75,7 @@ export default function ExpenseCategoriesPage() {
       });
       router.replace('/dashboard');
     }
-  }, [user, loading, router, toast]);
+  }, [loading, hasPermission, router, toast]);
 
   const filteredCategories = useMemo(() => {
     return categories.filter(category =>
@@ -112,6 +112,10 @@ export default function ExpenseCategoriesPage() {
   };
 
   const onSubmit = async (data: ExpenseCategoryFormValues) => {
+    if (!hasPermission('expenses:write')) {
+      toast({ variant: 'destructive', title: 'Permission Denied'});
+      return;
+    }
     if (editingCategory) {
       setCategories(
         categories.map((c) =>
@@ -132,13 +136,19 @@ export default function ExpenseCategoriesPage() {
   };
 
   const handleDeleteCategory = (categoryId: string) => {
+    if (!hasPermission('expenses:write')) {
+      toast({ variant: 'destructive', title: 'Permission Denied'});
+      return;
+    }
     setCategories(categories.filter((c) => c.id !== categoryId));
     toast({ title: "Category Deleted" });
   };
   
-  if (user?.role !== 'Admin') {
+  if (loading || !hasPermission('expenses:read')) {
     return null;
   }
+  
+  const canWrite = hasPermission('expenses:write');
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -162,7 +172,7 @@ export default function ExpenseCategoriesPage() {
                     />
                 </div>
             </div>
-            <Button onClick={() => handleOpenModal()}>
+            <Button onClick={() => handleOpenModal()} disabled={!canWrite}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Category
             </Button>
@@ -193,13 +203,14 @@ export default function ExpenseCategoriesPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleOpenModal(category)}>
+                            <DropdownMenuItem onClick={() => handleOpenModal(category)} disabled={!canWrite}>
                               <Edit className="mr-2 h-4 w-4" />
                               <span>Edit</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => handleDeleteCategory(category.id)}
                               className="text-destructive"
+                              disabled={!canWrite}
                             >
                               <Trash className="mr-2 h-4 w-4" />
                               <span>Delete</span>
@@ -293,7 +304,7 @@ export default function ExpenseCategoriesPage() {
                 <Button type="button" variant="outline" onClick={handleCloseModal}>
                   Cancel
                 </Button>
-                <Button type="submit">Save Category</Button>
+                <Button type="submit" disabled={!canWrite}>Save Category</Button>
               </DialogFooter>
             </form>
           </Form>

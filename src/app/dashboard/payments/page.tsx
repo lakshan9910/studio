@@ -23,7 +23,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 const ROWS_PER_PAGE = 10;
 
 export default function PaymentsPage() {
-  const { user, loading } = useAuth();
+  const { hasPermission, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -48,7 +48,7 @@ export default function PaymentsPage() {
   });
 
   useEffect(() => {
-    if (!loading && user?.role !== 'Admin') {
+    if (!loading && !hasPermission('payments:read')) {
       toast({
         variant: 'destructive',
         title: 'Access Denied',
@@ -56,7 +56,7 @@ export default function PaymentsPage() {
       });
       router.replace('/dashboard');
     }
-  }, [user, loading, router, toast]);
+  }, [loading, hasPermission, router, toast]);
   
   const getPaymentStatus = (sale: Sale): PaymentStatus => {
     if (sale.paymentStatus === 'Paid') return 'Paid';
@@ -108,7 +108,11 @@ export default function PaymentsPage() {
   }
 
   const handleMarkAsPaid = () => {
-    if (!selectedSale) return;
+    if (!selectedSale || !hasPermission('pos:write')) {
+      toast({ variant: 'destructive', title: 'Permission Denied'});
+      return;
+    };
+
     setSales(prevSales => prevSales.map(s => 
         s.id === selectedSale.id 
         ? { ...s, paymentStatus: 'Paid', paidAmount: s.total } 
@@ -119,7 +123,7 @@ export default function PaymentsPage() {
     setSelectedSale(null);
   }
 
-  if (user?.role !== 'Admin') {
+  if (loading || !hasPermission('payments:read')) {
     return null;
   }
   
@@ -128,6 +132,8 @@ export default function PaymentsPage() {
       Due: { color: "secondary", icon: <History className="h-3 w-3" />, label: "Due" },
       Overdue: { color: "destructive", icon: <AlertCircle className="h-3 w-3" />, label: "Overdue" },
   };
+
+  const canWrite = hasPermission('pos:write');
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -259,7 +265,7 @@ export default function PaymentsPage() {
                       <TableCell className="text-right font-medium">${sale.total.toFixed(2)}</TableCell>
                       <TableCell className="text-center">
                           {sale.paymentStatus !== 'Paid' && (
-                              <Button variant="outline" size="sm" onClick={() => openMarkAsPaid(sale)}>Mark as Paid</Button>
+                              <Button variant="outline" size="sm" onClick={() => openMarkAsPaid(sale)} disabled={!canWrite}>Mark as Paid</Button>
                           )}
                       </TableCell>
                     </TableRow>
@@ -316,7 +322,7 @@ export default function PaymentsPage() {
                 </DialogHeader>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => setMarkAsPaidOpen(false)}>Cancel</Button>
-                    <Button onClick={handleMarkAsPaid}>Confirm</Button>
+                    <Button onClick={handleMarkAsPaid} disabled={!canWrite}>Confirm</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

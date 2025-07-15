@@ -11,7 +11,7 @@ import { ProductModal, ProductFormData } from '@/components/pos/ProductModal';
 import { useToast } from '@/hooks/use-toast';
 
 export default function ProductsPage() {
-  const { user, loading } = useAuth();
+  const { hasPermission, loading } = useAuth();
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [categories] = useState<Category[]>(initialCategories);
@@ -24,7 +24,7 @@ export default function ProductsPage() {
   const { toast } = useToast();
   
   useEffect(() => {
-    if (!loading && user?.role !== 'Admin') {
+    if (!loading && !hasPermission('products:read')) {
       toast({
         variant: 'destructive',
         title: 'Access Denied',
@@ -32,7 +32,7 @@ export default function ProductsPage() {
       });
       router.replace('/dashboard');
     }
-  }, [user, loading, router, toast]);
+  }, [loading, hasPermission, router, toast]);
 
   const handleOpenAddProduct = () => {
     setEditingProduct(null);
@@ -45,10 +45,18 @@ export default function ProductsPage() {
   };
   
   const handleDeleteProduct = (productId: string) => {
+    if (!hasPermission('products:write')) {
+      toast({ variant: 'destructive', title: 'Permission Denied'});
+      return;
+    }
     setProducts(products.filter(p => p.id !== productId));
   };
 
   const handleSaveProduct = async (productData: ProductFormData) => {
+    if (!hasPermission('products:write')) {
+      toast({ variant: 'destructive', title: 'Permission Denied'});
+      return;
+    }
     const { imageFile, ...restData } = productData;
     let imageUrl = editingProduct?.imageUrl || "https://placehold.co/300x300.png";
 
@@ -87,7 +95,7 @@ export default function ProductsPage() {
     }
   };
   
-  if (!user || user.role !== 'Admin') {
+  if (loading || !hasPermission('products:read')) {
     return null;
   }
   
@@ -116,5 +124,3 @@ export default function ProductsPage() {
     </div>
   );
 }
-
-    

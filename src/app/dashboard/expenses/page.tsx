@@ -53,7 +53,7 @@ type ExpenseFormValues = z.infer<typeof expenseSchema>;
 const ROWS_PER_PAGE = 10;
 
 export default function ExpensesPage() {
-  const { user, loading } = useAuth();
+  const { hasPermission, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -73,7 +73,7 @@ export default function ExpensesPage() {
   });
 
   useEffect(() => {
-    if (!loading && user?.role !== 'Admin') {
+    if (!loading && !hasPermission('expenses:read')) {
       toast({
         variant: 'destructive',
         title: 'Access Denied',
@@ -81,7 +81,7 @@ export default function ExpensesPage() {
       });
       router.replace('/dashboard');
     }
-  }, [user, loading, router, toast]);
+  }, [loading, hasPermission, router, toast]);
 
   const filteredExpenses = useMemo(() => {
     const lowercasedTerm = debouncedSearchTerm.toLowerCase();
@@ -123,6 +123,10 @@ export default function ExpensesPage() {
   };
 
   const onSubmit = (data: ExpenseFormValues) => {
+    if (!hasPermission('expenses:write')) {
+      toast({ variant: 'destructive', title: 'Permission Denied'});
+      return;
+    }
     if (editingExpense) {
       setExpenses(
         expenses.map((e) =>
@@ -142,13 +146,19 @@ export default function ExpensesPage() {
   };
 
   const handleDeleteExpense = (expenseId: string) => {
+    if (!hasPermission('expenses:write')) {
+      toast({ variant: 'destructive', title: 'Permission Denied'});
+      return;
+    }
     setExpenses(expenses.filter((e) => e.id !== expenseId));
     toast({ title: "Expense Deleted" });
   };
   
-  if (user?.role !== 'Admin') {
+  if (loading || !hasPermission('expenses:read')) {
     return null;
   }
+  
+  const canWrite = hasPermission('expenses:write');
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -172,7 +182,7 @@ export default function ExpensesPage() {
                     />
                 </div>
             </div>
-            <Button onClick={() => handleOpenModal()}>
+            <Button onClick={() => handleOpenModal()} disabled={!canWrite}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Expense
             </Button>
@@ -207,13 +217,14 @@ export default function ExpensesPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleOpenModal(expense)}>
+                            <DropdownMenuItem onClick={() => handleOpenModal(expense)} disabled={!canWrite}>
                               <Edit className="mr-2 h-4 w-4" />
                               <span>Edit</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => handleDeleteExpense(expense.id)}
                               className="text-destructive"
+                              disabled={!canWrite}
                             >
                               <Trash className="mr-2 h-4 w-4" />
                               <span>Delete</span>
@@ -336,7 +347,7 @@ export default function ExpensesPage() {
                 <Button type="button" variant="outline" onClick={handleCloseModal}>
                   Cancel
                 </Button>
-                <Button type="submit">Save Expense</Button>
+                <Button type="submit" disabled={!canWrite}>Save Expense</Button>
               </DialogFooter>
             </form>
           </Form>

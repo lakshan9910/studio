@@ -14,6 +14,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { format, parseISO } from "date-fns";
 import { CaseSensitive, PlusCircle, ArrowUp, ArrowDown } from "lucide-react";
 import * as z from "zod";
@@ -73,12 +75,15 @@ export default function CashDrawerPage() {
         };
         setSessions(prev => [newSession, ...prev]);
         toast({ title: 'Session Started', description: `Cash drawer session started with an opening float of $${data.openingFloat.toFixed(2)}`});
+        openSessionForm.reset();
         document.getElementById('start-session-close')?.click();
     };
 
     const handleEndSession = (data: CloseSessionForm) => {
         if (!activeSession) return;
-        const totalCashInDrawer = activeSession.openingFloat + activeSession.cashSales + activeSession.entries.filter(e => e.type === 'IN').reduce((sum, e) => sum + e.amount, 0) - activeSession.entries.filter(e => e.type === 'OUT').reduce((sum, e) => sum + e.amount, 0);
+        const totalCashIn = activeSession.entries.filter(e => e.type === 'IN').reduce((sum, e) => sum + e.amount, 0);
+        const totalCashOut = activeSession.entries.filter(e => e.type === 'OUT').reduce((sum, e) => sum + e.amount, 0);
+        const totalCashInDrawer = activeSession.openingFloat + activeSession.cashSales + totalCashIn - totalCashOut;
         const variance = data.closingFloat - totalCashInDrawer;
 
         setSessions(prev => prev.map(s => s.id === activeSession.id ? {
@@ -89,6 +94,7 @@ export default function CashDrawerPage() {
             variance,
         } : s));
         toast({ title: 'Session Ended', description: `Variance of $${variance.toFixed(2)} recorded.` });
+        closeSessionForm.reset();
         document.getElementById('end-session-close')?.click();
     };
     
@@ -119,7 +125,7 @@ export default function CashDrawerPage() {
     return (
         <div className="p-4 sm:p-6 lg:p-8 space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2"><CaseSensitive /> Cash Drawer</h1>
+                <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2"><CaseSensitive /> Cash Register</h1>
                 {!activeSession && canWrite && (
                     <Dialog>
                         <DialogTrigger asChild>
@@ -185,7 +191,7 @@ export default function CashDrawerPage() {
             </div>
 
             {activeSession ? (
-                <Card>
+                <Card className="backdrop-blur-lg bg-white/50 dark:bg-black/50">
                     <CardHeader>
                         <CardTitle>Active Session</CardTitle>
                         <CardDescription>Started at {format(parseISO(activeSession.startTime), "PPP p")}</CardDescription>
@@ -223,13 +229,13 @@ export default function CashDrawerPage() {
                     </CardContent>
                 </Card>
             ) : (
-                 <Card className="text-center p-12">
+                 <Card className="text-center p-12 backdrop-blur-lg bg-white/50 dark:bg-black/50">
                     <CardTitle>No Active Session</CardTitle>
                     <CardDescription>Start a new session to begin tracking cash transactions.</CardDescription>
                 </Card>
             )}
 
-             <Card>
+             <Card className="backdrop-blur-lg bg-white/50 dark:bg-black/50">
                 <CardHeader><CardTitle>Session History</CardTitle></CardHeader>
                 <CardContent>
                     <Table>
@@ -244,7 +250,7 @@ export default function CashDrawerPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {sessions.map(s => (
+                            {sessions.length > 0 ? sessions.map(s => (
                                 <TableRow key={s.id}>
                                     <TableCell>{format(parseISO(s.startTime), "PPp")}</TableCell>
                                     <TableCell>{s.endTime ? format(parseISO(s.endTime), "PPp") : 'N/A'}</TableCell>
@@ -255,7 +261,11 @@ export default function CashDrawerPage() {
                                     </TableCell>
                                     <TableCell><Badge variant={s.status === 'Active' ? 'default' : 'secondary'}>{s.status}</Badge></TableCell>
                                 </TableRow>
-                            ))}
+                            )) : (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="h-24 text-center">No session history found.</TableCell>
+                                </TableRow>
+                            )}
                         </TableBody>
                     </Table>
                 </CardContent>
@@ -263,3 +273,5 @@ export default function CashDrawerPage() {
         </div>
     )
 }
+
+    

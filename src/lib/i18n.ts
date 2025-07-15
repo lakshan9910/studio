@@ -60,7 +60,7 @@ export const translations = {
         stock_transfers: 'Stock Transfers',
         loans_advances: 'Loans & Advances',
         salaries: 'Salaries',
-        cash_drawer: 'Cash Drawer',
+        cash_drawer: 'Cash Register',
     },
     mg: {
         storefront: 'Varotra',
@@ -313,3 +313,5 @@ export const translations = {
 };
 
 export type TranslationKey = keyof typeof translations.en;
+
+    

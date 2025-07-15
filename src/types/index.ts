@@ -281,3 +281,5 @@ export interface CashDrawerSession {
     status: 'Active' | 'Closed';
     variance?: number;
 }
+
+    

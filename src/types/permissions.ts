@@ -71,3 +71,5 @@ export const permissionGroups = [
 const allPermissionIds = permissionGroups.flatMap(group => group.permissions.map(p => p.id));
 export const allPermissions = [...allPermissionIds] as const;
 export type Permission = typeof allPermissions[number];
+
+    

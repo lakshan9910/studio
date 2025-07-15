@@ -84,7 +84,7 @@ const NavContent = ({ searchTerm, hasPermission, t, settings }: { searchTerm: st
             links: [
                 { href: '/dashboard/reports', label: t('reports'), icon: BarChart3, permission: 'reports:read' },
                 { href: '/dashboard/payments', label: t('payments'), icon: History, permission: 'payments:read' },
-                { href: '/dashboard/cash-drawer', label: 'Cash Drawer', icon: CaseSensitive, permission: 'cashdrawer:read', featureFlag: 'enableCashDrawer' },
+                { href: '/dashboard/cash-drawer', label: 'Cash Register', icon: CaseSensitive, permission: 'cashdrawer:read', featureFlag: 'enableCashDrawer' },
                 { href: '/dashboard/purchases', label: t('purchases'), icon: ShoppingCart, permission: 'purchases:read' },
                 { href: '/dashboard/expenses', label: t('expenses'), icon: Receipt, permission: 'expenses:read' },
                 { href: '/dashboard/expense-categories', label: t('expense_categories'), icon: Wallet, permission: 'expenses:read' },
@@ -363,7 +363,7 @@ export default function DashboardLayout({
                         <DropdownMenuTrigger asChild>
                         <Button variant="secondary" size="icon" className="rounded-full">
                             <Avatar>
-                            <AvatarImage src={user.imageUrl || `https://avatar.vercel.sh/${user.email}.png`} alt={user.name} />
+                            <AvatarImage src={user.imageUrl || `https://avatar.vercel.sh/${user.email}.png`} alt={user.name || user.email} />
                             <AvatarFallback>{user.name?.charAt(0) || user.email.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <span className="sr-only">Toggle user menu</span>
@@ -396,7 +396,7 @@ export default function DashboardLayout({
                 </div>
             </div>
         </header>
-        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">{children}</main>
+        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-muted/30">{children}</main>
         <footer className="border-t bg-muted/40 px-4 lg:px-6 py-3 text-center text-sm text-muted-foreground">
             © {new Date().getFullYear()} Solo solutions. All rights reserved.
         </footer>
@@ -404,3 +404,5 @@ export default function DashboardLayout({
     </div>
   );
 }
+
+    

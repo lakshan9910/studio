@@ -278,8 +278,8 @@ export function ProductCatalog({ products: initialProducts, categories, brands, 
                                       }
                                     />
                                 ) : (
-                                    <Button onClick={() => onAddToOrder(product, product.variants[0])} className="w-auto font-bold">
-                                        <Plus className="mr-2 h-4 w-4" /> {t('add')}
+                                    <Button onClick={() => onAddToOrder(product, product.variants[0])} className="w-auto font-bold" disabled={product.variants[0].stock <= 0}>
+                                        {product.variants[0].stock > 0 ? <><Plus className="mr-2 h-4 w-4" /> {t('add')}</> : 'Out of Stock'}
                                     </Button>
                                 )
                             )}
@@ -297,3 +297,5 @@ export function ProductCatalog({ products: initialProducts, categories, brands, 
     </Card>
   );
 }
+
+    

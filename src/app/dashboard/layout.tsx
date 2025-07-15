@@ -85,6 +85,9 @@ export default function DashboardLayout({
           </Link>
           {isAdmin && (
             <>
+              <Link href="/dashboard/suppliers" className="text-muted-foreground transition-colors hover:text-foreground">
+                Suppliers
+              </Link>
               <Link href="/dashboard/categories" className="text-muted-foreground transition-colors hover:text-foreground">
                 Categories
               </Link>

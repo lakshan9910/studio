@@ -1,4 +1,4 @@
-import type { Product, Category, Brand, Unit, Purchase, Return, Sale, Customer } from '@/types';
+import type { Product, Category, Brand, Unit, Purchase, Return, Sale, Customer, Supplier } from '@/types';
 
 export const initialProducts: Product[] = [
   {
@@ -146,10 +146,16 @@ export const initialUnits: Unit[] = [
     { id: 'unit_04', name: 'Pack', abbreviation: 'pk' },
 ];
 
+export const initialSuppliers: Supplier[] = [
+    { id: 'sup_01', name: 'FarmFresh Suppliers', contactPerson: 'John Appleseed', email: 'supplies@farmfresh.com', phone: '111-222-3333' },
+    { id: 'sup_02', name: 'Bakery Co. Distributors', contactPerson: 'Jane Dough', email: 'orders@bakeryco.com', phone: '444-555-6666'},
+    { id: 'sup_03', name: 'Global Foods Inc.', contactPerson: 'Peter Piper', email: 'peter@globalfoods.com', phone: '777-888-9999'}
+];
+
 export const initialPurchases: Purchase[] = [
     {
         id: 'purch_001',
-        supplier: 'FarmFresh Suppliers',
+        supplierId: 'sup_01',
         date: '2024-07-20T10:00:00Z',
         items: [
             { productId: 'prod_001', quantity: 50, cost: 1.50 },
@@ -161,7 +167,7 @@ export const initialPurchases: Purchase[] = [
     },
      {
         id: 'purch_002',
-        supplier: 'Bakery Co. Distributors',
+        supplierId: 'sup_02',
         date: '2024-07-22T14:30:00Z',
         items: [
             { productId: 'prod_003', quantity: 20, cost: 3.00 },
@@ -173,7 +179,7 @@ export const initialPurchases: Purchase[] = [
     },
     {
         id: 'purch_003',
-        supplier: 'Happy Cow Dairy',
+        supplierId: 'sup_03',
         date: '2024-07-23T09:00:00Z',
         items: [
             { productId: 'prod_005', quantity: 60, cost: 2.20 },

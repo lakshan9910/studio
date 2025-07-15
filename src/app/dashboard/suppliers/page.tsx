@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { initialBrands } from "@/lib/data";
-import type { Brand } from "@/types";
+import { initialSuppliers } from "@/lib/data";
+import type { Supplier } from "@/types";
 import { useAuth } from '@/context/AuthContext';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,26 +39,29 @@ import { MoreHorizontal, PlusCircle, Trash, Edit, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/use-debounce";
 
-const brandSchema = z.object({
-  name: z.string().min(2, { message: "Brand name must be at least 2 characters." }),
+const supplierSchema = z.object({
+  name: z.string().min(2, { message: "Supplier name must be at least 2 characters." }),
+  contactPerson: z.string().optional(),
+  email: z.string().email({ message: "Invalid email address." }).optional().or(z.literal('')),
+  phone: z.string().optional(),
 });
 
-type BrandFormValues = z.infer<typeof brandSchema>;
+type SupplierFormValues = z.infer<typeof supplierSchema>;
 
-export default function BrandsPage() {
+export default function SuppliersPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
-  const [brands, setBrands] = useState<Brand[]>(initialBrands);
+  const [suppliers, setSuppliers] = useState<Supplier[]>(initialSuppliers);
   const [isModalOpen, setModalOpen] = useState(false);
-  const [editingBrand, setEditingBrand] = useState<Brand | null>(null);
+  const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  const form = useForm<BrandFormValues>({
-    resolver: zodResolver(brandSchema),
-    defaultValues: { name: "" },
+  const form = useForm<SupplierFormValues>({
+    resolver: zodResolver(supplierSchema),
+    defaultValues: { name: "", contactPerson: "", email: "", phone: "" },
   });
 
   useEffect(() => {
@@ -72,43 +75,45 @@ export default function BrandsPage() {
     }
   }, [user, loading, router, toast]);
 
-  const filteredBrands = useMemo(() => {
-    return brands.filter(brand =>
-      brand.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+  const filteredSuppliers = useMemo(() => {
+    return suppliers.filter(supplier =>
+      supplier.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      supplier.contactPerson?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      supplier.email?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
     );
-  }, [brands, debouncedSearchTerm]);
+  }, [suppliers, debouncedSearchTerm]);
 
-  const handleOpenModal = (brand: Brand | null = null) => {
-    setEditingBrand(brand);
-    form.reset(brand ? { name: brand.name } : { name: "" });
+  const handleOpenModal = (supplier: Supplier | null = null) => {
+    setEditingSupplier(supplier);
+    form.reset(supplier || { name: "", contactPerson: "", email: "", phone: "" });
     setModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setModalOpen(false);
-    setEditingBrand(null);
-    form.reset({ name: "" });
+    setEditingSupplier(null);
+    form.reset({ name: "", contactPerson: "", email: "", phone: "" });
   };
 
-  const onSubmit = (data: BrandFormValues) => {
-    if (editingBrand) {
-      setBrands(
-        brands.map((b) =>
-          b.id === editingBrand.id ? { ...b, name: data.name } : b
+  const onSubmit = (data: SupplierFormValues) => {
+    if (editingSupplier) {
+      setSuppliers(
+        suppliers.map((s) =>
+          s.id === editingSupplier.id ? { ...s, ...data } : s
         )
       );
     } else {
-      const newBrand: Brand = {
-        id: `brand_${Date.now()}`,
-        name: data.name,
+      const newSupplier: Supplier = {
+        id: `sup_${Date.now()}`,
+        ...data,
       };
-      setBrands([...brands, newBrand]);
+      setSuppliers([...suppliers, newSupplier]);
     }
     handleCloseModal();
   };
 
-  const handleDeleteBrand = (brandId: string) => {
-    setBrands(brands.filter((b) => b.id !== brandId));
+  const handleDeleteSupplier = (supplierId: string) => {
+    setSuppliers(suppliers.filter((s) => s.id !== supplierId));
   };
   
   if (user?.role !== 'Admin') {
@@ -117,20 +122,20 @@ export default function BrandsPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <Card className="max-w-4xl mx-auto">
+      <Card className="max-w-6xl mx-auto">
         <CardHeader>
           <div className="flex items-center justify-between gap-4">
-             <div className="flex-1">
-              <CardTitle>Brands</CardTitle>
+            <div className="flex-1">
+              <CardTitle>Suppliers</CardTitle>
               <CardDescription>
-                Manage your product brands here.
+                Manage your product suppliers here.
               </CardDescription>
             </div>
-             <div className="flex-1 max-w-sm">
+            <div className="flex-1 max-w-sm">
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input 
-                        placeholder="Search brands..." 
+                        placeholder="Search suppliers..." 
                         className="pl-9"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -139,7 +144,7 @@ export default function BrandsPage() {
             </div>
             <Button onClick={() => handleOpenModal()}>
               <PlusCircle className="mr-2 h-4 w-4" />
-              Add Brand
+              Add Supplier
             </Button>
           </div>
         </CardHeader>
@@ -149,14 +154,20 @@ export default function BrandsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
+                  <TableHead>Contact Person</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
                   <TableHead className="w-[100px] text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredBrands.length > 0 ? (
-                  filteredBrands.map((brand) => (
-                    <TableRow key={brand.id}>
-                      <TableCell className="font-medium">{brand.name}</TableCell>
+                {filteredSuppliers.length > 0 ? (
+                  filteredSuppliers.map((supplier) => (
+                    <TableRow key={supplier.id}>
+                      <TableCell className="font-medium">{supplier.name}</TableCell>
+                      <TableCell>{supplier.contactPerson || 'N/A'}</TableCell>
+                      <TableCell>{supplier.email || 'N/A'}</TableCell>
+                      <TableCell>{supplier.phone || 'N/A'}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -166,12 +177,12 @@ export default function BrandsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleOpenModal(brand)}>
+                            <DropdownMenuItem onClick={() => handleOpenModal(supplier)}>
                               <Edit className="mr-2 h-4 w-4" />
                               <span>Edit</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => handleDeleteBrand(brand.id)}
+                              onClick={() => handleDeleteSupplier(supplier.id)}
                               className="text-destructive"
                             >
                               <Trash className="mr-2 h-4 w-4" />
@@ -184,8 +195,8 @@ export default function BrandsPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={2} className="h-24 text-center">
-                      No brands found.
+                    <TableCell colSpan={5} className="h-24 text-center">
+                      No suppliers found.
                     </TableCell>
                   </TableRow>
                 )}
@@ -198,23 +209,62 @@ export default function BrandsPage() {
       <Dialog open={isModalOpen} onOpenChange={setModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingBrand ? "Edit Brand" : "Add New Brand"}</DialogTitle>
+            <DialogTitle>{editingSupplier ? "Edit Supplier" : "Add New Supplier"}</DialogTitle>
             <DialogDescription>
-              {editingBrand
-                ? "Update the name of the brand."
-                : "Create a new brand for your products."}
+              {editingSupplier
+                ? "Update the details of the supplier."
+                : "Create a new supplier profile."}
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
-              <FormField
+               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Brand Name</FormLabel>
+                    <FormLabel>Supplier Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., FarmFresh" {...field} />
+                      <Input placeholder="e.g., Global Foods Inc." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="contactPerson"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contact Person (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., John Doe" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., contact@supplier.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., 123-456-7890" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -224,7 +274,7 @@ export default function BrandsPage() {
                 <Button type="button" variant="outline" onClick={handleCloseModal}>
                   Cancel
                 </Button>
-                <Button type="submit">Save Brand</Button>
+                <Button type="submit">Save Supplier</Button>
               </DialogFooter>
             </form>
           </Form>

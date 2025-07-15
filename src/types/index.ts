@@ -59,7 +59,7 @@ export interface PurchaseItem {
 
 export interface Purchase {
   id: string;
-  supplier: string;
+  supplierId: string;
   date: string; // ISO date string
   items: PurchaseItem[];
   totalCost: number;
@@ -84,6 +84,14 @@ export interface Return {
 export interface Customer {
   id: string;
   name: string;
+  email?: string;
+  phone?: string;
+}
+
+export interface Supplier {
+  id: string;
+  name: string;
+  contactPerson?: string;
   email?: string;
   phone?: string;
 }

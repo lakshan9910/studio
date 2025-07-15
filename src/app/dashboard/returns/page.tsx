@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -15,8 +15,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MoreHorizontal, PlusCircle, Trash, Edit, Trash2 } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash, Edit, Trash2, Search } from "lucide-react";
 import { format } from "date-fns";
+import { useDebounce } from "@/hooks/use-debounce";
 
 const returnItemSchema = z.object({
   productId: z.string().min(1, "Product is required."),
@@ -37,6 +38,8 @@ export default function ReturnsPage() {
   const [products] = useState<Product[]>(initialProducts);
   const [isModalOpen, setModalOpen] = useState(false);
   const [editingReturn, setEditingReturn] = useState<Return | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   const productMap = new Map(products.map(p => [p.id, p]));
 
@@ -49,6 +52,14 @@ export default function ReturnsPage() {
     control: form.control,
     name: "items",
   });
+
+  const filteredReturns = useMemo(() => {
+    return returns.filter(ret =>
+        ret.id.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        ret.customerName.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+    );
+  }, [returns, debouncedSearchTerm]);
+
 
   const handleOpenModal = (returnItem: Return | null = null) => {
     setEditingReturn(returnItem);
@@ -101,12 +112,23 @@ export default function ReturnsPage() {
     <div className="p-4 sm:p-6 lg:p-8">
       <Card className="max-w-6xl mx-auto">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1">
               <CardTitle>Returns</CardTitle>
               <CardDescription>
                 Manage customer returns and returned stock.
               </CardDescription>
+            </div>
+             <div className="flex-1 max-w-sm">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                        placeholder="Search by ID or customer..." 
+                        className="pl-9"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
             </div>
             <Button onClick={() => handleOpenModal()}>
               <PlusCircle className="mr-2 h-4 w-4" />
@@ -128,8 +150,8 @@ export default function ReturnsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {returns.length > 0 ? (
-                  returns.map((returnItem) => (
+                {filteredReturns.length > 0 ? (
+                  filteredReturns.map((returnItem) => (
                     <TableRow key={returnItem.id}>
                       <TableCell className="font-mono text-xs">{returnItem.id}</TableCell>
                       <TableCell className="font-medium">{returnItem.customerName}</TableCell>

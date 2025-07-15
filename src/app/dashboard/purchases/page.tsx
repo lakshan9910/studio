@@ -1,13 +1,13 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from 'next/navigation';
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { initialPurchases, initialProducts } from "@/lib/data";
-import type { Purchase, Product } from "@/types";
+import { initialPurchases, initialProducts, initialSuppliers } from "@/lib/data";
+import type { Purchase, Product, Supplier } from "@/types";
 import { useAuth } from '@/context/AuthContext';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,9 +17,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MoreHorizontal, PlusCircle, Trash, Edit, Trash2 } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash, Edit, Trash2, Search } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { useDebounce } from "@/hooks/use-debounce";
 
 
 const purchaseItemSchema = z.object({
@@ -29,7 +30,7 @@ const purchaseItemSchema = z.object({
 });
 
 const purchaseSchema = z.object({
-  supplier: z.string().min(2, { message: "Supplier name must be at least 2 characters." }),
+  supplierId: z.string().min(1, { message: "Supplier is required." }),
   date: z.string().min(1, "Date is required."),
   items: z.array(purchaseItemSchema).min(1, "Must have at least one item."),
 });
@@ -43,14 +44,18 @@ export default function PurchasesPage() {
 
   const [purchases, setPurchases] = useState<Purchase[]>(initialPurchases);
   const [products] = useState<Product[]>(initialProducts);
+  const [suppliers] = useState<Supplier[]>(initialSuppliers);
   const [isModalOpen, setModalOpen] = useState(false);
   const [editingPurchase, setEditingPurchase] = useState<Purchase | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   const productMap = new Map(products.map(p => [p.id, p]));
+  const supplierMap = new Map(suppliers.map(s => [s.id, s.name]));
 
   const form = useForm<PurchaseFormValues>({
     resolver: zodResolver(purchaseSchema),
-    defaultValues: { supplier: "", date: format(new Date(), 'yyyy-MM-dd'), items: [] },
+    defaultValues: { supplierId: "", date: format(new Date(), 'yyyy-MM-dd'), items: [] },
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -69,6 +74,13 @@ export default function PurchasesPage() {
     }
   }, [user, loading, router, toast]);
 
+  const filteredPurchases = useMemo(() => {
+    return purchases.filter(purchase =>
+      purchase.id.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      supplierMap.get(purchase.supplierId)?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+    );
+  }, [purchases, debouncedSearchTerm, supplierMap]);
+
   const handleOpenModal = (purchase: Purchase | null = null) => {
     setEditingPurchase(purchase);
     if (purchase) {
@@ -77,7 +89,7 @@ export default function PurchasesPage() {
         date: format(new Date(purchase.date), 'yyyy-MM-dd'),
       });
     } else {
-      form.reset({ supplier: "", date: format(new Date(), 'yyyy-MM-dd'), items: [{ productId: "", quantity: 1, cost: 0 }] });
+      form.reset({ supplierId: "", date: format(new Date(), 'yyyy-MM-dd'), items: [{ productId: "", quantity: 1, cost: 0 }] });
     }
     setModalOpen(true);
   };
@@ -85,7 +97,7 @@ export default function PurchasesPage() {
   const handleCloseModal = () => {
     setModalOpen(false);
     setEditingPurchase(null);
-    form.reset({ supplier: "", date: format(new Date(), 'yyyy-MM-dd'), items: [] });
+    form.reset({ supplierId: "", date: format(new Date(), 'yyyy-MM-dd'), items: [] });
   };
 
   const onSubmit = (data: PurchaseFormValues) => {
@@ -120,12 +132,23 @@ export default function PurchasesPage() {
     <div className="p-4 sm:p-6 lg:p-8">
       <Card className="max-w-6xl mx-auto">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1">
               <CardTitle>Purchases</CardTitle>
               <CardDescription>
                 Manage your incoming stock and purchase orders.
               </CardDescription>
+            </div>
+             <div className="flex-1 max-w-sm">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                        placeholder="Search by ID or supplier..." 
+                        className="pl-9"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
             </div>
             <Button onClick={() => handleOpenModal()}>
               <PlusCircle className="mr-2 h-4 w-4" />
@@ -147,11 +170,11 @@ export default function PurchasesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {purchases.length > 0 ? (
-                  purchases.map((purchase) => (
+                {filteredPurchases.length > 0 ? (
+                  filteredPurchases.map((purchase) => (
                     <TableRow key={purchase.id}>
                       <TableCell className="font-mono text-xs">{purchase.id}</TableCell>
-                      <TableCell className="font-medium">{purchase.supplier}</TableCell>
+                      <TableCell className="font-medium">{supplierMap.get(purchase.supplierId) || 'Unknown'}</TableCell>
                       <TableCell>{format(new Date(purchase.date), "PPP")}</TableCell>
                       <TableCell>${purchase.totalCost.toFixed(2)}</TableCell>
                       <TableCell>{purchase.status}</TableCell>
@@ -201,12 +224,17 @@ export default function PurchasesPage() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
               <div className="grid grid-cols-2 gap-4">
-                <FormField control={form.control} name="supplier" render={({ field }) => (
+                <FormField control={form.control} name="supplierId" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Supplier Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., Global Foods Inc." {...field} />
-                      </FormControl>
+                      <FormLabel>Supplier</FormLabel>
+                       <Select onValueChange={field.onChange} defaultValue={field.value}>
+                           <FormControl>
+                               <SelectTrigger><SelectValue placeholder="Select a supplier" /></SelectTrigger>
+                           </FormControl>
+                           <SelectContent>
+                               {suppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                           </SelectContent>
+                       </Select>
                       <FormMessage />
                     </FormItem>
                   )}

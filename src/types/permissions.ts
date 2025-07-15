@@ -1,4 +1,5 @@
 
+
 export const permissionGroups = [
   {
     name: 'Point of Sale (POS)',
@@ -46,6 +47,8 @@ export const permissionGroups = [
     permissions: [
         { id: 'expenses:read', label: 'View expenses' },
         { id: 'expenses:write', label: 'Create/edit expenses' },
+        { id: 'cashdrawer:read', label: 'View cash drawer sessions' },
+        { id: 'cashdrawer:write', label: 'Manage cash drawer (start/end/adjust)' },
     ]
   },
   {

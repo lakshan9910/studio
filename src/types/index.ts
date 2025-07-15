@@ -9,6 +9,7 @@ export type TransferStatus = 'Pending' | 'In Transit' | 'Completed' | 'Cancelled
 export type AttendanceStatus = 'Present' | 'Absent' | 'Leave';
 export type PayrollStatus = 'Pending' | 'Completed' | 'Paid';
 export type LoanStatus = 'Active' | 'Paid Off';
+export type CashDrawerEntryType = 'IN' | 'OUT';
 
 export interface Warehouse {
     id: string;
@@ -259,4 +260,24 @@ export interface Loan {
     monthlyInstallment: number;
     status: LoanStatus;
     repayments: LoanRepayment[];
+}
+
+export interface CashDrawerEntry {
+    id: string;
+    type: CashDrawerEntryType;
+    amount: number;
+    reason: string;
+    timestamp: string; // ISO date string
+}
+
+export interface CashDrawerSession {
+    id: string;
+    startTime: string; // ISO date string
+    endTime?: string; // ISO date string
+    openingFloat: number;
+    closingFloat?: number;
+    cashSales: number;
+    entries: CashDrawerEntry[];
+    status: 'Active' | 'Closed';
+    variance?: number;
 }

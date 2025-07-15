@@ -17,12 +17,14 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Textarea } from "@/components/ui/textarea";
 import { FileInput } from "@/components/ui/file-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 const systemSettingsSchema = z.object({
   currency: z.string().length(3, "Currency code must be 3 characters."),
+  enableCashDrawer: z.boolean(),
 });
 
 const brandingSettingsSchema = z.object({
@@ -204,6 +206,26 @@ export default function SettingsPage() {
                                         <Input placeholder="e.g., USD" {...field} />
                                     </FormControl>
                                     <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                         <FormField
+                            control={form.control}
+                            name="enableCashDrawer"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                  <div className="space-y-0.5">
+                                    <FormLabel className="text-base">Enable Cash Drawer Management</FormLabel>
+                                    <CardDescription>
+                                        Track cash drawer sessions including opening and closing floats.
+                                    </CardDescription>
+                                  </div>
+                                  <FormControl>
+                                    <Switch
+                                      checked={field.value}
+                                      onCheckedChange={field.onChange}
+                                    />
+                                  </FormControl>
                                 </FormItem>
                             )}
                         />

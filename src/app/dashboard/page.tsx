@@ -238,7 +238,9 @@ export default function PosPage() {
                     onHold={handleHoldOrder}
                     onResumeOrder={handleResumeOrder}
                     onDeleteHeldOrder={handleDeleteHeldOrder}
-                />
+                    // For cash drawer, we'll need to pass sales data eventually
+                    completedSalesThisSession={[]}
+                 />
             </div>
         </div>
         <ReceiptModal

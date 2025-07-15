@@ -2,18 +2,20 @@
 "use client";
 
 import { useState } from 'react';
-import type { OrderItem, Sale, Customer } from '@/types';
+import type { OrderItem, Sale, Customer, CashDrawerEntry, CashDrawerEntryType } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Minus, Plus, Trash2, ShoppingBag, ListRestart, History, Hand, Receipt, User, X } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingBag, ListRestart, History, Hand, Receipt, User, X, CaseSensitive } from 'lucide-react';
 import Image from "next/image";
 import { useSettings } from '@/context/SettingsContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 
 
 interface OrderPanelProps {
@@ -22,6 +24,7 @@ interface OrderPanelProps {
   recentSales: Sale[];
   customers: Customer[];
   currentCustomer: Customer | null;
+  completedSalesThisSession: Sale[];
   onSetCustomer: (customer: Customer | null) => void;
   onUpdateQuantity: (variantId: string, quantity: number) => void;
   onRemoveItem: (variantId: string) => void;
@@ -29,6 +32,82 @@ interface OrderPanelProps {
   onHold: () => void;
   onResumeOrder: (orderId: number) => void;
   onDeleteHeldOrder: (orderId: number) => void;
+}
+
+function CashDrawerView({ completedSales, onAddEntry }: { completedSales: Sale[], onAddEntry: (type: CashDrawerEntryType, amount: number, reason: string) => void }) {
+    const cashSalesTotal = completedSales.filter(s => s.paymentMethod === 'Cash').reduce((sum, s) => sum + s.total, 0);
+    const [amount, setAmount] = useState(0);
+    const [reason, setReason] = useState("");
+    
+    const handleAddCash = () => {
+        if (amount > 0 && reason) {
+            onAddEntry('IN', amount, reason);
+            setAmount(0);
+            setReason("");
+            document.getElementById('add-cash-close')?.click();
+        }
+    }
+    const handleRemoveCash = () => {
+         if (amount > 0 && reason) {
+            onAddEntry('OUT', amount, reason);
+            setAmount(0);
+            setReason("");
+             document.getElementById('remove-cash-close')?.click();
+        }
+    }
+
+    return (
+        <div className="p-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Cash Sales Today</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-3xl font-bold">${cashSalesTotal.toFixed(2)}</p>
+                </CardContent>
+            </Card>
+            <div className="grid grid-cols-2 gap-4 mt-4">
+                <Dialog>
+                    <DialogTrigger asChild>
+                         <Button variant="outline">Add Cash</Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Add Cash to Drawer</DialogTitle>
+                            <DialogDescription>Record cash being added for reasons other than sales.</DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                            <Input type="number" placeholder="Amount" value={amount || ''} onChange={e => setAmount(parseFloat(e.target.value))} />
+                            <Input placeholder="Reason (e.g., Change float)" value={reason} onChange={e => setReason(e.target.value)} />
+                        </div>
+                        <DialogFooter>
+                            <DialogClose asChild><Button type="button" variant="secondary" id="add-cash-close">Cancel</Button></DialogClose>
+                            <Button onClick={handleAddCash}>Add Cash</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button variant="destructive">Remove Cash</Button>
+                    </DialogTrigger>
+                     <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Remove Cash from Drawer</DialogTitle>
+                            <DialogDescription>Record cash being removed for reasons like payouts or bank deposits.</DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                            <Input type="number" placeholder="Amount" value={amount || ''} onChange={e => setAmount(parseFloat(e.target.value))} />
+                            <Input placeholder="Reason (e.g., Petty cash for supplies)" value={reason} onChange={e => setReason(e.target.value)} />
+                        </div>
+                        <DialogFooter>
+                            <DialogClose asChild><Button type="button" variant="secondary" id="remove-cash-close">Cancel</Button></DialogClose>
+                            <Button onClick={handleRemoveCash} variant="destructive">Remove Cash</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            </div>
+        </div>
+    )
 }
 
 function CurrentOrderView({ orderItems, customers, currentCustomer, onSetCustomer, onUpdateQuantity, onRemoveItem, onFinalize, onHold, t }: any) {
@@ -223,8 +302,8 @@ function RecentSalesView({ recentSales }: { recentSales: Sale[] }) {
     )
 }
 
-export function OrderPanel({ orderItems, heldOrders, recentSales, customers, currentCustomer, onSetCustomer, onUpdateQuantity, onRemoveItem, onFinalize, onHold, onResumeOrder, onDeleteHeldOrder }: OrderPanelProps) {
-  const { t } = useSettings();
+export function OrderPanel({ orderItems, heldOrders, recentSales, customers, currentCustomer, onSetCustomer, onUpdateQuantity, onRemoveItem, onFinalize, onHold, onResumeOrder, onDeleteHeldOrder, completedSalesThisSession }: OrderPanelProps) {
+  const { settings, t } = useSettings();
 
   return (
     <Card className="h-full flex flex-col shadow-lg rounded-xl">
@@ -246,6 +325,11 @@ export function OrderPanel({ orderItems, heldOrders, recentSales, customers, cur
                  <TabsTrigger value="recent" className="w-full flex items-center gap-2">
                     <History className="h-4 w-4" /> Recent
                 </TabsTrigger>
+                {settings.enableCashDrawer && (
+                 <TabsTrigger value="drawer" className="w-full flex items-center gap-2">
+                    <CaseSensitive className="h-4 w-4" /> Drawer
+                </TabsTrigger>
+                )}
             </TabsList>
             <TabsContent value="current" className="flex-1 flex flex-col mt-4 data-[state=inactive]:hidden">
                 <CurrentOrderView 
@@ -270,6 +354,11 @@ export function OrderPanel({ orderItems, heldOrders, recentSales, customers, cur
             <TabsContent value="recent" className="flex-1 flex flex-col mt-4 data-[state=inactive]:hidden">
                  <RecentSalesView recentSales={recentSales} />
             </TabsContent>
+            {settings.enableCashDrawer && (
+                <TabsContent value="drawer" className="flex-1 flex flex-col mt-4 data-[state=inactive]:hidden">
+                    <CashDrawerView completedSales={completedSalesThisSession} onAddEntry={() => {}} />
+                </TabsContent>
+            )}
         </Tabs>
       </CardContent>
     </Card>

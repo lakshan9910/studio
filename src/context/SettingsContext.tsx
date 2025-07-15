@@ -16,6 +16,7 @@ export interface Settings {
     receiptFooterText?: string;
     language: string;
     payrollType: 'salaryTheory' | 'wagesBoard';
+    enableCashDrawer: boolean;
 }
 
 interface SettingsContextType {
@@ -38,6 +39,7 @@ const defaultSettings: Settings = {
     receiptFooterText: 'Please come again!',
     language: 'en',
     payrollType: 'salaryTheory',
+    enableCashDrawer: false,
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);

@@ -60,6 +60,7 @@ export const translations = {
         stock_transfers: 'Stock Transfers',
         loans_advances: 'Loans & Advances',
         salaries: 'Salaries',
+        cash_drawer: 'Cash Drawer',
     },
     mg: {
         storefront: 'Varotra',
@@ -121,6 +122,7 @@ export const translations = {
         stock_transfers: 'Famindrana tahiry',
         loans_advances: 'Fampindramam-bola & Avansa',
         salaries: 'Karama',
+        cash_drawer: 'Vata fandraisam-bola',
     },
     ar: {
         storefront: 'واجهة المتجر',
@@ -182,6 +184,7 @@ export const translations = {
         stock_transfers: 'تحويلات المخزون',
         loans_advances: 'القروض والسلف',
         salaries: 'الرواتب',
+        cash_drawer: 'درج النقود',
     },
     si: {
         storefront: 'වෙළඳසැල',
@@ -243,6 +246,7 @@ export const translations = {
         stock_transfers: 'තොග මාරු කිරීම්',
         loans_advances: 'ණය සහ අත්තිකාරම්',
         salaries: 'වැටුප්',
+        cash_drawer: 'මුදල් ලාච්චුව',
     },
     ta: {
         storefront: 'கடை முகப்பு',
@@ -304,6 +308,7 @@ export const translations = {
         stock_transfers: 'பங்கு இடமாற்றங்கள்',
         loans_advances: 'கடன்கள் மற்றும் முன்பணங்கள்',
         salaries: 'சம்பளம்',
+        cash_drawer: 'பண ящик',
     },
 };
 

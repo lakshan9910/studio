@@ -17,7 +17,7 @@ import {
     LogOut, Settings, Store, Users, BarChart3, ShoppingCart, Receipt, Undo2, 
     Shapes, Shield, Beaker, Truck, UserCog, Wallet, Package, Search,
     Calculator, Bell, Menu, Globe, History, Wrench, Barcode, Warehouse, ArrowRightLeft,
-    Briefcase, CalendarCheck, HandCoins, DollarSign, UserRound
+    Briefcase, CalendarCheck, HandCoins, DollarSign, UserRound, CaseSensitive
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
@@ -68,7 +68,7 @@ function SimpleCalculator() {
     );
 }
 
-const NavContent = ({ searchTerm, hasPermission, t }: { searchTerm: string, hasPermission: (p: any) => boolean, t: (key: string) => string }) => {
+const NavContent = ({ searchTerm, hasPermission, t, settings }: { searchTerm: string, hasPermission: (p: any) => boolean, t: (key: string) => string, settings: any }) => {
     const pathname = usePathname();
     const navLinks = [
         { 
@@ -80,10 +80,11 @@ const NavContent = ({ searchTerm, hasPermission, t }: { searchTerm: string, hasP
         },
         {
             category: t('analytics_finance'),
-            permissions: ['reports:read', 'payments:read', 'purchases:read', 'expenses:read'],
+            permissions: ['reports:read', 'payments:read', 'purchases:read', 'expenses:read', 'cashdrawer:read'],
             links: [
                 { href: '/dashboard/reports', label: t('reports'), icon: BarChart3, permission: 'reports:read' },
                 { href: '/dashboard/payments', label: t('payments'), icon: History, permission: 'payments:read' },
+                { href: '/dashboard/cash-drawer', label: 'Cash Drawer', icon: CaseSensitive, permission: 'cashdrawer:read', featureFlag: 'enableCashDrawer' },
                 { href: '/dashboard/purchases', label: t('purchases'), icon: ShoppingCart, permission: 'purchases:read' },
                 { href: '/dashboard/expenses', label: t('expenses'), icon: Receipt, permission: 'expenses:read' },
                 { href: '/dashboard/expense-categories', label: t('expense_categories'), icon: Wallet, permission: 'expenses:read' },
@@ -138,6 +139,7 @@ const NavContent = ({ searchTerm, hasPermission, t }: { searchTerm: string, hasP
             }
             const filteredLinks = section.links.filter(link => 
                 hasPermission(link.permission) &&
+                (!link.featureFlag || settings[link.featureFlag]) &&
                 link.label.toLowerCase().includes(searchTerm.toLowerCase())
             );
 
@@ -261,7 +263,7 @@ export default function DashboardLayout({
                     </div>
                 </div>
                 <ScrollArea className="flex-1">
-                    <NavContent searchTerm={searchTerm} hasPermission={hasPermission} t={t} />
+                    <NavContent searchTerm={searchTerm} hasPermission={hasPermission} t={t} settings={settings} />
                 </ScrollArea>
             </div>
         </div>
@@ -291,7 +293,7 @@ export default function DashboardLayout({
                         </Link>
                     </div>
                     <ScrollArea className="flex-1">
-                        <NavContent searchTerm={searchTerm} hasPermission={hasPermission} t={t}/>
+                        <NavContent searchTerm={searchTerm} hasPermission={hasPermission} t={t} settings={settings}/>
                     </ScrollArea>
                 </SheetContent>
             </Sheet>

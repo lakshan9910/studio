@@ -2,10 +2,12 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "@/context/AuthContext";
+import { useSettings } from "@/context/SettingsContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -24,6 +26,7 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
   const { signup, user } = useAuth();
+  const { settings } = useSettings();
   const router = useRouter();
 
   const form = useForm<SignupFormValues>({
@@ -56,9 +59,13 @@ export default function SignupPage() {
              <div className="flex justify-center mb-6">
                 <div className="flex items-center gap-3">
                     <div className="bg-primary/20 p-2 rounded-lg">
-                        <Store className="text-primary h-6 w-6" />
+                       {settings.storeLogo ? (
+                            <Image src={settings.storeLogo} alt={settings.storeName} width={24} height={24} className="object-contain" />
+                        ) : (
+                            <Store className="text-primary h-6 w-6" />
+                        )}
                     </div>
-                    <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Cashy</h1>
+                    <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">{settings.storeName}</h1>
                 </div>
             </div>
             <Card>

@@ -86,25 +86,35 @@ export default function PosPage() {
     setOrderItems(orderItems.filter(item => item.id !== productId));
   };
 
-  const handleSaveProduct = (productData: ProductFormData) => {
+  const handleSaveProduct = async (productData: ProductFormData) => {
+    const { imageFile, ...restData } = productData;
+    let imageUrl = editingProduct?.imageUrl || "https://placehold.co/300x300.png";
+
+    if (imageFile && imageFile.length > 0) {
+        const file = imageFile[0];
+        const reader = new FileReader();
+        imageUrl = await new Promise((resolve) => {
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(file);
+        });
+    }
+
     if (editingProduct) {
       // Edit existing product
-      const updatedProduct = { ...editingProduct, ...productData };
+      const updatedProduct = { ...editingProduct, ...restData, imageUrl };
       setProducts(products.map(p => p.id === editingProduct.id ? updatedProduct : p));
     } else {
       // Add new product
       const newProduct: Product = {
-        ...productData,
+        ...restData,
         id: `prod_${Date.now()}`,
-        imageUrl: 'https://placehold.co/300x300.png',
+        imageUrl: imageUrl,
       };
       setProducts([newProduct, ...products]);
     }
   };
   
-  const productModalData = editingProduct ? 
-    { name: editingProduct.name, category: editingProduct.category, brand: editingProduct.brand, unit: editingProduct.unit, price: editingProduct.price, stock: editingProduct.stock } : 
-    null;
+  const productModalData = editingProduct;
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-4rem)]">

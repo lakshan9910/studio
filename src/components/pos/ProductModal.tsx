@@ -1,7 +1,8 @@
 
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -26,6 +27,10 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { FileInput } from '@/components/ui/file-input';
+
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 const productSchema = z.object({
   name: z.string().min(3, { message: 'Product name must be at least 3 characters.' }),
@@ -34,6 +39,15 @@ const productSchema = z.object({
   unit: z.string().min(1, { message: 'Please select a unit.' }),
   price: z.coerce.number().min(0.01, { message: 'Price must be a positive number.' }),
   stock: z.coerce.number().int().min(0, { message: 'Stock must be a non-negative integer.' }),
+  imageUrl: z.string().optional(),
+  imageFile: z
+    .any()
+    .refine((files) => files?.length !== 1 || files[0].size <= MAX_FILE_SIZE, `Max file size is 2MB.`)
+    .refine(
+      (files) => files?.length !== 1 || ACCEPTED_IMAGE_TYPES.includes(files[0].type),
+      ".jpg, .jpeg, .png and .webp files are accepted."
+    )
+    .optional()
 });
 
 export type ProductFormData = z.infer<typeof productSchema>;
@@ -42,7 +56,7 @@ interface ProductModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: ProductFormData) => void;
-  product: Omit<Product, 'id' | 'imageUrl'> | null;
+  product: Product | null;
   categories: Category[];
   brands: Brand[];
   units: Unit[];
@@ -58,21 +72,44 @@ export function ProductModal({ isOpen, onClose, onSave, product, categories, bra
       unit: '',
       price: 0,
       stock: 0,
+      imageUrl: '',
     },
   });
 
+  const imageFile = form.watch("imageFile");
+  const [preview, setPreview] = useState<string | null>(null);
+
   useEffect(() => {
-    if (product) {
-      form.reset(product);
+    if (imageFile && imageFile.length > 0) {
+      const file = imageFile[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     } else {
-      form.reset({
-        name: '',
-        category: '',
-        brand: '',
-        unit: '',
-        price: 0,
-        stock: 0,
-      });
+      setPreview(null);
+    }
+  }, [imageFile]);
+
+
+  useEffect(() => {
+    if (isOpen) {
+      if (product) {
+        form.reset({...product});
+        setPreview(product.imageUrl);
+      } else {
+        form.reset({
+          name: '',
+          category: '',
+          brand: '',
+          unit: '',
+          price: 0,
+          stock: 0,
+          imageUrl: '',
+        });
+        setPreview(null);
+      }
     }
   }, [product, form, isOpen]);
 
@@ -80,6 +117,8 @@ export function ProductModal({ isOpen, onClose, onSave, product, categories, bra
     onSave(data);
     onClose();
   };
+
+  const currentImageUrl = preview || product?.imageUrl;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -209,6 +248,29 @@ export function ProductModal({ isOpen, onClose, onSave, product, categories, bra
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="imageFile"
+              render={({ field: { onChange, value, ...rest } }) => (
+                <FormItem>
+                  <FormLabel>Product Image</FormLabel>
+                   <div className="flex items-center gap-4">
+                    {currentImageUrl && (
+                        <Image src={currentImageUrl} alt="Product preview" width={64} height={64} className="rounded-md object-cover" />
+                    )}
+                    <FormControl>
+                        <FileInput
+                          {...rest}
+                          onFileSelect={(files) => onChange(files)}
+                        />
+                    </FormControl>
+                   </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancel

@@ -37,6 +37,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { MoreHorizontal, PlusCircle, Trash, Edit, Users, Search } from "lucide-react";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useToast } from "@/hooks/use-toast";
 
 const customerSchema = z.object({
   name: z.string().min(2, { message: "Customer name must be at least 2 characters." }),
@@ -55,6 +56,7 @@ export default function CustomersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [currentPage, setCurrentPage] = useState(1);
+  const { toast } = useToast();
 
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(customerSchema),
@@ -99,23 +101,26 @@ export default function CustomersPage() {
           c.id === editingCustomer.id ? { ...c, ...data } : c
         )
       );
+      toast({ title: "Customer Updated" });
     } else {
       const newCustomer: Customer = {
         id: `cust_${Date.now()}`,
         ...data,
       };
       setCustomers([...customers, newCustomer]);
+      toast({ title: "Customer Added" });
     }
     handleCloseModal();
   };
 
   const handleDeleteCustomer = (customerId: string) => {
     setCustomers(customers.filter((c) => c.id !== customerId));
+    toast({ title: "Customer Deleted" });
   };
   
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <Card className="max-w-4xl mx-auto">
+      <Card className="max-w-4xl mx-auto backdrop-blur-lg bg-white/50 dark:bg-black/50">
         <CardHeader>
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1">

@@ -159,6 +159,7 @@ export default function BrandsPage() {
           b.id === editingBrand.id ? { ...b, name: data.name, imageUrl: imageData } : b
         )
       );
+      toast({ title: "Brand Updated", description: "The brand has been successfully updated." });
     } else {
       const newBrand: Brand = {
         id: `brand_${Date.now()}`,
@@ -166,12 +167,14 @@ export default function BrandsPage() {
         imageUrl: imageData,
       };
       setBrands([...brands, newBrand]);
+      toast({ title: "Brand Added", description: "A new brand has been successfully added." });
     }
     handleCloseModal();
   };
 
   const handleDeleteBrand = (brandId: string) => {
     setBrands(brands.filter((b) => b.id !== brandId));
+    toast({ title: "Brand Deleted", description: "The brand has been successfully deleted." });
   };
   
   if (user?.role !== 'Admin') {
@@ -182,7 +185,7 @@ export default function BrandsPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <Card className="max-w-4xl mx-auto">
+      <Card className="max-w-4xl mx-auto backdrop-blur-lg bg-white/50 dark:bg-black/50">
         <CardHeader>
           <div className="flex items-center justify-between gap-4">
              <div className="flex-1">

@@ -118,6 +118,7 @@ export default function ExpenseCategoriesPage() {
           c.id === editingCategory.id ? { ...c, ...data } : c
         )
       );
+      toast({ title: "Category Updated" });
     } else {
       const newCategory: ExpenseCategory = {
         id: `exp_cat_${Date.now()}`,
@@ -125,12 +126,14 @@ export default function ExpenseCategoriesPage() {
         description: data.description,
       };
       setCategories([...categories, newCategory]);
+      toast({ title: "Category Added" });
     }
     handleCloseModal();
   };
 
   const handleDeleteCategory = (categoryId: string) => {
     setCategories(categories.filter((c) => c.id !== categoryId));
+    toast({ title: "Category Deleted" });
   };
   
   if (user?.role !== 'Admin') {
@@ -139,7 +142,7 @@ export default function ExpenseCategoriesPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <Card className="max-w-4xl mx-auto">
+      <Card className="max-w-4xl mx-auto backdrop-blur-lg bg-white/50 dark:bg-black/50">
         <CardHeader>
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1">

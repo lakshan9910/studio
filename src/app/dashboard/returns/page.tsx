@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { MoreHorizontal, PlusCircle, Trash, Edit, Trash2, Search } from "lucide-react";
 import { format } from "date-fns";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useToast } from "@/hooks/use-toast";
 
 const returnItemSchema = z.object({
   productId: z.string().min(1, "Product is required."),
@@ -43,6 +44,7 @@ export default function ReturnsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [currentPage, setCurrentPage] = useState(1);
+  const { toast } = useToast();
 
   const productMap = new Map(products.map(p => [p.id, p]));
 
@@ -106,6 +108,7 @@ export default function ReturnsPage() {
           p.id === editingReturn.id ? { ...p, ...data, totalValue } : p
         )
       );
+      toast({ title: "Return Updated" });
     } else {
       const newReturn: Return = {
         id: `ret_${Date.now()}`,
@@ -114,17 +117,19 @@ export default function ReturnsPage() {
         totalValue
       };
       setReturns([...returns, newReturn]);
+      toast({ title: "Return Added" });
     }
     handleCloseModal();
   };
 
   const handleDeleteReturn = (returnId: string) => {
     setReturns(returns.filter((p) => p.id !== returnId));
+    toast({ title: "Return Deleted" });
   };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <Card className="max-w-6xl mx-auto">
+      <Card className="max-w-6xl mx-auto backdrop-blur-lg bg-white/50 dark:bg-black/50">
         <CardHeader>
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1">

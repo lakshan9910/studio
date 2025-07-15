@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -12,10 +12,11 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { 
     LogOut, Settings, Store, Users, BarChart3, ShoppingCart, Receipt, Undo2, 
-    Shapes, Shield, Beaker, Truck, UserCog, Wallet, Package 
+    Shapes, Shield, Beaker, Truck, UserCog, Wallet, Package, Search
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
+import { Input } from '@/components/ui/input';
 
 
 export default function DashboardLayout({
@@ -27,6 +28,7 @@ export default function DashboardLayout({
   const { settings } = useSettings();
   const router = useRouter();
   const pathname = usePathname();
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     if (!loading && !user) {
@@ -111,11 +113,26 @@ export default function DashboardLayout({
     },
   ];
 
+  const filteredNavLinks = navLinks.map(section => {
+    if (section.adminOnly && !isAdmin) {
+        return null;
+    }
+    const filteredLinks = section.links.filter(link => 
+        link.label.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (filteredLinks.length > 0) {
+        return { ...section, links: filteredLinks };
+    }
+    return null;
+  }).filter(Boolean);
+
+
   return (
     <div className="flex min-h-screen w-full bg-muted/40">
       <aside className="fixed inset-y-0 left-0 z-10 hidden w-64 flex-col border-r bg-background sm:flex">
-        <div className="flex h-16 items-center gap-2 border-b px-6">
-            <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
+        <div className="flex flex-col gap-2 border-b p-4">
+            <Link href="/dashboard" className="flex items-center gap-2 font-semibold mb-2">
                 {settings.storeLogo ? (
                     <Image src={settings.storeLogo} alt={settings.storeName} width={24} height={24} className="object-contain" />
                 ) : (
@@ -123,27 +140,35 @@ export default function DashboardLayout({
                 )}
                 <span className="">{settings.storeName}</span>
             </Link>
+             <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                    type="search"
+                    placeholder="Search modules..."
+                    className="w-full rounded-lg bg-muted pl-8 h-9"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
         </div>
         <nav className="flex flex-col gap-4 p-4 text-sm font-medium overflow-y-auto">
-          {navLinks.map((section, index) => (
-            (!section.adminOnly || isAdmin) && (
+          {filteredNavLinks.map((section, index) => (
+            section && (
               <div key={index}>
                 <h3 className="mb-2 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">{section.category}</h3>
                 <div className='flex flex-col gap-1'>
                     {section.links.map((link, linkIndex) => (
-                         (!section.adminOnly || isAdmin) && (
-                            <Link 
-                                key={linkIndex} 
-                                href={link.href} 
-                                className={cn(
-                                    "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-primary/10",
-                                    pathname === link.href && "text-primary bg-primary/10"
-                                )}
-                            >
-                                <link.icon className="h-4 w-4" />
-                                {link.label}
-                            </Link>
-                        )
+                        <Link 
+                            key={linkIndex} 
+                            href={link.href} 
+                            className={cn(
+                                "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-primary/10",
+                                pathname === link.href && "text-primary bg-primary/10"
+                            )}
+                        >
+                            <link.icon className="h-4 w-4" />
+                            {link.label}
+                        </Link>
                     ))}
                 </div>
               </div>
@@ -153,39 +178,35 @@ export default function DashboardLayout({
       </aside>
 
       <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-64 w-full">
-         <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6 sm:bg-muted/40 sm:border-none sm:rounded-xl">
-            <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
-                <div className='ml-auto'>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                        <Button variant="secondary" size="icon" className="rounded-full">
-                            <Avatar>
-                            <AvatarImage src={user.imageUrl || `https://avatar.vercel.sh/${user.email}.png`} alt={user.name} />
-                            <AvatarFallback>{user.name?.charAt(0) || user.email.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <span className="sr-only">Toggle user menu</span>
-                        </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>{user.name || user.email} <span className='text-xs text-muted-foreground'>({user.role})</span></DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        {isAdmin && (
-                        <DropdownMenuItem asChild>
-                            <Link href="/dashboard/settings">
-                                <Settings className="mr-2 h-4 w-4" />
-                                <span>Settings</span>
-                            </Link>
-                        </DropdownMenuItem>
-                        )}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={logout}>
-                            <LogOut className="mr-2 h-4 w-4" />
-                            <span>Logout</span>
-                        </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-            </div>
+         <header className="sticky top-0 z-30 flex h-16 items-center justify-end gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                <Button variant="secondary" size="icon" className="rounded-full">
+                    <Avatar>
+                    <AvatarImage src={user.imageUrl || `https://avatar.vercel.sh/${user.email}.png`} alt={user.name} />
+                    <AvatarFallback>{user.name?.charAt(0) || user.email.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <span className="sr-only">Toggle user menu</span>
+                </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                <DropdownMenuLabel>{user.name || user.email} <span className='text-xs text-muted-foreground'>({user.role})</span></DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {isAdmin && (
+                <DropdownMenuItem asChild>
+                    <Link href="/dashboard/settings">
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Settings</span>
+                    </Link>
+                </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={logout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Logout</span>
+                </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
         </header>
         <main className="flex-1 sm:px-6">{children}</main>
       </div>
@@ -193,3 +214,4 @@ export default function DashboardLayout({
   );
 }
 
+    

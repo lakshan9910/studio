@@ -118,10 +118,14 @@ export default function DashboardLayout({
                     <DropdownMenuContent align="end">
                     <DropdownMenuLabel>{user.name || user.email} <span className='text-xs text-muted-foreground'>({user.role})</span></DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem disabled>
-                        <Settings className="mr-2 h-4 w-4" />
-                        <span>Settings</span>
-                    </DropdownMenuItem>
+                    {isAdmin && (
+                       <DropdownMenuItem asChild>
+                          <Link href="/dashboard/settings">
+                              <Settings className="mr-2 h-4 w-4" />
+                              <span>Settings</span>
+                          </Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={logout}>
                         <LogOut className="mr-2 h-4 w-4" />

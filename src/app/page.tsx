@@ -19,7 +19,7 @@ export default function HomePage() {
     if (!settings.isSetupComplete) {
       router.replace('/setup');
     } else if (user) {
-      router.replace('/dashboard');
+      router.replace('/dashboard/home');
     } else {
       router.replace('/login');
     }

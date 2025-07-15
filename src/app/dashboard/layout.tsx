@@ -17,7 +17,7 @@ import {
     LogOut, Settings, Store, Users, BarChart3, ShoppingCart, Receipt, Undo2, 
     Shapes, Shield, Beaker, Truck, UserCog, Wallet, Package, Search,
     Calculator, Bell, Menu, Globe, History, Wrench, Barcode, Warehouse, ArrowRightLeft,
-    Briefcase, CalendarCheck, HandCoins, DollarSign, UserRound, CaseSensitive, AlertTriangle, FileText
+    Briefcase, CalendarCheck, HandCoins, DollarSign, UserRound, CaseSensitive, AlertTriangle, FileText, Home
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
@@ -75,10 +75,11 @@ function SimpleCalculator() {
 const NavContent = ({ searchTerm, hasPermission, t, settings }: { searchTerm: string, hasPermission: (p: any) => boolean, t: (key: string) => string, settings: any }) => {
     const pathname = usePathname();
     const navLinks = [
-        { 
+        {
             category: t('storefront'),
             permissions: ['pos:read'],
             links: [
+                { href: '/dashboard/home', label: 'Home', icon: Home, permission: 'pos:read' },
                 { href: '/dashboard', label: 'POS', icon: Store, permission: 'pos:read' },
             ]
         },
@@ -254,7 +255,7 @@ export default function DashboardLayout({
       <aside className="hidden border-r bg-muted/40 md:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
             <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-                 <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
+                 <Link href="/dashboard/home" className="flex items-center gap-2 font-semibold">
                     {settings.storeLogo ? (
                         <Image src={settings.storeLogo} alt={settings.storeName} width={24} height={24} className="object-contain" />
                     ) : (
@@ -297,7 +298,7 @@ export default function DashboardLayout({
                     className="flex flex-col p-0"
                 >
                      <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-                        <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
+                        <Link href="/dashboard/home" className="flex items-center gap-2 font-semibold">
                             {settings.storeLogo ? (
                                 <Image src={settings.storeLogo} alt={settings.storeName} width={24} height={24} className="object-contain" />
                             ) : (

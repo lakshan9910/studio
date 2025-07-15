@@ -80,6 +80,9 @@ export default function DashboardLayout({
           <Link href="/dashboard/returns" className="text-muted-foreground transition-colors hover:text-foreground">
             Returns
           </Link>
+           <Link href="/dashboard/customers" className="text-muted-foreground transition-colors hover:text-foreground">
+            Customers
+          </Link>
           {isAdmin && (
             <>
               <Link href="/dashboard/categories" className="text-muted-foreground transition-colors hover:text-foreground">

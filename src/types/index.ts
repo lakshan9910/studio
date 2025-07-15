@@ -80,3 +80,10 @@ export interface Return {
   totalValue: number;
   status: 'Pending' | 'Completed' | 'Cancelled';
 }
+
+export interface Customer {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+}

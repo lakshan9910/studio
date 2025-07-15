@@ -1,4 +1,4 @@
-import type { Product, Category, Brand, Unit, Purchase, Return, Sale } from '@/types';
+import type { Product, Category, Brand, Unit, Purchase, Return, Sale, Customer } from '@/types';
 
 export const initialProducts: Product[] = [
   {
@@ -235,4 +235,10 @@ export const initialSales: Sale[] = [
         ],
         total: 15.96
     }
+];
+
+export const initialCustomers: Customer[] = [
+  { id: 'cust_001', name: 'Alice Johnson', email: 'alice@example.com', phone: '123-456-7890' },
+  { id: 'cust_002', name: 'Bob Williams', email: 'bob@example.com', phone: '234-567-8901' },
+  { id: 'cust_003', name: 'Charlie Brown', email: 'charlie@example.com', phone: '345-678-9012' },
 ];

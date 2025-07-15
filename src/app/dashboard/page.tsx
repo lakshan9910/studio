@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from 'react';
-import type { OrderItem, Product, Category, Brand, Unit, Sale, PaymentMethod, Customer } from '@/types';
+import type { OrderItem, Product, Category, Brand, Unit, Sale, Customer, ProductVariant } from '@/types';
 import { initialProducts, initialCategories, initialBrands, initialUnits, initialSales, initialCustomers } from '@/lib/data';
 import { ProductCatalog } from '@/components/pos/ProductCatalog';
 import { OrderPanel } from '@/components/pos/OrderPanel';
@@ -35,35 +35,41 @@ export default function PosPage() {
   const [isProductModalOpen, setProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
-  const handleAddToOrder = (product: Product) => {
+  const handleAddToOrder = (product: Product, variant: ProductVariant) => {
     setOrderItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item.id === product.id);
+      const existingItem = prevItems.find((item) => item.variant.id === variant.id);
       if (existingItem) {
         return prevItems.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          item.variant.id === variant.id ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
-      return [...prevItems, { ...product, quantity: 1 }];
+      return [...prevItems, { 
+        productId: product.id,
+        productName: product.name,
+        variant: variant,
+        quantity: 1,
+        imageUrl: product.imageUrl,
+       }];
     });
   };
 
-  const handleUpdateQuantity = (productId: string, quantity: number) => {
+  const handleUpdateQuantity = (variantId: string, quantity: number) => {
     setOrderItems((prevItems) => {
       if (quantity <= 0) {
-        return prevItems.filter((item) => item.id !== productId);
+        return prevItems.filter((item) => item.variant.id !== variantId);
       }
       return prevItems.map((item) =>
-        item.id === productId ? { ...item, quantity } : item
+        item.variant.id === variantId ? { ...item, quantity } : item
       );
     });
   };
 
-  const handleRemoveItem = (productId: string) => {
-    setOrderItems((prevItems) => prevItems.filter((item) => item.id !== productId));
+  const handleRemoveItem = (variantId: string) => {
+    setOrderItems((prevItems) => prevItems.filter((item) => item.variant.id !== variantId));
   };
   
   const calculateTotal = (items: OrderItem[]) => {
-    const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const subtotal = items.reduce((sum, item) => sum + item.variant.price * item.quantity, 0);
     const tax = subtotal * 0.08; // 8% tax
     return { subtotal, tax, total: subtotal + tax };
   };
@@ -102,10 +108,12 @@ export default function PosPage() {
         id: `sale_${Date.now()}`,
         date: new Date().toISOString(),
         items: orderItems.map(item => ({
-            productId: item.id,
+            productId: item.productId,
+            productName: item.productName,
+            variantId: item.variant.id,
+            variantName: item.variant.name,
             quantity: item.quantity,
-            price: item.price,
-            name: item.name
+            price: item.variant.price,
         })),
         total,
         paymentMethod: paymentDetails.method,
@@ -152,7 +160,7 @@ export default function PosPage() {
   
   const handleDeleteProduct = (productId: string) => {
     setProducts(products.filter(p => p.id !== productId));
-    setOrderItems(orderItems.filter(item => item.id !== productId));
+    setOrderItems(orderItems.filter(item => item.productId !== productId));
   };
 
   const handleSaveProduct = async (productData: ProductFormData) => {
@@ -168,9 +176,14 @@ export default function PosPage() {
         });
     }
 
+    const variants = productData.variants.map((v, i) => ({
+      ...v,
+      id: v.id || `${productData.name.replace(/\s+/g, '-')}-${i}`
+    }));
+
     if (editingProduct) {
       // Edit existing product
-      const updatedProduct = { ...editingProduct, ...restData, imageUrl };
+      const updatedProduct: Product = { ...editingProduct, ...restData, imageUrl, variants };
       setProducts(products.map(p => p.id === editingProduct.id ? updatedProduct : p));
     } else {
       // Add new product
@@ -178,6 +191,7 @@ export default function PosPage() {
         ...restData,
         id: `prod_${Date.now()}`,
         imageUrl: imageUrl,
+        variants,
       };
       setProducts([newProduct, ...products]);
     }

@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
-import type { Product, Category, Brand, Unit } from '@/types';
+import type { Product, Category, Brand, Unit, ProductVariant } from '@/types';
 import { initialProducts, initialCategories, initialBrands, initialUnits } from '@/lib/data';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -59,9 +59,19 @@ export default function ProductsPage() {
             reader.readAsDataURL(file);
         });
     }
+    
+    const variants = productData.variants.map((v, i) => ({
+      ...v,
+      id: v.id || `${restData.name.replace(/\s+/g, '-')}-${i}`
+    }));
 
     if (editingProduct) {
-      const updatedProduct = { ...editingProduct, ...restData, imageUrl };
+      const updatedProduct: Product = { 
+          ...editingProduct, 
+          ...restData, 
+          variants,
+          imageUrl 
+        };
       setProducts(products.map(p => p.id === editingProduct.id ? updatedProduct : p));
       toast({ title: "Product Updated" });
     } else {
@@ -69,6 +79,7 @@ export default function ProductsPage() {
         ...restData,
         id: `prod_${Date.now()}`,
         imageUrl: imageUrl,
+        variants
       };
       setProducts([newProduct, ...products]);
       toast({ title: "Product Added" });

@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import type { Product, Category, Brand, Unit } from '@/types';
+import type { Product, Category, Brand, Unit, ProductVariant } from '@/types';
 import { suggestItemSearchQueries } from '@/ai/flows/suggest-item-search-queries';
 import { searchProductsByDescription } from '@/ai/flows/search-products-by-description';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Search, Plus, LoaderCircle, Frown, Edit, Trash2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -30,14 +31,46 @@ interface ProductCatalogProps {
   categories: Category[];
   brands: Brand[];
   units: Unit[];
-  onAddToOrder: (product: Product) => void;
+  onAddToOrder: (product: Product, variant: ProductVariant) => void;
   onAddProduct: () => void;
   onEditProduct: (product: Product) => void;
   onDeleteProduct: (productId: string) => void;
   isManagementView?: boolean;
 }
 
-export function ProductCatalog({ products: initialProducts, categories, brands, units, onAddToOrder, onAddProduct, onEditProduct, onDeleteProduct, isManagementView = false }: ProductCatalogProps) {
+function VariantSelector({ product, onSelectVariant, trigger }: { product: Product, onSelectVariant: (variant: ProductVariant) => void, trigger: React.ReactNode }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleSelect = (variant: ProductVariant) => {
+    onSelectVariant(variant);
+    setIsOpen(false);
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Select Variant for {product.name}</DialogTitle>
+          <DialogDescription>Choose one of the available options to add to the order.</DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col gap-2 pt-4">
+          {product.variants.map(variant => (
+            <Button key={variant.id} variant="outline" className="w-full justify-between h-12" onClick={() => handleSelect(variant)} disabled={variant.stock <= 0}>
+              <div>
+                <p className="font-semibold">{variant.name}</p>
+                {variant.stock <= 0 && <p className="text-xs text-destructive">Out of stock</p>}
+              </div>
+              <p className="font-bold">${variant.price.toFixed(2)}</p>
+            </Button>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+export function ProductCatalog({ products: initialProducts, categories, brands, onAddToOrder, onAddProduct, onEditProduct, onDeleteProduct, isManagementView = false }: ProductCatalogProps) {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(initialProducts);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isAiLoading, startAiTransition] = useTransition();
@@ -128,6 +161,15 @@ export function ProductCatalog({ products: initialProducts, categories, brands, 
     setSuggestions([]);
   }
 
+  const handleProductAction = (product: Product) => {
+    if (isManagementView) return;
+    if (product.variants.length === 1) {
+      onAddToOrder(product, product.variants[0]);
+    } else {
+      // The VariantSelector will handle the rest
+    }
+  }
+
   return (
     <Card className="h-full flex flex-col shadow-lg rounded-xl overflow-hidden">
         <CardHeader className="p-4 sm:p-6 flex-row items-center justify-between gap-4 border-b">
@@ -174,7 +216,11 @@ export function ProductCatalog({ products: initialProducts, categories, brands, 
         <CardContent className="p-0 flex-1 relative">
                 <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 overflow-y-auto h-full">
                     {filteredProducts.length > 0 ? filteredProducts.map((product) => (
-                    <Card key={product.id} className="flex flex-col overflow-hidden group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 relative rounded-lg">
+                    <Card 
+                      key={product.id} 
+                      className="flex flex-col overflow-hidden group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 relative rounded-lg"
+                      onClick={() => handleProductAction(product)}
+                    >
                         <CardContent className="p-0 flex-1 flex flex-col">
                             <div className="relative">
                                 <DropdownMenu>
@@ -184,11 +230,11 @@ export function ProductCatalog({ products: initialProducts, categories, brands, 
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onClick={() => onEditProduct(product)}>
+                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEditProduct(product); }}>
                                             <Edit className="mr-2 h-4 w-4" />
                                             <span>{t('edit')}</span>
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => onDeleteProduct(product.id)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDeleteProduct(product.id); }} className="text-destructive focus:text-destructive focus:bg-destructive/10">
                                             <Trash2 className="mr-2 h-4 w-4" />
                                             <span>{t('delete')}</span>
                                         </DropdownMenuItem>
@@ -212,12 +258,24 @@ export function ProductCatalog({ products: initialProducts, categories, brands, 
                             </div>
                         </CardContent>
                         <CardFooter className="p-2 pt-0 flex items-center justify-between">
-                             <p className="text-xl font-bold ml-2">${product.price.toFixed(2)}</p>
-                            {!isManagementView &&
-                                <Button onClick={() => onAddToOrder(product)} className="w-auto font-bold">
-                                    <Plus className="mr-2 h-4 w-4" /> {t('add')}
-                                </Button>
-                            }
+                            <p className="text-xl font-bold ml-2">${product.variants[0].price.toFixed(2)}{product.variants.length > 1 ? '+' : ''}</p>
+                            {!isManagementView && (
+                                product.variants.length > 1 ? (
+                                    <VariantSelector
+                                      product={product}
+                                      onSelectVariant={(variant) => onAddToOrder(product, variant)}
+                                      trigger={
+                                        <Button onClick={(e) => e.stopPropagation()} className="w-auto font-bold">
+                                            Select Option
+                                        </Button>
+                                      }
+                                    />
+                                ) : (
+                                    <Button onClick={() => onAddToOrder(product, product.variants[0])} className="w-auto font-bold">
+                                        <Plus className="mr-2 h-4 w-4" /> {t('add')}
+                                    </Button>
+                                )
+                            )}
                         </CardFooter>
                     </Card>
                     )) : (

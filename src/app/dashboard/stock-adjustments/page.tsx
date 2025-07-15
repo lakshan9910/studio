@@ -7,7 +7,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { initialStockAdjustments, initialProducts } from "@/lib/data";
-import type { StockAdjustment, Product, StockAdjustmentType } from "@/types";
+import type { StockAdjustment, Product } from "@/types";
 import { useAuth } from '@/context/AuthContext';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +26,7 @@ import { Badge } from "@/components/ui/badge";
 
 const adjustmentItemSchema = z.object({
   productId: z.string().min(1, "Product is required."),
+  variantId: z.string().min(1, "Variant is required."),
   quantity: z.coerce.number().min(1, "Quantity must be at least 1."),
 });
 
@@ -53,18 +54,28 @@ export default function StockAdjustmentsPage() {
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [currentPage, setCurrentPage] = useState(1);
   
-  const productMap = useMemo(() => new Map(products.map(p => [p.id, p])), [products]);
+  const productMap = useMemo(() => {
+    const map = new Map<string, { product: Product, variant: any }>();
+    products.forEach(p => {
+        p.variants.forEach(v => {
+            map.set(v.id, { product: p, variant: v });
+        });
+    });
+    return map;
+  }, [products]);
 
   const form = useForm<AdjustmentFormValues>({
     resolver: zodResolver(adjustmentSchema),
     defaultValues: { date: format(new Date(), 'yyyy-MM-dd'), reason: "", type: "Subtraction", items: [] },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, watch } = useFieldArray({
     control: form.control,
     name: "items",
   });
   
+  const watchedItems = watch();
+
   useEffect(() => {
     if (!loading && user?.role !== 'Admin') {
       toast({
@@ -102,7 +113,7 @@ export default function StockAdjustmentsPage() {
         date: format(new Date(adjustment.date), 'yyyy-MM-dd'),
       });
     } else {
-      form.reset({ date: format(new Date(), 'yyyy-MM-dd'), reason: "", type: "Subtraction", items: [{ productId: "", quantity: 1 }] });
+      form.reset({ date: format(new Date(), 'yyyy-MM-dd'), reason: "", type: "Subtraction", items: [{ productId: "", variantId: "", quantity: 1 }] });
     }
     setModalOpen(true);
   };
@@ -114,18 +125,18 @@ export default function StockAdjustmentsPage() {
   };
 
   const onSubmit = (data: AdjustmentFormValues) => {
-    // In a real app, you'd have a transaction to update product stock levels here.
-    // For now, we'll just simulate it.
-    
     setProducts(prevProducts => {
-        const newProducts = [...prevProducts];
+        const newProducts = JSON.parse(JSON.stringify(prevProducts));
         data.items.forEach(item => {
-            const productIndex = newProducts.findIndex(p => p.id === item.productId);
-            if(productIndex !== -1) {
-                if (data.type === 'Addition') {
-                    newProducts[productIndex].stock += item.quantity;
-                } else {
-                    newProducts[productIndex].stock = Math.max(0, newProducts[productIndex].stock - item.quantity);
+            const product = newProducts.find((p: Product) => p.id === item.productId);
+            if (product) {
+                const variant = product.variants.find((v: any) => v.id === item.variantId);
+                if (variant) {
+                    if (data.type === 'Addition') {
+                        variant.stock += item.quantity;
+                    } else {
+                        variant.stock = Math.max(0, variant.stock - item.quantity);
+                    }
                 }
             }
         });
@@ -215,7 +226,10 @@ export default function StockAdjustmentsPage() {
                       </TableCell>
                       <TableCell className="font-medium">{adj.reason}</TableCell>
                       <TableCell>
-                          {adj.items.map(item => `${productMap.get(item.productId)?.name || 'N/A'} (x${item.quantity})`).join(', ')}
+                          {adj.items.map(item => {
+                            const details = productMap.get(item.variantId);
+                            return `${details?.product.name || 'N/A'} (${details?.variant.name || 'N/A'}) (x${item.quantity})`
+                          }).join(', ')}
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
@@ -333,35 +347,53 @@ export default function StockAdjustmentsPage() {
 
               <div className="space-y-4">
                 <FormLabel>Items</FormLabel>
-                {fields.map((field, index) => (
-                  <div key={field.id} className="flex items-end gap-2 p-2 border rounded-md">
-                    <FormField control={form.control} name={`items.${index}.productId`} render={({ field }) => (
-                        <FormItem className="flex-1">
-                           <FormLabel className="text-xs">Product</FormLabel>
-                           <Select onValueChange={field.onChange} defaultValue={field.value}>
-                               <FormControl>
-                                   <SelectTrigger><SelectValue placeholder="Select product" /></SelectTrigger>
-                               </FormControl>
-                               <SelectContent>
-                                   {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                               </SelectContent>
-                           </Select>
-                           <FormMessage />
-                        </FormItem>
-                    )}/>
-                    <FormField control={form.control} name={`items.${index}.quantity`} render={({ field }) => (
-                        <FormItem className="w-24">
-                          <FormLabel className="text-xs">Quantity</FormLabel>
-                          <FormControl><Input type="number" placeholder="Qty" {...field} /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                    )}/>
-                    <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-                <Button type="button" variant="outline" size="sm" onClick={() => append({ productId: "", quantity: 1 })}>
+                {fields.map((field, index) => {
+                  const selectedProductId = watchedItems.items[index]?.productId;
+                  const availableVariants = products.find(p => p.id === selectedProductId)?.variants || [];
+                  return(
+                    <div key={field.id} className="grid grid-cols-[1fr,1fr,100px,auto] items-end gap-2 p-2 border rounded-md">
+                      <FormField control={form.control} name={`items.${index}.productId`} render={({ field }) => (
+                          <FormItem className="flex-1">
+                             <FormLabel className="text-xs">Product</FormLabel>
+                             <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                 <FormControl>
+                                     <SelectTrigger><SelectValue placeholder="Select product" /></SelectTrigger>
+                                 </FormControl>
+                                 <SelectContent>
+                                     {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                                 </SelectContent>
+                             </Select>
+                             <FormMessage />
+                          </FormItem>
+                      )}/>
+                      <FormField control={form.control} name={`items.${index}.variantId`} render={({ field }) => (
+                          <FormItem className="flex-1">
+                             <FormLabel className="text-xs">Variant</FormLabel>
+                             <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!selectedProductId}>
+                                 <FormControl>
+                                     <SelectTrigger><SelectValue placeholder="Select variant" /></SelectTrigger>
+                                 </FormControl>
+                                 <SelectContent>
+                                     {availableVariants.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
+                                 </SelectContent>
+                             </Select>
+                             <FormMessage />
+                          </FormItem>
+                      )}/>
+                      <FormField control={form.control} name={`items.${index}.quantity`} render={({ field }) => (
+                          <FormItem className="w-24">
+                            <FormLabel className="text-xs">Quantity</FormLabel>
+                            <FormControl><Input type="number" placeholder="Qty" {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                      )}/>
+                      <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  );
+                })}
+                <Button type="button" variant="outline" size="sm" onClick={() => append({ productId: "", variantId: "", quantity: 1 })}>
                     <PlusCircle className="mr-2 h-4 w-4" /> Add Item
                 </Button>
               </div>

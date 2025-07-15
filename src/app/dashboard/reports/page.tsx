@@ -3,12 +3,12 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Sale, Purchase, Return, Product, Category, Expense, ExpenseCategory } from '@/types';
-import { initialSales, initialPurchases, initialReturns, initialProducts, initialCategories, initialExpenses, initialExpenseCategories } from '@/lib/data';
+import type { Sale, Purchase, Return, Product, Category, Expense } from '@/types';
+import { initialSales, initialPurchases, initialReturns, initialProducts, initialCategories, initialExpenses } from '@/lib/data';
 import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, Package, TrendingUp, TrendingDown, Layers, Receipt } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, Layers, Receipt } from 'lucide-react';
 import { SalesChart } from '@/components/reports/SalesChart';
 import { CategoryPieChart } from '@/components/reports/CategoryPieChart';
 import { useToast } from "@/hooks/use-toast";
@@ -45,7 +45,7 @@ export default function ReportsPage() {
         purchases.forEach(purchase => {
             if (purchase.status === 'Completed') {
                 purchase.items.forEach(item => {
-                    productCosts.set(item.productId, item.cost);
+                    productCosts.set(item.variantId, item.cost);
                 });
             }
         });
@@ -66,7 +66,7 @@ export default function ReportsPage() {
             salesByDay[date] = (salesByDay[date] || 0) + sale.total;
             
             sale.items.forEach(item => {
-                const cost = productCosts.get(item.productId) || 0;
+                const cost = productCosts.get(item.variantId) || 0;
                 totalCostOfGoods += cost * item.quantity;
                 const product = productMap.get(item.productId);
                 if (product && categorySales[product.category]) {

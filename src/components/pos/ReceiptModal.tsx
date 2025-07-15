@@ -71,14 +71,14 @@ export function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalProps) {
             <ScrollArea className="max-h-60">
                 <div className="space-y-2 pr-4">
                     {items.map((item) => (
-                    <div key={item.id} className="flex justify-between items-center text-sm">
+                    <div key={item.variant.id} className="flex justify-between items-center text-sm">
                         <div>
-                            <p className="font-medium">{item.name}</p>
+                            <p className="font-medium">{item.productName} <span className="text-muted-foreground text-xs">({item.variant.name})</span></p>
                             <p className="text-muted-foreground text-xs">
-                                {item.quantity} x ${item.price.toFixed(2)}
+                                {item.quantity} x ${item.variant.price.toFixed(2)}
                             </p>
                         </div>
-                        <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
+                        <p className="font-medium">${(item.variant.price * item.quantity).toFixed(2)}</p>
                     </div>
                     ))}
                 </div>

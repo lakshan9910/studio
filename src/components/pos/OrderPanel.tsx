@@ -23,8 +23,8 @@ interface OrderPanelProps {
   customers: Customer[];
   currentCustomer: Customer | null;
   onSetCustomer: (customer: Customer | null) => void;
-  onUpdateQuantity: (productId: string, quantity: number) => void;
-  onRemoveItem: (productId: string) => void;
+  onUpdateQuantity: (variantId: string, quantity: number) => void;
+  onRemoveItem: (variantId: string) => void;
   onFinalize: () => void;
   onHold: () => void;
   onResumeOrder: (orderId: number) => void;
@@ -32,7 +32,7 @@ interface OrderPanelProps {
 }
 
 function CurrentOrderView({ orderItems, customers, currentCustomer, onSetCustomer, onUpdateQuantity, onRemoveItem, onFinalize, onHold, t }: any) {
-    const subtotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const subtotal = orderItems.reduce((sum, item) => sum + item.variant.price * item.quantity, 0);
     const tax = subtotal * 0.08;
     const total = subtotal + tax;
     const [openCustomerPopover, setOpenCustomerPopover] = useState(false);
@@ -89,24 +89,25 @@ function CurrentOrderView({ orderItems, customers, currentCustomer, onSetCustome
                 <ScrollArea className="flex-1">
                     <div className="px-6 flex flex-col gap-5">
                         {orderItems.map((item) => (
-                            <div key={item.id} className="flex items-start gap-4">
-                                <Image src={item.imageUrl} alt={item.name} width={64} height={64} className="rounded-lg object-cover aspect-square" />
+                            <div key={item.variant.id} className="flex items-start gap-4">
+                                <Image src={item.imageUrl} alt={item.productName} width={64} height={64} className="rounded-lg object-cover aspect-square" />
                                 <div className="flex-1">
-                                    <p className="font-semibold leading-tight">{item.name}</p>
-                                    <p className="text-sm text-muted-foreground">${item.price.toFixed(2)}</p>
+                                    <p className="font-semibold leading-tight">{item.productName}</p>
+                                    <p className="text-xs text-muted-foreground">{item.variant.name}</p>
+                                    <p className="text-sm text-muted-foreground">${item.variant.price.toFixed(2)}</p>
                                     <div className="flex items-center gap-2 mt-2">
-                                        <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}>
+                                        <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => onUpdateQuantity(item.variant.id, item.quantity - 1)}>
                                             <Minus className="h-4 w-4" />
                                         </Button>
                                         <span className="w-6 text-center font-bold text-sm">{item.quantity}</span>
-                                        <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}>
+                                        <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => onUpdateQuantity(item.variant.id, item.quantity + 1)}>
                                             <Plus className="h-4 w-4" />
                                         </Button>
                                     </div>
                                 </div>
                                 <div className="flex flex-col items-end gap-1">
-                                    <p className="font-bold text-base">${(item.price * item.quantity).toFixed(2)}</p>
-                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/70 hover:text-destructive" onClick={() => onRemoveItem(item.id)}>
+                                    <p className="font-bold text-base">${(item.variant.price * item.quantity).toFixed(2)}</p>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/70 hover:text-destructive" onClick={() => onRemoveItem(item.variant.id)}>
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
                                 </div>
@@ -147,7 +148,7 @@ function CurrentOrderView({ orderItems, customers, currentCustomer, onSetCustome
 
 function HeldOrdersView({ heldOrders, onResumeOrder, onDeleteHeldOrder }: any) {
     const calculateTotal = (items: OrderItem[]) => {
-        return items.reduce((sum, item) => sum + item.price * item.quantity, 0) * 1.08;
+        return items.reduce((sum, item) => sum + item.variant.price * item.quantity, 0) * 1.08;
     };
 
     return (
@@ -207,8 +208,8 @@ function RecentSalesView({ recentSales }: { recentSales: Sale[] }) {
                                 <Separator className="my-2" />
                                 <ul className="text-xs space-y-1">
                                     {sale.items.map(item => (
-                                        <li key={item.productId} className="flex justify-between">
-                                            <span>{item.name} x{item.quantity}</span>
+                                        <li key={item.variantId} className="flex justify-between">
+                                            <span>{item.productName} ({item.variantName}) x{item.quantity}</span>
                                             <span>${(item.price * item.quantity).toFixed(2)}</span>
                                         </li>
                                     ))}

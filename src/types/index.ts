@@ -3,24 +3,37 @@ export type UserRole = 'Admin' | 'Cashier';
 export type PaymentMethod = 'Cash' | 'Card' | 'Online' | 'Credit';
 export type StockAdjustmentType = 'Addition' | 'Subtraction';
 
+export interface ProductVariant {
+  id: string; // Unique ID for the variant, e.g., prod_001-small
+  sku: string; // Stock Keeping Unit
+  name: string; // e.g., "Small", "Red", "12oz"
+  price: number;
+  stock: number;
+}
+
 export interface Product {
   id: string;
   name: string;
   category: string;
   brand: string;
-  unit: string;
-  price: number;
+  unit: string; // Base unit, might be less relevant with variants
   imageUrl: string;
-  stock: number;
+  variants: ProductVariant[];
 }
 
-export interface OrderItem extends Product {
+export interface OrderItem {
+  productId: string;
+  productName: string;
+  variant: ProductVariant;
   quantity: number;
+  imageUrl: string;
 }
 
 export interface SaleItem {
     productId: string;
-    name: string;
+    productName: string;
+    variantId: string;
+    variantName: string;
     quantity: number;
     price: number; // Price per unit at time of sale
 }
@@ -64,6 +77,7 @@ export interface User {
 
 export interface PurchaseItem {
   productId: string;
+  variantId: string;
   quantity: number;
   cost: number; // Cost per unit
 }
@@ -79,6 +93,7 @@ export interface Purchase {
 
 export interface ReturnItem {
   productId: string;
+  variantId: string;
   quantity: number;
   reason: string;
 }
@@ -123,6 +138,7 @@ export interface Expense {
 
 export interface StockAdjustmentItem {
   productId: string;
+  variantId: string;
   quantity: number;
 }
 

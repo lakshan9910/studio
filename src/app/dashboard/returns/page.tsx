@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const returnItemSchema = z.object({
   productId: z.string().min(1, "Product is required."),
+  variantId: z.string().min(1, "Variant is required."),
   quantity: z.coerce.number().min(1, "Quantity must be at least 1."),
   reason: z.string().min(3, "Reason is required."),
 });
@@ -46,17 +47,24 @@ export default function ReturnsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
 
-  const productMap = new Map(products.map(p => [p.id, p]));
+  const productMap = useMemo(() => {
+    const map = new Map<string, Product>();
+    products.forEach(p => map.set(p.id, p));
+    return map;
+  }, [products]);
+
 
   const form = useForm<ReturnFormValues>({
     resolver: zodResolver(returnSchema),
     defaultValues: { customerName: "", date: format(new Date(), 'yyyy-MM-dd'), items: [] },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, watch } = useFieldArray({
     control: form.control,
     name: "items",
   });
+
+  const watchedItems = watch();
 
   const filteredReturns = useMemo(() => {
     return returns.filter(ret =>
@@ -85,7 +93,7 @@ export default function ReturnsPage() {
         date: format(new Date(returnItem.date), 'yyyy-MM-dd'),
       });
     } else {
-      form.reset({ customerName: "", date: format(new Date(), 'yyyy-MM-dd'), items: [{ productId: "", quantity: 1, reason: "" }] });
+      form.reset({ customerName: "", date: format(new Date(), 'yyyy-MM-dd'), items: [{ productId: "", variantId: "", quantity: 1, reason: "" }] });
     }
     setModalOpen(true);
   };
@@ -99,7 +107,8 @@ export default function ReturnsPage() {
   const onSubmit = (data: ReturnFormValues) => {
     const totalValue = data.items.reduce((sum, item) => {
         const product = productMap.get(item.productId);
-        return sum + (product ? product.price * item.quantity : 0);
+        const variant = product?.variants.find(v => v.id === item.variantId);
+        return sum + (variant ? variant.price * item.quantity : 0);
     }, 0);
 
     if (editingReturn) {
@@ -272,10 +281,13 @@ export default function ReturnsPage() {
 
               <div className="space-y-4">
                 <FormLabel>Returned Items</FormLabel>
-                {fields.map((field, index) => (
-                  <div key={field.id} className="grid grid-cols-[1fr_80px_1fr_auto] items-end gap-2 p-2 border rounded-md">
+                {fields.map((field, index) => {
+                  const selectedProductId = watchedItems.items[index]?.productId;
+                  const availableVariants = products.find(p => p.id === selectedProductId)?.variants || [];
+                  return(
+                  <div key={field.id} className="grid grid-cols-[1fr,1fr,80px,1fr,auto] items-end gap-2 p-2 border rounded-md">
                     <FormField control={form.control} name={`items.${index}.productId`} render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="col-span-2">
                            <FormLabel className="text-xs">Product</FormLabel>
                            <Select onValueChange={field.onChange} defaultValue={field.value}>
                                <FormControl>
@@ -283,6 +295,20 @@ export default function ReturnsPage() {
                                </FormControl>
                                <SelectContent>
                                    {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                               </SelectContent>
+                           </Select>
+                           <FormMessage />
+                        </FormItem>
+                    )}/>
+                     <FormField control={form.control} name={`items.${index}.variantId`} render={({ field }) => (
+                        <FormItem>
+                           <FormLabel className="text-xs">Variant</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!selectedProductId}>
+                               <FormControl>
+                                   <SelectTrigger><SelectValue placeholder="Select variant" /></SelectTrigger>
+                               </FormControl>
+                               <SelectContent>
+                                   {availableVariants.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
                                </SelectContent>
                            </Select>
                            <FormMessage />
@@ -306,8 +332,8 @@ export default function ReturnsPage() {
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
-                ))}
-                <Button type="button" variant="outline" size="sm" onClick={() => append({ productId: "", quantity: 1, reason: "" })}>
+                )})}
+                <Button type="button" variant="outline" size="sm" onClick={() => append({ productId: "", variantId: "", quantity: 1, reason: "" })}>
                     <PlusCircle className="mr-2 h-4 w-4" /> Add Item
                 </Button>
               </div>

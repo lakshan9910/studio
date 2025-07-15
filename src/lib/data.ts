@@ -8,9 +8,11 @@ export const initialProducts: Product[] = [
     category: 'cat_01',
     brand: 'brand_01',
     unit: 'unit_02',
-    price: 2.99,
     imageUrl: 'https://placehold.co/300x300.png',
-    stock: 150,
+    variants: [
+      { id: 'prod_001-kg', sku: 'FR-APP-KG', name: 'Per Kg', price: 2.99, stock: 150 },
+      { id: 'prod_001-bag', sku: 'FR-APP-BG', name: 'Bag (2kg)', price: 5.49, stock: 50 },
+    ],
   },
   {
     id: 'prod_002',
@@ -18,9 +20,10 @@ export const initialProducts: Product[] = [
     category: 'cat_01',
     brand: 'brand_01',
     unit: 'unit_02',
-    price: 1.49,
     imageUrl: 'https://placehold.co/300x300.png',
-    stock: 200,
+    variants: [
+      { id: 'prod_002-kg', sku: 'FR-BAN-KG', name: 'Per Kg', price: 1.49, stock: 200 }
+    ],
   },
   {
     id: 'prod_003',
@@ -28,9 +31,10 @@ export const initialProducts: Product[] = [
     category: 'cat_02',
     brand: 'brand_02',
     unit: 'unit_01',
-    price: 5.49,
     imageUrl: 'https://placehold.co/300x300.png',
-    stock: 50,
+    variants: [
+      { id: 'prod_003-loaf', sku: 'BK-SDB-LF', name: 'Loaf', price: 5.49, stock: 50 }
+    ],
   },
   {
     id: 'prod_004',
@@ -38,9 +42,10 @@ export const initialProducts: Product[] = [
     category: 'cat_02',
     brand: 'brand_02',
     unit: 'unit_01',
-    price: 3.25,
     imageUrl: 'https://placehold.co/300x300.png',
-    stock: 80,
+    variants: [
+      { id: 'prod_004-pc', sku: 'BK-CRS-PC', name: 'Piece', price: 3.25, stock: 80 }
+    ],
   },
   {
     id: 'prod_005',
@@ -48,9 +53,11 @@ export const initialProducts: Product[] = [
     category: 'cat_03',
     brand: 'brand_03',
     unit: 'unit_03',
-    price: 3.89,
     imageUrl: 'https://placehold.co/300x300.png',
-    stock: 100,
+    variants: [
+      { id: 'prod_005-1l', sku: 'DR-MLK-1L', name: '1 Liter', price: 3.89, stock: 100 },
+      { id: 'prod_005-2l', sku: 'DR-MLK-2L', name: '2 Liter', price: 6.99, stock: 40 },
+    ],
   },
   {
     id: 'prod_006',
@@ -58,9 +65,10 @@ export const initialProducts: Product[] = [
     category: 'cat_03',
     brand: 'brand_03',
     unit: 'unit_01',
-    price: 6.99,
     imageUrl: 'https://placehold.co/300x300.png',
-    stock: 75,
+    variants: [
+      { id: 'prod_006-250g', sku: 'DR-CHD-250G', name: '250g', price: 6.99, stock: 75 }
+    ],
   },
   {
     id: 'prod_007',
@@ -68,9 +76,10 @@ export const initialProducts: Product[] = [
     category: 'cat_04',
     brand: 'brand_04',
     unit: 'unit_01',
-    price: 4.79,
     imageUrl: 'https://placehold.co/300x300.png',
-    stock: 120,
+    variants: [
+      { id: 'prod_007-reg', sku: 'SN-CHP-REG', name: 'Regular', price: 4.79, stock: 120 }
+    ],
   },
   {
     id: 'prod_008',
@@ -78,49 +87,11 @@ export const initialProducts: Product[] = [
     category: 'cat_04',
     brand: 'brand_05',
     unit: 'unit_01',
-    price: 3.99,
     imageUrl: 'https://placehold.co/300x300.png',
-    stock: 90,
-  },
-  {
-    id: 'prod_009',
-    name: 'Avocado',
-    category: 'cat_01',
-    brand: 'brand_01',
-    unit: 'unit_01',
-    price: 1.99,
-    imageUrl: 'https://placehold.co/300x300.png',
-    stock: 110,
-  },
-  {
-    id: 'prod_010',
-    name: 'Baguette',
-    category: 'cat_02',
-    brand: 'brand_02',
-    unit: 'unit_01',
-    price: 2.79,
-    imageUrl: 'https://placehold.co/300x300.png',
-    stock: 60,
-  },
-  {
-    id: 'prod_011',
-    name: 'Greek Yogurt',
-    category: 'cat_03',
-    brand: 'brand_03',
-    unit: 'unit_01',
-    price: 4.49,
-    imageUrl: 'https://placehold.co/300x300.png',
-    stock: 85,
-  },
-  {
-    id: 'prod_012',
-    name: 'Salted Pretzels',
-    category: 'cat_04',
-    brand: 'brand_04',
-    unit: 'unit_01',
-    price: 3.29,
-    imageUrl: 'https://placehold.co/300x300.png',
-    stock: 150,
+    variants: [
+      { id: 'prod_008-70pct', sku: 'SN-DCB-70', name: '70% Cacao', price: 3.99, stock: 90 },
+      { id: 'prod_008-85pct', sku: 'SN-DCB-85', name: '85% Cacao', price: 4.49, stock: 60 },
+    ],
   },
 ];
 
@@ -159,37 +130,11 @@ export const initialPurchases: Purchase[] = [
         supplierId: 'sup_01',
         date: '2024-07-20T10:00:00Z',
         items: [
-            { productId: 'prod_001', quantity: 50, cost: 1.50 },
-            { productId: 'prod_002', quantity: 100, cost: 0.75 },
-            { productId: 'prod_009', quantity: 80, cost: 1.00 },
+            { productId: 'prod_001', variantId: 'prod_001-kg', quantity: 50, cost: 1.50 },
         ],
-        totalCost: 235.00,
+        totalCost: 75.00,
         status: 'Completed',
     },
-     {
-        id: 'purch_002',
-        supplierId: 'sup_02',
-        date: '2024-07-22T14:30:00Z',
-        items: [
-            { productId: 'prod_003', quantity: 20, cost: 3.00 },
-            { productId: 'prod_004', quantity: 50, cost: 1.80 },
-            { productId: 'prod_010', quantity: 40, cost: 1.50 },
-        ],
-        totalCost: 210.00,
-        status: 'Completed',
-    },
-    {
-        id: 'purch_003',
-        supplierId: 'sup_03',
-        date: '2024-07-23T09:00:00Z',
-        items: [
-            { productId: 'prod_005', quantity: 60, cost: 2.20 },
-            { productId: 'prod_006', quantity: 40, cost: 4.50 },
-            { productId: 'prod_011', quantity: 50, cost: 2.50 },
-        ],
-        totalCost: 437.00,
-        status: 'Completed',
-    }
 ];
 
 export const initialReturns: Return[] = [
@@ -198,7 +143,7 @@ export const initialReturns: Return[] = [
         customerName: 'John Doe',
         date: '2024-07-25T11:00:00Z',
         items: [
-            { productId: 'prod_005', quantity: 1, reason: 'Expired' },
+            { productId: 'prod_005', variantId: 'prod_005-1l', quantity: 1, reason: 'Expired' },
         ],
         totalValue: 3.89,
         status: 'Completed'
@@ -216,49 +161,14 @@ export const initialSales: Sale[] = [
         id: 'sale_001',
         date: '2024-07-28T10:30:00Z',
         items: [
-            { productId: 'prod_001', name: 'Organic Apples', quantity: 2, price: 2.99 },
-            { productId: 'prod_003', name: 'Sourdough Bread', quantity: 1, price: 5.49 },
+            { productId: 'prod_001', productName: 'Organic Apples', variantId: 'prod_001-kg', variantName: 'Per Kg', quantity: 2, price: 2.99 },
+            { productId: 'prod_003', productName: 'Sourdough Bread', variantId: 'prod_003-loaf', variantName: 'Loaf', quantity: 1, price: 5.49 },
         ],
         total: 11.47,
         paymentMethod: 'Card',
         customerId: 'cust_001',
         customerName: 'Alice Johnson',
     },
-    {
-        id: 'sale_002',
-        date: '2024-07-28T12:15:00Z',
-        items: [
-            { productId: 'prod_005', name: 'Whole Milk', quantity: 1, price: 3.89 },
-            { productId: 'prod_006', name: 'Cheddar Cheese Block', quantity: 1, price: 6.99 },
-            { productId: 'prod_007', name: 'Kettle-Cooked Chips', quantity: 2, price: 4.79 },
-        ],
-        total: 20.46,
-        paymentMethod: 'Cash',
-        customerId: 'cust_002',
-        customerName: 'Bob Williams',
-    },
-    {
-        id: 'sale_003',
-        date: '2024-07-29T15:00:00Z',
-        items: [
-            { productId: 'prod_002', name: 'Ripe Bananas', quantity: 5, price: 1.49 },
-            { productId: 'prod_012', name: 'Salted Pretzels', quantity: 3, price: 3.29 },
-        ],
-        total: 17.32,
-        paymentMethod: 'Cash',
-        customerName: 'Walk-in Customer'
-    },
-    {
-        id: 'sale_004',
-        date: '2024-07-30T18:45:00Z',
-        items: [
-            { productId: 'prod_008', name: 'Dark Chocolate Bar', quantity: 4, price: 3.99 },
-        ],
-        total: 15.96,
-        paymentMethod: 'Online',
-        customerId: 'cust_003',
-        customerName: 'Charlie Brown',
-    }
 ];
 
 export const initialExpenseCategories: ExpenseCategory[] = [
@@ -279,18 +189,9 @@ export const initialStockAdjustments: StockAdjustment[] = [
     id: 'adj_001',
     date: '2024-07-26T09:00:00Z',
     items: [
-      { productId: 'prod_001', quantity: 5 },
+      { productId: 'prod_001', variantId: 'prod_001-kg', quantity: 5 },
     ],
     reason: 'Damaged during shipment',
     type: 'Subtraction',
   },
-  {
-    id: 'adj_002',
-    date: '2024-07-27T14:00:00Z',
-    items: [
-      { productId: 'prod_003', quantity: 2 },
-    ],
-    reason: 'Manual stock recount correction',
-    type: 'Addition',
-  }
 ];

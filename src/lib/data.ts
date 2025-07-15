@@ -168,7 +168,7 @@ export const initialCustomers: Customer[] = [
 export const initialSales: Sale[] = [
     {
         id: 'sale_001',
-        date: '2024-07-28T10:30:00Z',
+        date: subDays(new Date(), 5).toISOString(),
         items: [
             { productId: 'prod_001', productName: 'Organic Apples', variantId: 'prod_001-kg', variantName: 'Per Kg', quantity: 2, price: 2.99 },
             { productId: 'prod_003', productName: 'Sourdough Bread', variantId: 'prod_003-loaf', variantName: 'Loaf', quantity: 1, price: 5.49 },
@@ -193,6 +193,35 @@ export const initialSales: Sale[] = [
         paymentStatus: 'Paid',
         paidAmount: 4.20,
     },
+    {
+        id: 'sale_003',
+        date: subDays(new Date(), 15).toISOString(),
+        items: [
+            { productId: 'prod_008', productName: 'Dark Chocolate Bar', variantId: 'prod_008-85pct', variantName: '85% Cacao', quantity: 5, price: 4.49 },
+        ],
+        total: 22.45,
+        paymentMethod: 'Credit',
+        customerId: 'cust_003',
+        customerName: 'Charlie Brown',
+        dueDate: subDays(new Date(), 5).toISOString(), // Overdue
+        paymentStatus: 'Due',
+        paidAmount: 0,
+    },
+     {
+        id: 'sale_004',
+        date: subDays(new Date(), 2).toISOString(),
+        items: [
+            { productId: 'prod_007', productName: 'Kettle-Cooked Chips', variantId: 'prod_007-reg', variantName: 'Regular', quantity: 3, price: 4.79 },
+            { productId: 'prod_002', productName: 'Ripe Bananas', variantId: 'prod_002-kg', variantName: 'Per Kg', quantity: 1.5, price: 1.49 },
+        ],
+        total: 16.60,
+        paymentMethod: 'Credit',
+        customerId: 'cust_001',
+        customerName: 'Alice Johnson',
+        dueDate: addDays(new Date(), 10).toISOString(), // Still Due
+        paymentStatus: 'Due',
+        paidAmount: 0,
+    }
 ];
 
 export const initialExpenseCategories: ExpenseCategory[] = [
@@ -337,3 +366,5 @@ export const initialCashDrawerSessions: CashDrawerSession[] = [
         variance: -0.75,
     }
 ]
+
+      

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useTransition } from 'react';
@@ -12,25 +13,35 @@ import { searchProductsByDescription } from '@/ai/flows/search-products-by-descr
 import { useDebounce } from '@/hooks/use-debounce';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
-import { Search, Plus, LoaderCircle, Frown } from 'lucide-react';
+import { Search, Plus, LoaderCircle, Frown, Edit, Trash2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { MoreVertical } from 'lucide-react';
 
 const formSchema = z.object({
   query: z.string(),
 });
 
 interface ProductCatalogProps {
+  products: Product[];
   onAddToOrder: (product: Product) => void;
+  onAddProduct: () => void;
+  onEditProduct: (product: Product) => void;
+  onDeleteProduct: (productId: string) => void;
 }
 
-export function ProductCatalog({ onAddToOrder }: ProductCatalogProps) {
-  const [products, setProducts] = useState<Product[]>(allProducts);
+export function ProductCatalog({ products: initialProducts, onAddToOrder, onAddProduct, onEditProduct, onDeleteProduct }: ProductCatalogProps) {
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>(initialProducts);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isAiLoading, startAiTransition] = useTransition();
   const { toast } = useToast();
+
+  useEffect(() => {
+    setFilteredProducts(initialProducts);
+  }, [initialProducts]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -54,35 +65,34 @@ export function ProductCatalog({ onAddToOrder }: ProductCatalogProps) {
       setSuggestions([]);
     }
   }, [debouncedSearchTerm]);
-
+  
   const handleSearch = async (values: z.infer<typeof formSchema>) => {
     setSuggestions([]);
     startAiTransition(async () => {
-        if(values.query.trim() === '') {
-            setProducts(allProducts);
-            return;
-        }
+      const query = values.query.toLowerCase();
+      if(query.trim() === '') {
+          setFilteredProducts(initialProducts);
+          return;
+      }
+      
+      // Local search first for responsiveness
+      const localFiltered = initialProducts.filter(p => p.name.toLowerCase().includes(query));
+      setFilteredProducts(localFiltered);
 
       try {
         const result = await searchProductsByDescription({ description: values.query });
         if (result.products && result.products.length > 0) {
-            // This assumes the AI returns products that can be matched to our mock data by name.
-            // In a real app, the AI would likely return IDs we can use to fetch from a DB.
-            const foundProducts = allProducts.filter(p => result.products.some(rp => rp.name.toLowerCase() === p.name.toLowerCase()));
-            setProducts(foundProducts.length > 0 ? foundProducts : allProducts.filter(p => p.name.toLowerCase().includes(values.query.toLowerCase())));
-        } else {
-           setProducts(allProducts.filter(p => p.name.toLowerCase().includes(values.query.toLowerCase())));
+            const foundProductNames = result.products.map(p => p.name.toLowerCase());
+            const aiFiltered = initialProducts.filter(p => foundProductNames.includes(p.name.toLowerCase()));
+            setFilteredProducts(aiFiltered.length > 0 ? aiFiltered : localFiltered);
         }
       } catch (error) {
         console.error("Failed to search products:", error);
         toast({
             variant: "destructive",
-            title: "Search Error",
-            description: "Could not perform AI search. Falling back to local search.",
+            title: "AI Search Error",
+            description: "Could not perform AI search. Displaying local results.",
         });
-        // Fallback to simple local search
-        const filtered = allProducts.filter(p => p.name.toLowerCase().includes(values.query.toLowerCase()));
-        setProducts(filtered);
       }
     });
   };
@@ -95,8 +105,8 @@ export function ProductCatalog({ onAddToOrder }: ProductCatalogProps) {
 
   return (
     <Card className="h-full flex flex-col">
-        <CardContent className="p-4 flex-1 flex flex-col gap-4">
-            <div className="relative">
+        <CardHeader className="p-4 flex-row items-center justify-between">
+            <div className="relative flex-1">
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(handleSearch)} className="flex gap-2">
                         <FormField
@@ -105,7 +115,7 @@ export function ProductCatalog({ onAddToOrder }: ProductCatalogProps) {
                         render={({ field }) => (
                             <FormItem className="flex-1 relative">
                                 <FormControl>
-                                    <Input placeholder="Search for products or describe an item..." {...field} className="pr-10" />
+                                    <Input placeholder="Search or describe an item..." {...field} className="pr-10" />
                                 </FormControl>
                                 <div className="absolute top-0 right-0 h-full flex items-center pr-3">
                                 {isAiLoading ? <LoaderCircle className="h-5 w-5 animate-spin text-muted-foreground" /> : <Search className="h-5 w-5 text-muted-foreground" />}
@@ -135,11 +145,32 @@ export function ProductCatalog({ onAddToOrder }: ProductCatalogProps) {
                     </Card>
                 )}
             </div>
-
-            <ScrollArea className="flex-1 -m-4">
+             <Button onClick={onAddProduct} className="ml-4">
+                <Plus className="mr-2 h-4 w-4" /> Add Product
+            </Button>
+        </CardHeader>
+        <CardContent className="p-0 flex-1">
+            <ScrollArea className="h-full">
                 <div className="p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {products.length > 0 ? products.map((product) => (
-                    <Card key={product.id} className="flex flex-col overflow-hidden group transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                    {filteredProducts.length > 0 ? filteredProducts.map((product) => (
+                    <Card key={product.id} className="flex flex-col overflow-hidden group transition-all duration-300 hover:shadow-lg hover:-translate-y-1 relative">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-7 w-7 z-10 bg-black/20 hover:bg-black/50 text-white hover:text-white">
+                                    <MoreVertical className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => onEditProduct(product)}>
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    <span>Edit</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onDeleteProduct(product.id)} className="text-destructive">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    <span>Delete</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                         <CardContent className="p-0 flex-1 flex flex-col">
                             <div className="aspect-square w-full overflow-hidden">
                                 <Image

@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -76,5 +77,20 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #receipt-content, #receipt-content * {
+    visibility: visible;
+  }
+  #receipt-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
   }
 }

@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { OrderItem } from '@/types';
@@ -5,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Printer } from 'lucide-react';
 
 interface ReceiptModalProps {
   isOpen: boolean;
@@ -17,16 +19,20 @@ export function ReceiptModal({ isOpen, onClose, orderItems, total }: ReceiptModa
     const subtotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const tax = total - subtotal;
 
+    const handlePrint = () => {
+        window.print();
+    };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md @media print:shadow-none print:border-none">
         <DialogHeader>
           <DialogTitle className="text-center text-2xl">Transaction Complete</DialogTitle>
           <DialogDescription className="text-center">
             Thank you for your purchase!
           </DialogDescription>
         </DialogHeader>
-        <div className="my-4">
+        <div id="receipt-content" className="my-4">
             <div className="bg-muted/50 p-4 rounded-lg">
                 <p className="text-sm font-semibold text-center">Receipt</p>
                 <p className="text-xs text-muted-foreground text-center">{new Date().toLocaleString()}</p>
@@ -62,8 +68,12 @@ export function ReceiptModal({ isOpen, onClose, orderItems, total }: ReceiptModa
                 </div>
             </div>
         </div>
-        <DialogFooter>
-          <Button onClick={onClose} className="w-full" size="lg">
+        <DialogFooter className="print:hidden">
+            <Button onClick={handlePrint} variant="outline" className="w-full sm:w-auto">
+                <Printer className="mr-2 h-4 w-4" />
+                Print Bill
+            </Button>
+          <Button onClick={onClose} className="w-full sm:w-auto" size="lg">
             Start New Order
           </Button>
         </DialogFooter>

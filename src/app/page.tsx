@@ -1,18 +1,25 @@
+
 "use client";
 
 import { useState } from 'react';
 import type { OrderItem, Product } from '@/types';
+import { products as initialProducts } from '@/lib/data';
 import { Header } from '@/components/pos/Header';
 import { ProductCatalog } from '@/components/pos/ProductCatalog';
 import { OrderPanel } from '@/components/pos/OrderPanel';
 import { ReceiptModal } from '@/components/pos/ReceiptModal';
+import { ProductModal } from '@/components/pos/ProductModal';
 import { Toaster } from "@/components/ui/toaster";
 
 export default function PosPage() {
+  const [products, setProducts] = useState<Product[]>(initialProducts);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [isReceiptOpen, setReceiptOpen] = useState(false);
   const [completedOrder, setCompletedOrder] = useState<OrderItem[]>([]);
   const [completedTotal, setCompletedTotal] = useState(0);
+
+  const [isProductModalOpen, setProductModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   const handleAddToOrder = (product: Product) => {
     setOrderItems((prevItems) => {
@@ -61,15 +68,54 @@ export default function PosPage() {
     setCompletedTotal(0);
   };
 
+  const handleOpenAddProduct = () => {
+    setEditingProduct(null);
+    setProductModalOpen(true);
+  };
+
+  const handleOpenEditProduct = (product: Product) => {
+    setEditingProduct(product);
+    setProductModalOpen(true);
+  };
+  
+  const handleDeleteProduct = (productId: string) => {
+    setProducts(products.filter(p => p.id !== productId));
+    setOrderItems(orderItems.filter(item => item.id !== productId));
+  };
+
+  const handleSaveProduct = (productData: Omit<Product, 'id' | 'imageUrl'> & { id?: string }) => {
+    if (editingProduct) {
+      // Edit existing product
+      const updatedProduct = { ...editingProduct, ...productData };
+      setProducts(products.map(p => p.id === editingProduct.id ? updatedProduct : p));
+    } else {
+      // Add new product
+      const newProduct: Product = {
+        ...productData,
+        id: `prod_${Date.now()}`,
+        imageUrl: 'https://placehold.co/300x300.png',
+      };
+      setProducts([...products, newProduct]);
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen bg-background font-body antialiased">
       <Header />
       <main className="flex-1 overflow-hidden p-4 sm:p-6 lg:p-8">
         <div className="h-full max-w-7xl mx-auto grid lg:grid-cols-[2fr,1fr] gap-8">
           <div className="h-full flex flex-col gap-4">
-            <h2 className="text-2xl font-bold tracking-tight">Product Catalog</h2>
+             <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold tracking-tight">Product Catalog</h2>
+            </div>
             <div className="flex-1 overflow-hidden">
-                <ProductCatalog onAddToOrder={handleAddToOrder} />
+                <ProductCatalog 
+                    products={products}
+                    onAddToOrder={handleAddToOrder} 
+                    onAddProduct={handleOpenAddProduct}
+                    onEditProduct={handleOpenEditProduct}
+                    onDeleteProduct={handleDeleteProduct}
+                />
             </div>
           </div>
           <div className="h-full flex flex-col gap-4">
@@ -90,6 +136,12 @@ export default function PosPage() {
         onClose={handleNewOrder}
         orderItems={completedOrder}
         total={completedTotal}
+      />
+      <ProductModal
+        isOpen={isProductModalOpen}
+        onClose={() => setProductModalOpen(false)}
+        onSave={handleSaveProduct}
+        product={editingProduct}
       />
       <Toaster />
     </div>

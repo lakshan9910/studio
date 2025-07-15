@@ -1,4 +1,5 @@
 
+      
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
@@ -21,13 +22,14 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const ROWS_PER_PAGE = 10;
+const SALES_STORAGE_KEY = 'pos_sales';
 
 export default function PaymentsPage() {
   const { hasPermission, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
-  const [sales, setSales] = useState<Sale[]>(initialSales);
+  const [sales, setSales] = useState<Sale[]>([]);
   const [customers] = useState<Customer[]>(initialCustomers);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
@@ -46,6 +48,20 @@ export default function PaymentsPage() {
     paymentMethod: null,
     paymentStatus: null,
   });
+
+  useEffect(() => {
+    const storedSales = localStorage.getItem(SALES_STORAGE_KEY);
+    if (storedSales) {
+      setSales(JSON.parse(storedSales));
+    } else {
+      setSales(initialSales);
+    }
+  }, []);
+
+  const persistSales = (updatedSales: Sale[]) => {
+    setSales(updatedSales);
+    localStorage.setItem(SALES_STORAGE_KEY, JSON.stringify(updatedSales));
+  }
 
   useEffect(() => {
     if (!loading && !hasPermission('payments:read')) {
@@ -68,7 +84,7 @@ export default function PaymentsPage() {
 
   const filteredSales = useMemo(() => {
     return sales
-      .map(sale => ({ ...sale, paymentStatus: getPaymentStatus(sale) }))
+      .map(sale => ({ ...sale, derivedStatus: getPaymentStatus(sale) }))
       .filter(sale => {
         const matchesSearch = sale.id.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
           sale.paymentMethod.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
@@ -80,7 +96,7 @@ export default function PaymentsPage() {
 
         const matchesPaymentMethod = !filters.paymentMethod || sale.paymentMethod === filters.paymentMethod;
         
-        const matchesPaymentStatus = !filters.paymentStatus || sale.paymentStatus === filters.paymentStatus;
+        const matchesPaymentStatus = !filters.paymentStatus || sale.derivedStatus === filters.paymentStatus;
 
         return matchesSearch && matchesDate && matchesCustomer && matchesPaymentMethod && matchesPaymentStatus;
       });
@@ -113,11 +129,12 @@ export default function PaymentsPage() {
       return;
     };
 
-    setSales(prevSales => prevSales.map(s => 
+    const updatedSales = sales.map(s => 
         s.id === selectedSale.id 
         ? { ...s, paymentStatus: 'Paid', paidAmount: s.total } 
         : s
-    ));
+    );
+    persistSales(updatedSales);
     toast({ title: 'Payment Confirmed', description: `Sale ${selectedSale.id.slice(-6)} has been marked as paid.`});
     setMarkAsPaidOpen(false);
     setSelectedSale(null);
@@ -255,16 +272,16 @@ export default function PaymentsPage() {
                           <Badge variant={sale.paymentMethod === 'Cash' ? 'default' : 'secondary'}>{sale.paymentMethod}</Badge>
                       </TableCell>
                        <TableCell>
-                          {sale.paymentStatus && (
-                            <Badge variant={paymentStatusMap[sale.paymentStatus].color} className="gap-1">
-                                {paymentStatusMap[sale.paymentStatus].icon}
-                                {paymentStatusMap[sale.paymentStatus].label}
+                          {sale.derivedStatus && (
+                            <Badge variant={paymentStatusMap[sale.derivedStatus].color} className="gap-1">
+                                {paymentStatusMap[sale.derivedStatus].icon}
+                                {paymentStatusMap[sale.derivedStatus].label}
                             </Badge>
                           )}
                       </TableCell>
                       <TableCell className="text-right font-medium">${sale.total.toFixed(2)}</TableCell>
                       <TableCell className="text-center">
-                          {sale.paymentStatus !== 'Paid' && (
+                          {sale.derivedStatus !== 'Paid' && (
                               <Button variant="outline" size="sm" onClick={() => openMarkAsPaid(sale)} disabled={!canWrite}>Mark as Paid</Button>
                           )}
                       </TableCell>
@@ -329,3 +346,5 @@ export default function PaymentsPage() {
     </div>
   );
 }
+
+    

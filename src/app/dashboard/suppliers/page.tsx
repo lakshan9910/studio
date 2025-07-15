@@ -10,7 +10,7 @@ import { initialSuppliers } from "@/lib/data";
 import type { Supplier } from "@/types";
 import { useAuth } from '@/context/AuthContext';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -48,6 +48,8 @@ const supplierSchema = z.object({
 
 type SupplierFormValues = z.infer<typeof supplierSchema>;
 
+const ROWS_PER_PAGE = 10;
+
 export default function SuppliersPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -58,6 +60,7 @@ export default function SuppliersPage() {
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const form = useForm<SupplierFormValues>({
     resolver: zodResolver(supplierSchema),
@@ -82,6 +85,17 @@ export default function SuppliersPage() {
       supplier.email?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
     );
   }, [suppliers, debouncedSearchTerm]);
+  
+  const totalPages = Math.ceil(filteredSuppliers.length / ROWS_PER_PAGE);
+
+  const paginatedSuppliers = useMemo(() => {
+    const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
+    return filteredSuppliers.slice(startIndex, startIndex + ROWS_PER_PAGE);
+  }, [filteredSuppliers, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm]);
 
   const handleOpenModal = (supplier: Supplier | null = null) => {
     setEditingSupplier(supplier);
@@ -161,8 +175,8 @@ export default function SuppliersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredSuppliers.length > 0 ? (
-                  filteredSuppliers.map((supplier) => (
+                {paginatedSuppliers.length > 0 ? (
+                  paginatedSuppliers.map((supplier) => (
                     <TableRow key={supplier.id}>
                       <TableCell className="font-medium">{supplier.name}</TableCell>
                       <TableCell>{supplier.contactPerson || 'N/A'}</TableCell>
@@ -204,6 +218,31 @@ export default function SuppliersPage() {
             </Table>
           </div>
         </CardContent>
+         <CardFooter>
+          <div className="flex items-center justify-between w-full">
+            <div className="text-sm text-muted-foreground">
+              Page {currentPage} of {totalPages}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </CardFooter>
       </Card>
 
       <Dialog open={isModalOpen} onOpenChange={setModalOpen}>

@@ -10,7 +10,7 @@ import * as z from "zod";
 import { useAuth } from '@/context/AuthContext';
 import type { User, UserRole } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -45,6 +45,8 @@ const userSchema = z.object({
 
 type UserFormValues = z.infer<typeof userSchema>;
 
+const ROWS_PER_PAGE = 10;
+
 export default function UsersPage() {
   const { user: currentUser, users, addUser, updateUser, deleteUser, updateUserPassword, loading } = useAuth();
   const [isModalOpen, setModalOpen] = useState(false);
@@ -53,6 +55,7 @@ export default function UsersPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const [currentPage, setCurrentPage] = useState(1);
   
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userSchema),
@@ -94,6 +97,16 @@ export default function UsersPage() {
     );
   }, [users, debouncedSearchTerm]);
 
+  const totalPages = Math.ceil(filteredUsers.length / ROWS_PER_PAGE);
+
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
+    return filteredUsers.slice(startIndex, startIndex + ROWS_PER_PAGE);
+  }, [filteredUsers, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm]);
 
   const handleOpenModal = (user: User | null = null) => {
     setEditingUser(user);
@@ -203,7 +216,7 @@ export default function UsersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.map((user) => (
+                {paginatedUsers.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">
                         <div className="flex items-center gap-3">
@@ -240,6 +253,31 @@ export default function UsersPage() {
             </Table>
           </div>
         </CardContent>
+        <CardFooter>
+          <div className="flex items-center justify-between w-full">
+            <div className="text-sm text-muted-foreground">
+              Page {currentPage} of {totalPages}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </CardFooter>
       </Card>
 
       <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>

@@ -1,14 +1,14 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { initialReturns, initialProducts } from "@/lib/data";
 import type { Return, Product } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -33,6 +33,8 @@ const returnSchema = z.object({
 
 type ReturnFormValues = z.infer<typeof returnSchema>;
 
+const ROWS_PER_PAGE = 10;
+
 export default function ReturnsPage() {
   const [returns, setReturns] = useState<Return[]>(initialReturns);
   const [products] = useState<Product[]>(initialProducts);
@@ -40,6 +42,7 @@ export default function ReturnsPage() {
   const [editingReturn, setEditingReturn] = useState<Return | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const productMap = new Map(products.map(p => [p.id, p]));
 
@@ -59,6 +62,17 @@ export default function ReturnsPage() {
         ret.customerName.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
     );
   }, [returns, debouncedSearchTerm]);
+  
+  const totalPages = Math.ceil(filteredReturns.length / ROWS_PER_PAGE);
+
+  const paginatedReturns = useMemo(() => {
+    const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
+    return filteredReturns.slice(startIndex, startIndex + ROWS_PER_PAGE);
+  }, [filteredReturns, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm]);
 
 
   const handleOpenModal = (returnItem: Return | null = null) => {
@@ -150,8 +164,8 @@ export default function ReturnsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredReturns.length > 0 ? (
-                  filteredReturns.map((returnItem) => (
+                {paginatedReturns.length > 0 ? (
+                  paginatedReturns.map((returnItem) => (
                     <TableRow key={returnItem.id}>
                       <TableCell className="font-mono text-xs">{returnItem.id}</TableCell>
                       <TableCell className="font-medium">{returnItem.customerName}</TableCell>
@@ -191,6 +205,31 @@ export default function ReturnsPage() {
             </Table>
           </div>
         </CardContent>
+        <CardFooter>
+          <div className="flex items-center justify-between w-full">
+            <div className="text-sm text-muted-foreground">
+              Page {currentPage} of {totalPages}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </CardFooter>
       </Card>
 
       <Dialog open={isModalOpen} onOpenChange={setModalOpen}>

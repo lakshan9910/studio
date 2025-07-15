@@ -11,7 +11,7 @@ import { initialBrands } from "@/lib/data";
 import type { Brand } from "@/types";
 import { useAuth } from '@/context/AuthContext';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -59,6 +59,8 @@ const brandSchema = z.object({
 
 type BrandFormValues = z.infer<typeof brandSchema>;
 
+const ROWS_PER_PAGE = 10;
+
 export default function BrandsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -69,6 +71,7 @@ export default function BrandsPage() {
   const [editingBrand, setEditingBrand] = useState<Brand | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const form = useForm<BrandFormValues>({
     resolver: zodResolver(brandSchema),
@@ -108,6 +111,17 @@ export default function BrandsPage() {
       brand.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
     );
   }, [brands, debouncedSearchTerm]);
+  
+  const totalPages = Math.ceil(filteredBrands.length / ROWS_PER_PAGE);
+
+  const paginatedBrands = useMemo(() => {
+    const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
+    return filteredBrands.slice(startIndex, startIndex + ROWS_PER_PAGE);
+  }, [filteredBrands, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm]);
 
   const handleOpenModal = (brand: Brand | null = null) => {
     setEditingBrand(brand);
@@ -205,8 +219,8 @@ export default function BrandsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredBrands.length > 0 ? (
-                  filteredBrands.map((brand) => (
+                {paginatedBrands.length > 0 ? (
+                  paginatedBrands.map((brand) => (
                     <TableRow key={brand.id}>
                       <TableCell>
                         <Image src={brand.imageUrl} alt={brand.name} width={40} height={40} className="rounded-md object-cover" data-ai-hint={`${brand.name} logo`}/>
@@ -248,6 +262,31 @@ export default function BrandsPage() {
             </Table>
           </div>
         </CardContent>
+         <CardFooter>
+          <div className="flex items-center justify-between w-full">
+            <div className="text-sm text-muted-foreground">
+              Page {currentPage} of {totalPages}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </CardFooter>
       </Card>
 
       <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>

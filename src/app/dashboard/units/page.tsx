@@ -10,7 +10,7 @@ import { initialUnits } from "@/lib/data";
 import type { Unit } from "@/types";
 import { useAuth } from '@/context/AuthContext';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -46,6 +46,8 @@ const unitSchema = z.object({
 
 type UnitFormValues = z.infer<typeof unitSchema>;
 
+const ROWS_PER_PAGE = 10;
+
 export default function UnitsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -56,6 +58,7 @@ export default function UnitsPage() {
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const form = useForm<UnitFormValues>({
     resolver: zodResolver(unitSchema),
@@ -80,6 +83,17 @@ export default function UnitsPage() {
       unit.abbreviation.toLowerCase().includes(lowercasedTerm)
     );
   }, [units, debouncedSearchTerm]);
+  
+  const totalPages = Math.ceil(filteredUnits.length / ROWS_PER_PAGE);
+
+  const paginatedUnits = useMemo(() => {
+    const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
+    return filteredUnits.slice(startIndex, startIndex + ROWS_PER_PAGE);
+  }, [filteredUnits, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm]);
 
   const handleOpenModal = (unit: Unit | null = null) => {
     setEditingUnit(unit);
@@ -157,8 +171,8 @@ export default function UnitsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUnits.length > 0 ? (
-                  filteredUnits.map((unit) => (
+                {paginatedUnits.length > 0 ? (
+                  paginatedUnits.map((unit) => (
                     <TableRow key={unit.id}>
                       <TableCell className="font-medium">{unit.name}</TableCell>
                       <TableCell>{unit.abbreviation}</TableCell>
@@ -198,6 +212,31 @@ export default function UnitsPage() {
             </Table>
           </div>
         </CardContent>
+         <CardFooter>
+          <div className="flex items-center justify-between w-full">
+            <div className="text-sm text-muted-foreground">
+              Page {currentPage} of {totalPages}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </CardFooter>
       </Card>
 
       <Dialog open={isModalOpen} onOpenChange={setModalOpen}>

@@ -11,7 +11,7 @@ import { initialCategories } from "@/lib/data";
 import type { Category } from "@/types";
 import { useAuth } from '@/context/AuthContext';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -59,6 +59,8 @@ const categorySchema = z.object({
 
 type CategoryFormValues = z.infer<typeof categorySchema>;
 
+const ROWS_PER_PAGE = 10;
+
 export default function CategoriesPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -69,6 +71,7 @@ export default function CategoriesPage() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
@@ -107,6 +110,17 @@ export default function CategoriesPage() {
       category.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
     );
   }, [categories, debouncedSearchTerm]);
+  
+  const totalPages = Math.ceil(filteredCategories.length / ROWS_PER_PAGE);
+
+  const paginatedCategories = useMemo(() => {
+    const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
+    return filteredCategories.slice(startIndex, startIndex + ROWS_PER_PAGE);
+  }, [filteredCategories, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm]);
 
   const handleOpenModal = (category: Category | null = null) => {
     setEditingCategory(category);
@@ -204,8 +218,8 @@ export default function CategoriesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredCategories.length > 0 ? (
-                  filteredCategories.map((category) => (
+                {paginatedCategories.length > 0 ? (
+                  paginatedCategories.map((category) => (
                     <TableRow key={category.id}>
                        <TableCell>
                         <Image src={category.imageUrl} alt={category.name} width={40} height={40} className="rounded-md object-cover" data-ai-hint={`${category.name}`}/>
@@ -247,6 +261,31 @@ export default function CategoriesPage() {
             </Table>
           </div>
         </CardContent>
+         <CardFooter>
+          <div className="flex items-center justify-between w-full">
+            <div className="text-sm text-muted-foreground">
+              Page {currentPage} of {totalPages}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </CardFooter>
       </Card>
 
       <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>

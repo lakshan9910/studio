@@ -10,7 +10,7 @@ import { initialPurchases, initialProducts, initialSuppliers } from "@/lib/data"
 import type { Purchase, Product, Supplier } from "@/types";
 import { useAuth } from '@/context/AuthContext';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -37,6 +37,8 @@ const purchaseSchema = z.object({
 
 type PurchaseFormValues = z.infer<typeof purchaseSchema>;
 
+const ROWS_PER_PAGE = 10;
+
 export default function PurchasesPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -49,6 +51,7 @@ export default function PurchasesPage() {
   const [editingPurchase, setEditingPurchase] = useState<Purchase | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const productMap = new Map(products.map(p => [p.id, p]));
   const supplierMap = new Map(suppliers.map(s => [s.id, s.name]));
@@ -80,6 +83,17 @@ export default function PurchasesPage() {
       supplierMap.get(purchase.supplierId)?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
     );
   }, [purchases, debouncedSearchTerm, supplierMap]);
+  
+  const totalPages = Math.ceil(filteredPurchases.length / ROWS_PER_PAGE);
+
+  const paginatedPurchases = useMemo(() => {
+    const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
+    return filteredPurchases.slice(startIndex, startIndex + ROWS_PER_PAGE);
+  }, [filteredPurchases, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm]);
 
   const handleOpenModal = (purchase: Purchase | null = null) => {
     setEditingPurchase(purchase);
@@ -170,8 +184,8 @@ export default function PurchasesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPurchases.length > 0 ? (
-                  filteredPurchases.map((purchase) => (
+                {paginatedPurchases.length > 0 ? (
+                  paginatedPurchases.map((purchase) => (
                     <TableRow key={purchase.id}>
                       <TableCell className="font-mono text-xs">{purchase.id}</TableCell>
                       <TableCell className="font-medium">{supplierMap.get(purchase.supplierId) || 'Unknown'}</TableCell>
@@ -211,6 +225,31 @@ export default function PurchasesPage() {
             </Table>
           </div>
         </CardContent>
+         <CardFooter>
+          <div className="flex items-center justify-between w-full">
+            <div className="text-sm text-muted-foreground">
+              Page {currentPage} of {totalPages}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </CardFooter>
       </Card>
 
       <Dialog open={isModalOpen} onOpenChange={setModalOpen}>

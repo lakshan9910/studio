@@ -10,7 +10,7 @@ import { initialExpenses, initialExpenseCategories } from "@/lib/data";
 import type { Expense, ExpenseCategory } from "@/types";
 import { useAuth } from '@/context/AuthContext';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -50,6 +50,8 @@ const expenseSchema = z.object({
 
 type ExpenseFormValues = z.infer<typeof expenseSchema>;
 
+const ROWS_PER_PAGE = 10;
+
 export default function ExpensesPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -61,6 +63,7 @@ export default function ExpensesPage() {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const categoryMap = useMemo(() => new Map(expenseCategories.map(cat => [cat.id, cat.name])), [expenseCategories]);
 
@@ -87,6 +90,18 @@ export default function ExpensesPage() {
       categoryMap.get(expense.categoryId)?.toLowerCase().includes(lowercasedTerm)
     );
   }, [expenses, debouncedSearchTerm, categoryMap]);
+  
+  const totalPages = Math.ceil(filteredExpenses.length / ROWS_PER_PAGE);
+
+  const paginatedExpenses = useMemo(() => {
+    const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
+    return filteredExpenses.slice(startIndex, startIndex + ROWS_PER_PAGE);
+  }, [filteredExpenses, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm]);
+
 
   const handleOpenModal = (expense: Expense | null = null) => {
     setEditingExpense(expense);
@@ -176,8 +191,8 @@ export default function ExpensesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredExpenses.length > 0 ? (
-                  filteredExpenses.map((expense) => (
+                {paginatedExpenses.length > 0 ? (
+                  paginatedExpenses.map((expense) => (
                     <TableRow key={expense.id}>
                       <TableCell>{format(new Date(expense.date), "PPP")}</TableCell>
                       <TableCell>{categoryMap.get(expense.categoryId) || 'Uncategorized'}</TableCell>
@@ -219,6 +234,31 @@ export default function ExpensesPage() {
             </Table>
           </div>
         </CardContent>
+        <CardFooter>
+          <div className="flex items-center justify-between w-full">
+            <div className="text-sm text-muted-foreground">
+              Page {currentPage} of {totalPages}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </CardFooter>
       </Card>
 
       <Dialog open={isModalOpen} onOpenChange={setModalOpen}>

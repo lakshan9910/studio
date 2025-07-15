@@ -2,11 +2,12 @@
 "use client";
 
 import { useState } from 'react';
-import type { OrderItem, Product, Category, Brand, Unit } from '@/types';
-import { initialProducts, initialCategories, initialBrands, initialUnits } from '@/lib/data';
+import type { OrderItem, Product, Category, Brand, Unit, Sale, PaymentMethod } from '@/types';
+import { initialProducts, initialCategories, initialBrands, initialUnits, initialSales } from '@/lib/data';
 import { ProductCatalog } from '@/components/pos/ProductCatalog';
 import { OrderPanel } from '@/components/pos/OrderPanel';
 import { ReceiptModal, ReceiptData } from '@/components/pos/ReceiptModal';
+import { PaymentModal, PaymentDetails } from '@/components/pos/PaymentModal';
 import { ProductModal, ProductFormData } from '@/components/pos/ProductModal';
 import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
@@ -22,9 +23,13 @@ export default function PosPage() {
   const [units, setUnits] = useState<Unit[]>(initialUnits);
 
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+  const [heldOrders, setHeldOrders] = useState<{ id: number, items: OrderItem[] }[]>([]);
+  const [completedSales, setCompletedSales] = useState<Sale[]>(initialSales);
+
   const [isReceiptOpen, setReceiptOpen] = useState(false);
   const [completedOrder, setCompletedOrder] = useState<ReceiptData | null>(null);
 
+  const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
   const [isProductModalOpen, setProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
@@ -55,15 +60,53 @@ export default function PosPage() {
     setOrderItems((prevItems) => prevItems.filter((item) => item.id !== productId));
   };
   
-  const calculateTotal = () => {
-    const subtotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const calculateTotal = (items: OrderItem[]) => {
+    const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const tax = subtotal * 0.08; // 8% tax
     return { subtotal, tax, total: subtotal + tax };
   };
 
-  const handleFinalizeOrder = () => {
+  const handleOpenPayment = () => {
+    if (orderItems.length > 0) {
+      setPaymentModalOpen(true);
+    }
+  };
+
+  const handleHoldOrder = () => {
     if (orderItems.length === 0) return;
-    const { subtotal, tax, total } = calculateTotal();
+    setHeldOrders(prev => [...prev, { id: Date.now(), items: orderItems }]);
+    setOrderItems([]);
+  };
+
+  const handleResumeOrder = (orderId: number) => {
+    const orderToResume = heldOrders.find(o => o.id === orderId);
+    if (orderToResume) {
+      setOrderItems(orderToResume.items);
+      setHeldOrders(prev => prev.filter(o => o.id !== orderId));
+    }
+  };
+  
+  const handleDeleteHeldOrder = (orderId: number) => {
+     setHeldOrders(prev => prev.filter(o => o.id !== orderId));
+  }
+
+  const handleFinalizeOrder = (paymentDetails: PaymentDetails) => {
+    if (orderItems.length === 0) return;
+    const { subtotal, tax, total } = calculateTotal(orderItems);
+
+    const newSale: Sale = {
+        id: `sale_${Date.now()}`,
+        date: new Date().toISOString(),
+        items: orderItems.map(item => ({
+            productId: item.id,
+            quantity: item.quantity,
+            price: item.price,
+            name: item.name
+        })),
+        total,
+        paymentMethod: paymentDetails.method,
+    };
+    setCompletedSales(prev => [newSale, ...prev]);
 
     setCompletedOrder({
       items: [...orderItems],
@@ -74,7 +117,12 @@ export default function PosPage() {
       storeName: settings.storeName,
       headerText: settings.receiptHeaderText || '',
       footerText: settings.receiptFooterText || '',
+      paymentMethod: paymentDetails.method,
+      amountPaid: paymentDetails.amountPaid,
+      change: paymentDetails.change
     });
+
+    setPaymentModalOpen(false);
     setReceiptOpen(true);
   };
 
@@ -128,6 +176,7 @@ export default function PosPage() {
   };
   
   const productModalData = editingProduct;
+  const currentOrderTotal = calculateTotal(orderItems).total;
 
   return (
     <div className="flex flex-col h-full">
@@ -146,10 +195,15 @@ export default function PosPage() {
             </div>
              <div className="h-full">
                  <OrderPanel
-                    items={orderItems}
+                    orderItems={orderItems}
+                    heldOrders={heldOrders}
+                    recentSales={completedSales}
                     onUpdateQuantity={handleUpdateQuantity}
                     onRemoveItem={handleRemoveItem}
-                    onFinalize={handleFinalizeOrder}
+                    onFinalize={handleOpenPayment}
+                    onHold={handleHoldOrder}
+                    onResumeOrder={handleResumeOrder}
+                    onDeleteHeldOrder={handleDeleteHeldOrder}
                 />
             </div>
         </div>
@@ -157,6 +211,12 @@ export default function PosPage() {
             isOpen={isReceiptOpen}
             onClose={handleNewOrder}
             receipt={completedOrder}
+        />
+         <PaymentModal
+            isOpen={isPaymentModalOpen}
+            onClose={() => setPaymentModalOpen(false)}
+            onConfirm={handleFinalizeOrder}
+            totalAmount={currentOrderTotal}
         />
         <ProductModal
             isOpen={isProductModalOpen}

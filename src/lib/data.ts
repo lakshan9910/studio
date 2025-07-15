@@ -1,3 +1,4 @@
+
 import type { Product, Category, Brand, Unit, Purchase, Return, Sale, Customer, Supplier, Expense, ExpenseCategory } from '@/types';
 
 export const initialProducts: Product[] = [
@@ -209,37 +210,41 @@ export const initialSales: Sale[] = [
         id: 'sale_001',
         date: '2024-07-28T10:30:00Z',
         items: [
-            { productId: 'prod_001', quantity: 2, price: 2.99 },
-            { productId: 'prod_003', quantity: 1, price: 5.49 },
+            { productId: 'prod_001', name: 'Organic Apples', quantity: 2, price: 2.99 },
+            { productId: 'prod_003', name: 'Sourdough Bread', quantity: 1, price: 5.49 },
         ],
-        total: 11.47
+        total: 11.47,
+        paymentMethod: 'Card'
     },
     {
         id: 'sale_002',
         date: '2024-07-28T12:15:00Z',
         items: [
-            { productId: 'prod_005', quantity: 1, price: 3.89 },
-            { productId: 'prod_006', quantity: 1, price: 6.99 },
-            { productId: 'prod_007', quantity: 2, price: 4.79 },
+            { productId: 'prod_005', name: 'Whole Milk', quantity: 1, price: 3.89 },
+            { productId: 'prod_006', name: 'Cheddar Cheese Block', quantity: 1, price: 6.99 },
+            { productId: 'prod_007', name: 'Kettle-Cooked Chips', quantity: 2, price: 4.79 },
         ],
-        total: 20.46
+        total: 20.46,
+        paymentMethod: 'Cash'
     },
     {
         id: 'sale_003',
         date: '2024-07-29T15:00:00Z',
         items: [
-            { productId: 'prod_002', quantity: 5, price: 1.49 },
-            { productId: 'prod_012', quantity: 3, price: 3.29 },
+            { productId: 'prod_002', name: 'Ripe Bananas', quantity: 5, price: 1.49 },
+            { productId: 'prod_012', name: 'Salted Pretzels', quantity: 3, price: 3.29 },
         ],
-        total: 17.32
+        total: 17.32,
+        paymentMethod: 'Cash'
     },
     {
         id: 'sale_004',
         date: '2024-07-30T18:45:00Z',
         items: [
-            { productId: 'prod_008', quantity: 4, price: 3.99 },
+            { productId: 'prod_008', name: 'Dark Chocolate Bar', quantity: 4, price: 3.99 },
         ],
-        total: 15.96
+        total: 15.96,
+        paymentMethod: 'Online'
     }
 ];
 

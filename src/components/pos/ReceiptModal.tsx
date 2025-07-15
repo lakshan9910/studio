@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { OrderItem } from '@/types';
+import type { OrderItem, PaymentMethod } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -17,6 +17,9 @@ export interface ReceiptData {
     storeName: string;
     headerText: string;
     footerText: string;
+    paymentMethod: PaymentMethod;
+    amountPaid?: number;
+    change?: number;
 }
 
 interface ReceiptModalProps {
@@ -32,7 +35,7 @@ export function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalProps) {
         window.print();
     };
 
-    const { items, subtotal, tax, total, cashierName, storeName, headerText, footerText } = receipt;
+    const { items, subtotal, tax, total, cashierName, storeName, headerText, footerText, paymentMethod, amountPaid, change } = receipt;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -54,6 +57,10 @@ export function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalProps) {
                 <div className="flex justify-between">
                     <span>Cashier:</span>
                     <span>{cashierName}</span>
+                </div>
+                 <div className="flex justify-between">
+                    <span>Payment:</span>
+                    <span>{paymentMethod}</span>
                 </div>
             </div>
             <ScrollArea className="max-h-60">
@@ -85,6 +92,18 @@ export function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalProps) {
                     <span>Total</span>
                     <span>${total.toFixed(2)}</span>
                 </div>
+                {paymentMethod === 'Cash' && amountPaid && (
+                   <div className="flex justify-between">
+                        <span className="text-muted-foreground">Cash Paid</span>
+                        <span>${amountPaid.toFixed(2)}</span>
+                    </div>
+                )}
+                 {paymentMethod === 'Cash' && change !== undefined && (
+                   <div className="flex justify-between">
+                        <span className="text-muted-foreground">Change</span>
+                        <span>${change.toFixed(2)}</span>
+                    </div>
+                )}
             </div>
             <p className="text-center text-xs text-muted-foreground mt-6">{footerText}</p>
         </div>

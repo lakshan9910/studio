@@ -1,4 +1,6 @@
+
 export type UserRole = 'Admin' | 'Cashier';
+export type PaymentMethod = 'Cash' | 'Card' | 'Online' | 'Credit';
 
 export interface Product {
   id: string;
@@ -17,6 +19,7 @@ export interface OrderItem extends Product {
 
 export interface SaleItem {
     productId: string;
+    name: string;
     quantity: number;
     price: number; // Price per unit at time of sale
 }
@@ -26,6 +29,7 @@ export interface Sale {
     date: string; // ISO date string
     items: SaleItem[];
     total: number;
+    paymentMethod: PaymentMethod;
 }
 
 export interface Category {

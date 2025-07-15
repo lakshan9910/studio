@@ -4,6 +4,12 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { translations, TranslationKey } from '@/lib/i18n';
 
+interface HSLColor {
+    h: number;
+    s: number;
+    l: number;
+}
+
 export interface Settings {
     storeName: string;
     storeLogo?: string;
@@ -15,6 +21,9 @@ export interface Settings {
     receiptHeaderText?: string;
     receiptFooterText?: string;
     language: string;
+    themePrimary: HSLColor;
+    themeBackground: HSLColor;
+    themeAccent: HSLColor;
 }
 
 interface SettingsContextType {
@@ -36,6 +45,9 @@ const defaultSettings: Settings = {
     receiptHeaderText: 'Thank you for your purchase!',
     receiptFooterText: 'Please come again!',
     language: 'en',
+    themePrimary: { h: 200, s: 95, l: 74 },
+    themeBackground: { h: 220, s: 13, l: 95 },
+    themeAccent: { h: 170, s: 65, l: 53 },
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -48,7 +60,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     try {
       const storedSettings = localStorage.getItem('appSettings');
       if (storedSettings) {
-        setSettings(JSON.parse(storedSettings));
+        setSettings({ ...defaultSettings, ...JSON.parse(storedSettings) });
       }
     } catch (error) {
       console.error("Failed to parse settings from local storage", error);

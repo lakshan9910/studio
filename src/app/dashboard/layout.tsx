@@ -170,6 +170,7 @@ export default function DashboardLayout({
   
   const [searchTerm, setSearchTerm] = useState('');
   const [time, setTime] = useState<Date | null>(null);
+  const [date, setDate] = useState<Date | undefined>(new Date());
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -305,7 +306,8 @@ export default function DashboardLayout({
                         <PopoverContent className="w-auto p-0">
                             <Calendar
                                 mode="single"
-                                selected={new Date()}
+                                selected={date}
+                                onSelect={setDate}
                                 className="rounded-md border"
                             />
                         </PopoverContent>

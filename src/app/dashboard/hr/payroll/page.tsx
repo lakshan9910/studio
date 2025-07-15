@@ -4,6 +4,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useSettings } from '@/context/SettingsContext';
 import type { Payroll, PayrollItem, Attendance, EmployeeSalary, Loan, SalaryComponent } from "@/types";
 import { initialAttendance, initialSalaries, initialLoans } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
@@ -27,14 +28,9 @@ const initialDateRange: DateRange = {
     to: addDays(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0), 0),
 }
 
-const bonusDeductionSchema = z.object({
-  bonus: z.coerce.number().min(0).optional(),
-  otherDeductions: z.coerce.number().min(0).optional(),
-});
-type BonusDeductionValues = z.infer<typeof bonusDeductionSchema>;
-
 export default function PayrollPage() {
     const { user: currentUser, users, loading, hasPermission } = useAuth();
+    const { settings } = useSettings();
     const router = useRouter();
     const { toast } = useToast();
 
@@ -52,7 +48,6 @@ export default function PayrollPage() {
         }
     }, [currentUser, loading, router, toast, hasPermission]);
     
-    const userMap = useMemo(() => new Map(users.map(u => [u.id, u])), [users]);
     const salaryMap = useMemo(() => new Map(salaries.map(s => [s.userId, s])), [salaries]);
     const canWrite = hasPermission('hr:write');
 
@@ -68,6 +63,10 @@ export default function PayrollPage() {
 
         const period = `${format(date.from, 'MMM yyyy')}`;
         const totalDaysInPeriod = differenceInDays(date.to, date.from) + 1;
+        
+        const isWagesBoard = settings.payrollType === 'wagesBoard';
+        const noPayDivisor = isWagesBoard ? 26 : 30;
+        const otDivisor = isWagesBoard ? 200 : 240;
 
         const newPayrollItems: PayrollItem[] = users.map(user => {
             const salaryStructure = salaryMap.get(user.id);
@@ -79,16 +78,11 @@ export default function PayrollPage() {
                 rec => rec.userId === user.id && isWithinInterval(new Date(rec.date), { start: date.from!, end: date.to! })
             );
             
-            const daysPresent = userAttendance.filter(r => r.status === 'Present').length;
-            const daysLeave = userAttendance.filter(r => r.status === 'Leave').length;
-            const daysWorked = daysPresent + daysLeave;
-            const daysAbsent = totalDaysInPeriod - daysWorked;
+            const daysAbsent = userAttendance.filter(r => r.status === 'Absent').length;
             
-            const dailySalary = baseSalary / totalDaysInPeriod;
-            const salaryPayable = dailySalary * daysWorked;
+            const noPayDeduction = (baseSalary / noPayDivisor) * daysAbsent;
             
             const totalAllowances = allowances.reduce((sum, a) => sum + a.amount, 0);
-            const grossEarnings = salaryPayable + totalAllowances;
             
             const loanDeductions = loans
               .filter(l => l.userId === user.id && l.status === 'Active')
@@ -101,21 +95,30 @@ export default function PayrollPage() {
               }));
 
             const allDeductions = [...recurringDeductions, ...loanDeductions];
-            const totalDeductionsAmount = allDeductions.reduce((sum, d) => sum + d.amount, 0);
-            const netPay = grossEarnings - totalDeductionsAmount;
-
-            return {
+            
+            const initialItem: Omit<PayrollItem, 'netPay' | 'grossEarnings'> = {
                 userId: user.id,
                 userName: user.name || user.email,
                 baseSalary,
                 allowances,
-                grossEarnings,
-                daysWorked,
                 daysAbsent,
-                salaryPayable,
+                noPayDeduction,
+                overtimeNormalHours: 0,
+                overtimeSundayHours: 0,
+                overtimeHolidayHours: 0,
+                overtimePay: 0,
                 bonus: 0,
                 deductions: allDeductions,
-                netPay,
+            };
+            
+            const grossEarnings = baseSalary + totalAllowances + initialItem.overtimePay + initialItem.bonus - noPayDeduction;
+            const totalDeductionsAmount = initialItem.deductions.reduce((sum, d) => sum + d.amount, 0);
+            const netPay = grossEarnings - totalDeductionsAmount;
+
+            return {
+                ...initialItem,
+                grossEarnings,
+                netPay
             };
         });
         
@@ -125,26 +128,34 @@ export default function PayrollPage() {
             dateFrom: date.from.toISOString(),
             dateTo: date.to.toISOString(),
             status: 'Pending',
-            items: newPayrollItems
+            items: newPayrollItems,
+            payrollType: settings.payrollType
         };
 
         setPayrollRuns(prev => [newPayroll, ...prev]);
         toast({ title: "Payroll Generated", description: `Payroll for ${period} has been created.` });
     };
 
-    const handleUpdatePayrollItem = (payrollId: string, userId: string, field: 'bonus' | 'otherDeductions', value: number) => {
+    const handleUpdatePayrollItem = (payrollId: string, userId: string, field: 'bonus' | 'otherDeductions' | 'overtimeNormal' | 'overtimeSunday' | 'overtimeHoliday', value: number) => {
          if (!canWrite) {
              toast({ variant: 'destructive', title: 'Permission Denied' });
              return;
         }
         setPayrollRuns(prev => prev.map(pr => {
             if (pr.id === payrollId) {
+                const isWagesBoard = pr.payrollType === 'wagesBoard';
+                const otDivisor = isWagesBoard ? 200 : 240;
+
                 const newItems = pr.items.map(item => {
                     if (item.userId === userId) {
                         const newItem = { ...item };
-                        if (field === 'bonus') {
-                            newItem.bonus = value;
-                        } else {
+                        
+                        if (field === 'bonus') newItem.bonus = value;
+                        if (field === 'overtimeNormal') newItem.overtimeNormalHours = value;
+                        if (field === 'overtimeSunday') newItem.overtimeSundayHours = value;
+                        if (field === 'overtimeHoliday') newItem.overtimeHolidayHours = value;
+                        
+                        if (field === 'otherDeductions') {
                              const otherDeductionIndex = newItem.deductions.findIndex(d => 'type' in d && d.type === 'Other');
                             if (otherDeductionIndex > -1) {
                                 if (value > 0) {
@@ -162,8 +173,16 @@ export default function PayrollPage() {
                             }
                         }
                         
+                        const hourlyRate = newItem.baseSalary / otDivisor;
+                        const otNormalPay = hourlyRate * 1.5 * newItem.overtimeNormalHours;
+                        const otSundayPay = hourlyRate * 2 * newItem.overtimeSundayHours;
+                        const otHolidayPay = hourlyRate * 2 * newItem.overtimeHolidayHours;
+                        newItem.overtimePay = otNormalPay + otSundayPay + otHolidayPay;
+
+                        const totalAllowances = newItem.allowances.reduce((sum, a) => sum + a.amount, 0);
                         const totalDeductions = newItem.deductions.reduce((sum, d) => sum + d.amount, 0);
-                        newItem.netPay = newItem.grossEarnings + newItem.bonus - totalDeductions;
+                        newItem.grossEarnings = newItem.baseSalary + totalAllowances + newItem.overtimePay + newItem.bonus - newItem.noPayDeduction;
+                        newItem.netPay = newItem.grossEarnings - totalDeductions;
                         return newItem;
                     }
                     return item;
@@ -245,13 +264,18 @@ export default function PayrollPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
+                        <div className="overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Employee</TableHead>
-                                    <TableHead>Gross Pay</TableHead>
+                                    <TableHead>Gross</TableHead>
                                     <TableHead>Bonus</TableHead>
-                                    <TableHead>Deductions</TableHead>
+                                    <TableHead>OT Normal (hrs)</TableHead>
+                                    <TableHead>OT Sunday (hrs)</TableHead>
+                                    <TableHead>OT Holiday (hrs)</TableHead>
+                                    <TableHead>OT Pay</TableHead>
+                                    <TableHead>Other Deductions</TableHead>
                                     <TableHead>Net Pay</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -270,6 +294,16 @@ export default function PayrollPage() {
                                             />
                                         </TableCell>
                                         <TableCell>
+                                            <Input type="number" defaultValue={item.overtimeNormalHours} onBlur={e => handleUpdatePayrollItem(pr.id, item.userId, 'overtimeNormal', parseFloat(e.target.value) || 0)} className="w-24 h-8" disabled={!canWrite} />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Input type="number" defaultValue={item.overtimeSundayHours} onBlur={e => handleUpdatePayrollItem(pr.id, item.userId, 'overtimeSunday', parseFloat(e.target.value) || 0)} className="w-24 h-8" disabled={!canWrite} />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Input type="number" defaultValue={item.overtimeHolidayHours} onBlur={e => handleUpdatePayrollItem(pr.id, item.userId, 'overtimeHoliday', parseFloat(e.target.value) || 0)} className="w-24 h-8" disabled={!canWrite} />
+                                        </TableCell>
+                                         <TableCell>${item.overtimePay.toFixed(2)}</TableCell>
+                                        <TableCell>
                                              <Input 
                                                 type="number" 
                                                 defaultValue={(item.deductions.find(d => 'type' in d && d.type === 'Other') as any)?.amount || 0}
@@ -286,6 +320,7 @@ export default function PayrollPage() {
                                 ))}
                             </TableBody>
                         </Table>
+                        </div>
                     </CardContent>
                  </Card>
             ))}

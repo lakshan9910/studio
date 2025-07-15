@@ -217,9 +217,12 @@ export interface PayrollItem {
     userName: string;
     baseSalary: number;
     grossEarnings: number;
-    daysWorked: number;
     daysAbsent: number;
-    salaryPayable: number;
+    noPayDeduction: number;
+    overtimeNormalHours: number;
+    overtimeSundayHours: number;
+    overtimeHolidayHours: number;
+    overtimePay: number;
     bonus: number;
     allowances: SalaryComponent[];
     deductions: (PayrollDeduction | SalaryComponent)[];
@@ -234,6 +237,7 @@ export interface Payroll {
     dateTo: string; // ISO date
     status: PayrollStatus;
     items: PayrollItem[];
+    payrollType: 'salaryTheory' | 'wagesBoard';
 }
 
 export interface LoanRepayment {

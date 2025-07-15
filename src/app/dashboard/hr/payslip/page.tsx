@@ -2,29 +2,49 @@
 "use client";
 
 import { useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSettings } from '@/context/SettingsContext';
 import type { Payroll, SalaryComponent, PayrollDeduction } from '@/types';
 import { Button } from "@/components/ui/button";
 import { format } from 'date-fns';
 import { Printer } from 'lucide-react';
 
-// This is a placeholder. In a real app, you'd fetch this from your state/DB.
-const PAYROLL_RUNS: Payroll[] = []; 
-
 function PaySlipContent() {
     const searchParams = useSearchParams();
     const payrollId = searchParams.get('payrollId');
     const { settings } = useSettings();
     
-    // In a real app, you would fetch the payroll data based on payrollId
-    // For this example, we'll just find it in the (currently empty) placeholder.
-    // A more robust solution would be needed to get the generated payroll runs here.
-    const payrollRun: Payroll | undefined = PAYROLL_RUNS.find(p => p.id === payrollId);
+    // In a real app, you would fetch the payroll data. Here we simulate it.
+    const [payrollRun, setPayrollRun] = useState<Payroll | undefined>(undefined);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        // This simulates fetching the data. In a real app, this would be an API call.
+        // For now, we use localStorage as a temporary state holder between pages.
+        const payrollsJSON = localStorage.getItem('temp_payrolls');
+        if (payrollsJSON) {
+            const payrolls: Payroll[] = JSON.parse(payrollsJSON);
+            const foundPayroll = payrolls.find(p => p.id === payrollId);
+            setPayrollRun(foundPayroll);
+        }
+        setLoading(false);
+    }, [payrollId]);
+
+    useEffect(() => {
+        // This is a workaround for this demo to pass payroll data to this page.
+        // It's not a recommended pattern for production apps.
+        if (payrollRun) {
+            localStorage.setItem('temp_payrolls', JSON.stringify([payrollRun]));
+        }
+    }, [payrollRun]);
 
     const handlePrint = () => {
         window.print();
     };
+
+    if (loading) {
+        return <div className="text-center p-8">Loading payroll data...</div>;
+    }
 
     if (!payrollRun) {
         return (
@@ -47,7 +67,8 @@ function PaySlipContent() {
             <main className="p-4 md:p-8" id="printable-area">
                 <div className="space-y-8">
                     {payrollRun.items.map(item => {
-                        const totalDeductions = item.deductions.reduce((sum, d) => sum + d.amount, 0);
+                        const totalDeductions = item.deductions.reduce((sum, d) => sum + d.amount, 0) + item.noPayDeduction;
+                        const totalEarnings = item.baseSalary + item.allowances.reduce((sum, a) => sum + a.amount, 0) + item.bonus + item.overtimePay;
 
                         return (
                         <div key={item.userId} className="p-6 bg-white rounded-lg shadow-md page-break-after">
@@ -69,6 +90,7 @@ function PaySlipContent() {
                                 <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
                                     <p><strong>Employee Name:</strong></p><p>{item.userName}</p>
                                     <p><strong>User ID:</strong></p><p>{item.userId}</p>
+                                    <p><strong>Days Absent:</strong></p><p>{item.daysAbsent}</p>
                                 </div>
                             </section>
 
@@ -78,17 +100,18 @@ function PaySlipContent() {
                                         <h3 className="font-semibold text-lg mb-2 border-b pb-1">Earnings</h3>
                                         <div className="space-y-1 text-sm">
                                             <div className="flex justify-between"><p>Base Salary:</p> <p>${item.baseSalary.toFixed(2)}</p></div>
-                                            <div className="flex justify-between"><p>Salary Payable ({item.daysWorked} days):</p> <p>${item.salaryPayable.toFixed(2)}</p></div>
                                             {item.allowances.map(allowance => (
                                                  <div key={allowance.name} className="flex justify-between"><p>{allowance.name}:</p> <p>${allowance.amount.toFixed(2)}</p></div>
                                             ))}
+                                            <div className="flex justify-between"><p>Overtime Pay:</p> <p>${item.overtimePay.toFixed(2)}</p></div>
                                             <div className="flex justify-between"><p>Bonus:</p> <p>${item.bonus.toFixed(2)}</p></div>
-                                            <div className="flex justify-between font-bold border-t pt-1 mt-1"><p>Total Earnings:</p> <p>${(item.grossEarnings + item.bonus).toFixed(2)}</p></div>
+                                            <div className="flex justify-between font-bold border-t pt-1 mt-1"><p>Total Earnings:</p> <p>${totalEarnings.toFixed(2)}</p></div>
                                         </div>
                                     </div>
                                     <div>
                                          <h3 className="font-semibold text-lg mb-2 border-b pb-1">Deductions</h3>
                                          <div className="space-y-1 text-sm">
+                                            <div className="flex justify-between"><p>No Pay Deduction:</p> <p>${item.noPayDeduction.toFixed(2)}</p></div>
                                             {item.deductions.map((deduction, index) => (
                                                  <div key={index} className="flex justify-between">
                                                     <p>{'description' in deduction ? deduction.description : deduction.name}:</p>

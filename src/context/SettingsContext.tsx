@@ -15,6 +15,7 @@ export interface Settings {
     receiptHeaderText?: string;
     receiptFooterText?: string;
     language: string;
+    payrollType: 'salaryTheory' | 'wagesBoard';
 }
 
 interface SettingsContextType {
@@ -36,6 +37,7 @@ const defaultSettings: Settings = {
     receiptHeaderText: 'Thank you for your purchase!',
     receiptFooterText: 'Please come again!',
     language: 'en',
+    payrollType: 'salaryTheory',
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);

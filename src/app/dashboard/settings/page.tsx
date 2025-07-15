@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { FileInput } from "@/components/ui/file-input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -49,7 +50,15 @@ const receiptSettingsSchema = z.object({
     receiptFooterText: z.string().optional(),
 });
 
-const settingsSchema = systemSettingsSchema.merge(brandingSettingsSchema).merge(emailSettingsSchema).merge(receiptSettingsSchema);
+const payrollSettingsSchema = z.object({
+    payrollType: z.enum(['salaryTheory', 'wagesBoard']),
+});
+
+const settingsSchema = systemSettingsSchema
+    .merge(brandingSettingsSchema)
+    .merge(emailSettingsSchema)
+    .merge(receiptSettingsSchema)
+    .merge(payrollSettingsSchema);
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
 
@@ -194,6 +203,36 @@ export default function SettingsPage() {
                                     <FormControl>
                                         <Input placeholder="e.g., USD" {...field} />
                                     </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </CardContent>
+                </Card>
+                
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Payroll Settings</CardTitle>
+                        <CardDescription>Configure how payroll is calculated.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4 pt-6">
+                         <FormField
+                            control={form.control}
+                            name="payrollType"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Payroll Calculation Method</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select a calculation method" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="salaryTheory">Salary Theory (30-day month)</SelectItem>
+                                            <SelectItem value="wagesBoard">Wages Board (26-day month)</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                     <FormMessage />
                                 </FormItem>
                             )}

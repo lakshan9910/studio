@@ -227,8 +227,11 @@ function CurrentOrderView({ orderItems, customers, currentCustomer, onSetCustome
 }
 
 function HeldOrdersView({ heldOrders, onResumeOrder, onDeleteHeldOrder }: any) {
+    const { settings } = useSettings();
     const calculateTotal = (items: OrderItem[]) => {
-        return items.reduce((sum, item) => sum + item.variant.price * item.quantity, 0) * 1.08;
+        const subtotal = items.reduce((sum, item) => sum + item.variant.price * item.quantity, 0);
+        const tax = settings.enableTax ? subtotal * (settings.taxRate / 100) : 0;
+        return subtotal + tax;
     };
 
     return (

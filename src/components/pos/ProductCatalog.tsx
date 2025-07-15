@@ -6,8 +6,7 @@ import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import type { Product } from '@/types';
-import { products as allProducts } from '@/lib/data';
+import type { Product, Category } from '@/types';
 import { suggestItemSearchQueries } from '@/ai/flows/suggest-item-search-queries';
 import { searchProductsByDescription } from '@/ai/flows/search-products-by-description';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -27,17 +26,20 @@ const formSchema = z.object({
 
 interface ProductCatalogProps {
   products: Product[];
+  categories: Category[];
   onAddToOrder: (product: Product) => void;
   onAddProduct: () => void;
   onEditProduct: (product: Product) => void;
   onDeleteProduct: (productId: string) => void;
 }
 
-export function ProductCatalog({ products: initialProducts, onAddToOrder, onAddProduct, onEditProduct, onDeleteProduct }: ProductCatalogProps) {
+export function ProductCatalog({ products: initialProducts, categories, onAddToOrder, onAddProduct, onEditProduct, onDeleteProduct }: ProductCatalogProps) {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(initialProducts);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isAiLoading, startAiTransition] = useTransition();
   const { toast } = useToast();
+
+  const categoryMap = new Map(categories.map(c => [c.id, c.name]));
 
   useEffect(() => {
     setFilteredProducts(initialProducts);
@@ -50,6 +52,23 @@ export function ProductCatalog({ products: initialProducts, onAddToOrder, onAddP
 
   const searchTerm = form.watch('query');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
+  useEffect(() => {
+    const performSearch = () => {
+        if (debouncedSearchTerm.trim() === '') {
+            setFilteredProducts(initialProducts);
+            return;
+        }
+
+        const query = debouncedSearchTerm.toLowerCase();
+        const localFiltered = initialProducts.filter(p => 
+            p.name.toLowerCase().includes(query) || 
+            categoryMap.get(p.category)?.toLowerCase().includes(query)
+        );
+        setFilteredProducts(localFiltered);
+    };
+    performSearch();
+  }, [debouncedSearchTerm, initialProducts, categoryMap]);
 
   useEffect(() => {
     if (debouncedSearchTerm.length > 2) {
@@ -66,25 +85,20 @@ export function ProductCatalog({ products: initialProducts, onAddToOrder, onAddP
     }
   }, [debouncedSearchTerm]);
   
-  const handleSearch = async (values: z.infer<typeof formSchema>) => {
+  const handleAiSearch = async (values: z.infer<typeof formSchema>) => {
     setSuggestions([]);
     startAiTransition(async () => {
-      const query = values.query.toLowerCase();
-      if(query.trim() === '') {
-          setFilteredProducts(initialProducts);
-          return;
-      }
-      
-      // Local search first for responsiveness
-      const localFiltered = initialProducts.filter(p => p.name.toLowerCase().includes(query));
-      setFilteredProducts(localFiltered);
-
       try {
         const result = await searchProductsByDescription({ description: values.query });
         if (result.products && result.products.length > 0) {
             const foundProductNames = result.products.map(p => p.name.toLowerCase());
             const aiFiltered = initialProducts.filter(p => foundProductNames.includes(p.name.toLowerCase()));
-            setFilteredProducts(aiFiltered.length > 0 ? aiFiltered : localFiltered);
+            setFilteredProducts(aiFiltered);
+        } else {
+            toast({
+                title: "AI Search",
+                description: "No products found with that description.",
+            });
         }
       } catch (error) {
         console.error("Failed to search products:", error);
@@ -99,7 +113,7 @@ export function ProductCatalog({ products: initialProducts, onAddToOrder, onAddP
   
   const handleSuggestionClick = (suggestion: string) => {
     form.setValue('query', suggestion);
-    handleSearch({ query: suggestion });
+    handleAiSearch({ query: suggestion });
     setSuggestions([]);
   }
 
@@ -108,14 +122,14 @@ export function ProductCatalog({ products: initialProducts, onAddToOrder, onAddP
         <CardHeader className="p-4 flex-row items-center justify-between">
             <div className="relative flex-1">
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleSearch)} className="flex gap-2">
+                    <form onSubmit={form.handleSubmit(handleAiSearch)} className="flex gap-2">
                         <FormField
                         control={form.control}
                         name="query"
                         render={({ field }) => (
                             <FormItem className="flex-1 relative">
                                 <FormControl>
-                                    <Input placeholder="Search or describe an item..." {...field} className="pr-10" />
+                                    <Input placeholder="Search products..." {...field} className="pr-10" />
                                 </FormControl>
                                 <div className="absolute top-0 right-0 h-full flex items-center pr-3">
                                 {isAiLoading ? <LoaderCircle className="h-5 w-5 animate-spin text-muted-foreground" /> : <Search className="h-5 w-5 text-muted-foreground" />}
@@ -124,7 +138,7 @@ export function ProductCatalog({ products: initialProducts, onAddToOrder, onAddP
                         )}
                         />
                          <Button type="submit" disabled={isAiLoading}>
-                            Search
+                            AI Search
                         </Button>
                     </form>
                 </Form>
@@ -179,12 +193,12 @@ export function ProductCatalog({ products: initialProducts, onAddToOrder, onAddP
                                     width={300}
                                     height={300}
                                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                    data-ai-hint={`${product.category} ${product.name}`}
+                                    data-ai-hint={`${categoryMap.get(product.category)} ${product.name}`}
                                 />
                             </div>
                             <div className="p-4 flex-1 flex flex-col">
                                 <CardTitle className="text-base font-semibold">{product.name}</CardTitle>
-                                <p className="text-sm text-muted-foreground">{product.category}</p>
+                                <p className="text-sm text-muted-foreground">{categoryMap.get(product.category) || 'Uncategorized'}</p>
                                 <p className="text-lg font-bold mt-2 flex-1">${product.price.toFixed(2)}</p>
                             </div>
                         </CardContent>
@@ -198,6 +212,7 @@ export function ProductCatalog({ products: initialProducts, onAddToOrder, onAddP
                         <div className="col-span-full flex flex-col items-center justify-center h-64 text-muted-foreground">
                             <Frown className="w-16 h-16" />
                             <p className="mt-4 text-lg">No products found</p>
+                            <p className="text-sm">Try adjusting your search or adding new products.</p>
                         </div>
                     )}
                 </div>

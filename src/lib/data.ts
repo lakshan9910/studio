@@ -1,10 +1,10 @@
-import type { Product } from '@/types';
+import type { Product, Category } from '@/types';
 
-export const products: Product[] = [
+export const initialProducts: Product[] = [
   {
     id: 'prod_001',
     name: 'Organic Apples',
-    category: 'Fresh Produce',
+    category: 'cat_01',
     price: 2.99,
     imageUrl: 'https://placehold.co/300x300.png',
     stock: 150,
@@ -12,7 +12,7 @@ export const products: Product[] = [
   {
     id: 'prod_002',
     name: 'Ripe Bananas',
-    category: 'Fresh Produce',
+    category: 'cat_01',
     price: 1.49,
     imageUrl: 'https://placehold.co/300x300.png',
     stock: 200,
@@ -20,7 +20,7 @@ export const products: Product[] = [
   {
     id: 'prod_003',
     name: 'Sourdough Bread',
-    category: 'Bakery',
+    category: 'cat_02',
     price: 5.49,
     imageUrl: 'https://placehold.co/300x300.png',
     stock: 50,
@@ -28,7 +28,7 @@ export const products: Product[] = [
   {
     id: 'prod_004',
     name: 'Butter Croissant',
-    category: 'Bakery',
+    category: 'cat_02',
     price: 3.25,
     imageUrl: 'https://placehold.co/300x300.png',
     stock: 80,
@@ -36,7 +36,7 @@ export const products: Product[] = [
   {
     id: 'prod_005',
     name: 'Whole Milk',
-    category: 'Dairy',
+    category: 'cat_03',
     price: 3.89,
     imageUrl: 'https://placehold.co/300x300.png',
     stock: 100,
@@ -44,7 +44,7 @@ export const products: Product[] = [
   {
     id: 'prod_006',
     name: 'Cheddar Cheese Block',
-    category: 'Dairy',
+    category: 'cat_03',
     price: 6.99,
     imageUrl: 'https://placehold.co/300x300.png',
     stock: 75,
@@ -52,7 +52,7 @@ export const products: Product[] = [
   {
     id: 'prod_007',
     name: 'Kettle-Cooked Chips',
-    category: 'Snacks',
+    category: 'cat_04',
     price: 4.79,
     imageUrl: 'https://placehold.co/300x300.png',
     stock: 120,
@@ -60,7 +60,7 @@ export const products: Product[] = [
   {
     id: 'prod_008',
     name: 'Dark Chocolate Bar',
-    category: 'Snacks',
+    category: 'cat_04',
     price: 3.99,
     imageUrl: 'https://placehold.co/300x300.png',
     stock: 90,
@@ -68,7 +68,7 @@ export const products: Product[] = [
   {
     id: 'prod_009',
     name: 'Avocado',
-    category: 'Fresh Produce',
+    category: 'cat_01',
     price: 1.99,
     imageUrl: 'https://placehold.co/300x300.png',
     stock: 110,
@@ -76,7 +76,7 @@ export const products: Product[] = [
   {
     id: 'prod_010',
     name: 'Baguette',
-    category: 'Bakery',
+    category: 'cat_02',
     price: 2.79,
     imageUrl: 'https://placehold.co/300x300.png',
     stock: 60,
@@ -84,7 +84,7 @@ export const products: Product[] = [
   {
     id: 'prod_011',
     name: 'Greek Yogurt',
-    category: 'Dairy',
+    category: 'cat_03',
     price: 4.49,
     imageUrl: 'https://placehold.co/300x300.png',
     stock: 85,
@@ -92,9 +92,17 @@ export const products: Product[] = [
   {
     id: 'prod_012',
     name: 'Salted Pretzels',
-    category: 'Snacks',
+    category: 'cat_04',
     price: 3.29,
     imageUrl: 'https://placehold.co/300x300.png',
     stock: 150,
   },
+];
+
+
+export const initialCategories: Category[] = [
+    { id: 'cat_01', name: 'Fresh Produce' },
+    { id: 'cat_02', name: 'Bakery' },
+    { id: 'cat_03', name: 'Dairy' },
+    { id: 'cat_04', name: 'Snacks' },
 ];

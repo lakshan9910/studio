@@ -1,3 +1,7 @@
+// This component is no longer used in the main POS page, 
+// as the header is now part of the DashboardLayout.
+// It can be removed or kept for other potential uses.
+
 import { ShoppingCart } from 'lucide-react';
 
 export function Header() {

@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import type { Product } from '@/types';
+import type { Product, Category } from '@/types';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -17,7 +17,6 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Form,
   FormControl,
@@ -26,24 +25,26 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const productSchema = z.object({
   name: z.string().min(3, { message: 'Product name must be at least 3 characters.' }),
-  category: z.string().min(3, { message: 'Category must be at least 3 characters.' }),
+  category: z.string().min(1, { message: 'Please select a category.' }),
   price: z.coerce.number().min(0.01, { message: 'Price must be a positive number.' }),
   stock: z.coerce.number().int().min(0, { message: 'Stock must be a non-negative integer.' }),
 });
 
-type ProductFormData = z.infer<typeof productSchema>;
+export type ProductFormData = z.infer<typeof productSchema>;
 
 interface ProductModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: ProductFormData) => void;
-  product: Product | null;
+  product: Omit<Product, 'id' | 'imageUrl'> | null;
+  categories: Category[];
 }
 
-export function ProductModal({ isOpen, onClose, onSave, product }: ProductModalProps) {
+export function ProductModal({ isOpen, onClose, onSave, product, categories }: ProductModalProps) {
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: {
@@ -102,9 +103,20 @@ export function ProductModal({ isOpen, onClose, onSave, product }: ProductModalP
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Fresh Produce" {...field} />
-                  </FormControl>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

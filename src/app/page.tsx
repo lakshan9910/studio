@@ -1,149 +1,49 @@
 
 "use client";
 
-import { useState } from 'react';
-import type { OrderItem, Product } from '@/types';
-import { products as initialProducts } from '@/lib/data';
-import { Header } from '@/components/pos/Header';
-import { ProductCatalog } from '@/components/pos/ProductCatalog';
-import { OrderPanel } from '@/components/pos/OrderPanel';
-import { ReceiptModal } from '@/components/pos/ReceiptModal';
-import { ProductModal } from '@/components/pos/ProductModal';
-import { Toaster } from "@/components/ui/toaster";
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 
-export default function PosPage() {
-  const [products, setProducts] = useState<Product[]>(initialProducts);
-  const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
-  const [isReceiptOpen, setReceiptOpen] = useState(false);
-  const [completedOrder, setCompletedOrder] = useState<OrderItem[]>([]);
-  const [completedTotal, setCompletedTotal] = useState(0);
+export default function HomePage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
 
-  const [isProductModalOpen, setProductModalOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-
-  const handleAddToOrder = (product: Product) => {
-    setOrderItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item.id === product.id);
-      if (existingItem) {
-        return prevItems.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
-        );
+  useEffect(() => {
+    if (!loading) {
+      if (user) {
+        router.replace('/dashboard');
+      } else {
+        router.replace('/login');
       }
-      return [...prevItems, { ...product, quantity: 1 }];
-    });
-  };
-
-  const handleUpdateQuantity = (productId: string, quantity: number) => {
-    setOrderItems((prevItems) => {
-      if (quantity === 0) {
-        return prevItems.filter((item) => item.id !== productId);
-      }
-      return prevItems.map((item) =>
-        item.id === productId ? { ...item, quantity } : item
-      );
-    });
-  };
-
-  const handleRemoveItem = (productId: string) => {
-    setOrderItems((prevItems) => prevItems.filter((item) => item.id !== productId));
-  };
-  
-  const calculateTotal = () => {
-    const subtotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const tax = subtotal * 0.08; // 8% tax
-    return subtotal + tax;
-  };
-
-  const handleFinalizeOrder = () => {
-    if (orderItems.length === 0) return;
-    setCompletedOrder([...orderItems]);
-    setCompletedTotal(calculateTotal());
-    setReceiptOpen(true);
-  };
-
-  const handleNewOrder = () => {
-    setOrderItems([]);
-    setReceiptOpen(false);
-    setCompletedOrder([]);
-    setCompletedTotal(0);
-  };
-
-  const handleOpenAddProduct = () => {
-    setEditingProduct(null);
-    setProductModalOpen(true);
-  };
-
-  const handleOpenEditProduct = (product: Product) => {
-    setEditingProduct(product);
-    setProductModalOpen(true);
-  };
-  
-  const handleDeleteProduct = (productId: string) => {
-    setProducts(products.filter(p => p.id !== productId));
-    setOrderItems(orderItems.filter(item => item.id !== productId));
-  };
-
-  const handleSaveProduct = (productData: Omit<Product, 'id' | 'imageUrl'> & { id?: string }) => {
-    if (editingProduct) {
-      // Edit existing product
-      const updatedProduct = { ...editingProduct, ...productData };
-      setProducts(products.map(p => p.id === editingProduct.id ? updatedProduct : p));
-    } else {
-      // Add new product
-      const newProduct: Product = {
-        ...productData,
-        id: `prod_${Date.now()}`,
-        imageUrl: 'https://placehold.co/300x300.png',
-      };
-      setProducts([...products, newProduct]);
     }
-  };
+  }, [user, loading, router]);
 
   return (
-    <div className="flex flex-col h-screen bg-background font-body antialiased">
-      <Header />
-      <main className="flex-1 overflow-hidden p-4 sm:p-6 lg:p-8">
-        <div className="h-full max-w-7xl mx-auto grid lg:grid-cols-[2fr,1fr] gap-8">
-          <div className="h-full flex flex-col gap-4">
-             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold tracking-tight">Product Catalog</h2>
-            </div>
-            <div className="flex-1 overflow-hidden">
-                <ProductCatalog 
-                    products={products}
-                    onAddToOrder={handleAddToOrder} 
-                    onAddProduct={handleOpenAddProduct}
-                    onEditProduct={handleOpenEditProduct}
-                    onDeleteProduct={handleDeleteProduct}
-                />
-            </div>
-          </div>
-          <div className="h-full flex flex-col gap-4">
-            <h2 className="text-2xl font-bold tracking-tight">Current Order</h2>
-            <div className="flex-1">
-                <OrderPanel
-                    items={orderItems}
-                    onUpdateQuantity={handleUpdateQuantity}
-                    onRemoveItem={handleRemoveItem}
-                    onFinalize={handleFinalizeOrder}
-                />
-            </div>
-          </div>
-        </div>
-      </main>
-      <ReceiptModal
-        isOpen={isReceiptOpen}
-        onClose={handleNewOrder}
-        orderItems={completedOrder}
-        total={completedTotal}
-      />
-      <ProductModal
-        isOpen={isProductModalOpen}
-        onClose={() => setProductModalOpen(false)}
-        onSave={handleSaveProduct}
-        product={editingProduct}
-      />
-      <Toaster />
+    <div className="flex h-screen items-center justify-center bg-background">
+      <div className="flex items-center gap-2">
+        <svg
+          className="h-8 w-8 animate-spin text-primary"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          ></circle>
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          ></path>
+        </svg>
+        <span className="text-xl text-muted-foreground">Loading...</span>
+      </div>
     </div>
   );
 }

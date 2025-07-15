@@ -1,5 +1,7 @@
-import type {Metadata} from 'next';
+import type { Metadata } from 'next';
 import './globals.css';
+import { AuthProvider } from '@/context/AuthContext';
+import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: 'Firebase Studio App',
@@ -18,7 +20,12 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-body antialiased">{children}</body>
+      <body className="font-body antialiased">
+        <AuthProvider>
+          {children}
+          <Toaster />
+        </AuthProvider>
+      </body>
     </html>
   );
 }

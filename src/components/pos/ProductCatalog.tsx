@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreVertical } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useSettings } from '@/context/SettingsContext';
 
 const formSchema = z.object({
   query: z.string(),
@@ -41,6 +42,7 @@ export function ProductCatalog({ products: initialProducts, categories, brands, 
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isAiLoading, startAiTransition] = useTransition();
   const { toast } = useToast();
+  const { t } = useSettings();
 
   const categoryMap = new Map(categories.map(c => [c.id, c.name]));
   const brandMap = new Map(brands.map(b => [b.id, b.name]));
@@ -138,7 +140,7 @@ export function ProductCatalog({ products: initialProducts, categories, brands, 
                         render={({ field }) => (
                             <FormItem className="flex-1 relative">
                                 <FormControl>
-                                    <Input placeholder="Search products by name or use AI for descriptions..." {...field} className="pr-10 h-11 text-base" />
+                                    <Input placeholder={t('product_search_placeholder')} {...field} className="pr-10 h-11 text-base" />
                                 </FormControl>
                                 <Button size="icon" variant="ghost" type="submit" className="absolute top-1/2 right-2 -translate-y-1/2 h-8 w-8" disabled={isAiLoading}>
                                   {isAiLoading ? <LoaderCircle className="h-5 w-5 animate-spin text-muted-foreground" /> : <Search className="h-5 w-5 text-muted-foreground" />}
@@ -151,7 +153,7 @@ export function ProductCatalog({ products: initialProducts, categories, brands, 
                  {suggestions.length > 0 && (
                     <Card className="absolute top-full mt-2 w-full z-10 shadow-lg border-primary/20">
                         <CardContent className="p-2">
-                           <p className="text-xs font-semibold text-muted-foreground px-2 py-1">AI Suggestions</p>
+                           <p className="text-xs font-semibold text-muted-foreground px-2 py-1">{t('ai_suggestions')}</p>
                             <ul className='flex flex-col gap-1'>
                                 {suggestions.map((s, i) => (
                                     <li key={i}>
@@ -166,7 +168,7 @@ export function ProductCatalog({ products: initialProducts, categories, brands, 
                 )}
             </div>
              <Button onClick={onAddProduct} size="lg" className="h-11">
-                <Plus className="mr-2 h-4 w-4" /> Add Product
+                <Plus className="mr-2 h-4 w-4" /> {t('add_product')}
             </Button>
         </CardHeader>
         <CardContent className="p-0 flex-1 relative">
@@ -184,11 +186,11 @@ export function ProductCatalog({ products: initialProducts, categories, brands, 
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuItem onClick={() => onEditProduct(product)}>
                                             <Edit className="mr-2 h-4 w-4" />
-                                            <span>Edit</span>
+                                            <span>{t('edit')}</span>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem onClick={() => onDeleteProduct(product.id)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
                                             <Trash2 className="mr-2 h-4 w-4" />
-                                            <span>Delete</span>
+                                            <span>{t('delete')}</span>
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
@@ -213,7 +215,7 @@ export function ProductCatalog({ products: initialProducts, categories, brands, 
                              <p className="text-xl font-bold ml-2">${product.price.toFixed(2)}</p>
                             {!isManagementView &&
                                 <Button onClick={() => onAddToOrder(product)} className="w-auto font-bold">
-                                    <Plus className="mr-2 h-4 w-4" /> Add
+                                    <Plus className="mr-2 h-4 w-4" /> {t('add')}
                                 </Button>
                             }
                         </CardFooter>
@@ -221,8 +223,8 @@ export function ProductCatalog({ products: initialProducts, categories, brands, 
                     )) : (
                         <div className="col-span-full flex flex-col items-center justify-center h-64 text-muted-foreground">
                             <Frown className="w-16 h-16" />
-                            <p className="mt-4 text-lg font-semibold">No products found</p>
-                            <p className="text-sm">Try adjusting your search or adding new products.</p>
+                            <p className="mt-4 text-lg font-semibold">{t('no_products_found')}</p>
+                            <p className="text-sm">{t('no_products_found_desc')}</p>
                         </div>
                     )}
                 </div>

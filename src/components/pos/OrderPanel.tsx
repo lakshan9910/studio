@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
 import Image from "next/image";
+import { useSettings } from '@/context/SettingsContext';
 
 interface OrderPanelProps {
   items: OrderItem[];
@@ -17,6 +18,7 @@ interface OrderPanelProps {
 }
 
 export function OrderPanel({ items, onUpdateQuantity, onRemoveItem, onFinalize }: OrderPanelProps) {
+  const { t } = useSettings();
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const tax = subtotal * 0.08;
   const total = subtotal + tax;
@@ -26,7 +28,7 @@ export function OrderPanel({ items, onUpdateQuantity, onRemoveItem, onFinalize }
       <CardHeader className='pb-4'>
         <CardTitle className="flex items-center gap-2 text-lg">
             <ShoppingBag className="h-5 w-5" />
-            <span>Current Order</span>
+            <span>{t('current_order')}</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col gap-4 p-0 overflow-hidden">
@@ -35,8 +37,8 @@ export function OrderPanel({ items, onUpdateQuantity, onRemoveItem, onFinalize }
             <div className='p-5 bg-muted rounded-full mb-4'>
                 <ShoppingBag className="w-10 h-10" />
             </div>
-            <p className="mt-2 text-lg font-semibold">Your order is empty</p>
-            <p className="text-sm">Add products from the catalog to get started.</p>
+            <p className="mt-2 text-lg font-semibold">{t('order_is_empty')}</p>
+            <p className="text-sm">{t('add_products_to_start')}</p>
           </div>
         ) : (
             <ScrollArea className="flex-1">
@@ -72,20 +74,20 @@ export function OrderPanel({ items, onUpdateQuantity, onRemoveItem, onFinalize }
       {items.length > 0 && (
         <CardFooter className="flex-col gap-2 !p-6 border-t mt-auto bg-muted/30">
           <div className="w-full flex justify-between text-sm">
-            <span className="text-muted-foreground">Subtotal</span>
+            <span className="text-muted-foreground">{t('subtotal')}</span>
             <span className="font-medium">${subtotal.toFixed(2)}</span>
           </div>
           <div className="w-full flex justify-between text-sm">
-            <span className="text-muted-foreground">Tax (8%)</span>
+            <span className="text-muted-foreground">{t('tax')} (8%)</span>
             <span className="font-medium">${tax.toFixed(2)}</span>
           </div>
           <Separator className="my-2 bg-border/50" />
           <div className="w-full flex justify-between text-lg font-bold">
-            <span>Total</span>
+            <span>{t('total')}</span>
             <span>${total.toFixed(2)}</span>
           </div>
           <Button onClick={onFinalize} size="lg" className="w-full mt-4 text-base font-bold tracking-wide">
-            Finalize Transaction
+            {t('finalize_transaction')}
           </Button>
         </CardFooter>
       )}

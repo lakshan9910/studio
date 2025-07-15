@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { DollarSign, ShoppingCart, Users, Package, AlertTriangle, ArrowRight } from 'lucide-react';
+import { DollarSign, ShoppingCart, Users, Package, AlertTriangle, ArrowRight, Receipt } from 'lucide-react';
 import { format, isToday, isThisMonth } from 'date-fns';
 
 const LOW_STOCK_THRESHOLD = 10;

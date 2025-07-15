@@ -111,8 +111,9 @@ function CashDrawerView({ completedSales, onAddEntry }: { completedSales: Sale[]
 }
 
 function CurrentOrderView({ orderItems, customers, currentCustomer, onSetCustomer, onUpdateQuantity, onRemoveItem, onFinalize, onHold, t }: any) {
+    const { settings } = useSettings();
     const subtotal = orderItems.reduce((sum, item) => sum + item.variant.price * item.quantity, 0);
-    const tax = subtotal * 0.08;
+    const tax = settings.enableTax ? subtotal * (settings.taxRate / 100) : 0;
     const total = subtotal + tax;
     const [openCustomerPopover, setOpenCustomerPopover] = useState(false);
 
@@ -203,7 +204,7 @@ function CurrentOrderView({ orderItems, customers, currentCustomer, onSetCustome
                     <span className="font-medium">${subtotal.toFixed(2)}</span>
                 </div>
                 <div className="w-full flex justify-between text-sm">
-                    <span className="text-muted-foreground">{t('tax')} (8%)</span>
+                    <span className="text-muted-foreground">{t('tax')} ({settings.taxRate}%)</span>
                     <span className="font-medium">${tax.toFixed(2)}</span>
                 </div>
                 <Separator className="my-2 bg-border/50" />

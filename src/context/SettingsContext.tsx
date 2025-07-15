@@ -17,6 +17,8 @@ export interface Settings {
     language: string;
     payrollType: 'salaryTheory' | 'wagesBoard';
     enableCashDrawer: boolean;
+    enableTax: boolean;
+    taxRate: number;
 }
 
 interface SettingsContextType {
@@ -40,6 +42,8 @@ const defaultSettings: Settings = {
     language: 'en',
     payrollType: 'salaryTheory',
     enableCashDrawer: false,
+    enableTax: true,
+    taxRate: 8,
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);

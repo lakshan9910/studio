@@ -56,11 +56,17 @@ const payrollSettingsSchema = z.object({
     payrollType: z.enum(['salaryTheory', 'wagesBoard']),
 });
 
+const taxSettingsSchema = z.object({
+  enableTax: z.boolean(),
+  taxRate: z.coerce.number().min(0, "Tax rate cannot be negative.").max(100, "Tax rate cannot exceed 100."),
+});
+
 const settingsSchema = systemSettingsSchema
     .merge(brandingSettingsSchema)
     .merge(emailSettingsSchema)
     .merge(receiptSettingsSchema)
-    .merge(payrollSettingsSchema);
+    .merge(payrollSettingsSchema)
+    .merge(taxSettingsSchema);
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
 
@@ -232,6 +238,48 @@ export default function SettingsPage() {
                     </CardContent>
                 </Card>
                 
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Tax Settings</CardTitle>
+                        <CardDescription>Configure sales tax for transactions.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4 pt-6">
+                        <FormField
+                            control={form.control}
+                            name="enableTax"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                    <div className="space-y-0.5">
+                                        <FormLabel className="text-base">Enable Sales Tax</FormLabel>
+                                        <CardDescription>
+                                            Apply a sales tax to all transactions.
+                                        </CardDescription>
+                                    </div>
+                                    <FormControl>
+                                        <Switch
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                        />
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        />
+                         <FormField
+                            control={form.control}
+                            name="taxRate"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Tax Rate (%)</FormLabel>
+                                    <FormControl>
+                                        <Input type="number" placeholder="e.g., 8" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </CardContent>
+                </Card>
+
                  <Card>
                     <CardHeader>
                         <CardTitle>Payroll Settings</CardTitle>

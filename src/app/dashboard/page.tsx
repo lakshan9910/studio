@@ -70,7 +70,7 @@ export default function PosPage() {
   
   const calculateTotal = (items: OrderItem[]) => {
     const subtotal = items.reduce((sum, item) => sum + item.variant.price * item.quantity, 0);
-    const tax = subtotal * 0.08; // 8% tax
+    const tax = settings.enableTax ? subtotal * (settings.taxRate / 100) : 0;
     return { subtotal, tax, total: subtotal + tax };
   };
 

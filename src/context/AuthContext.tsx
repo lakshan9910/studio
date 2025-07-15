@@ -177,7 +177,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const hasPermission = (permission: Permission): boolean => {
-    if (!user) return false;
+    if (!user || !user.permissions) return false;
     // Admins implicitly have all permissions
     if (user.permissions.includes('admin')) return true;
     return user.permissions.includes(permission);

@@ -34,3 +34,33 @@ export interface User {
   email: string;
   name?: string;
 }
+
+export interface PurchaseItem {
+  productId: string;
+  quantity: number;
+  cost: number; // Cost per unit
+}
+
+export interface Purchase {
+  id: string;
+  supplier: string;
+  date: string; // ISO date string
+  items: PurchaseItem[];
+  totalCost: number;
+  status: 'Pending' | 'Completed' | 'Cancelled';
+}
+
+export interface ReturnItem {
+  productId: string;
+  quantity: number;
+  reason: string;
+}
+
+export interface Return {
+  id: string;
+  customerName: string; 
+  date: string; // ISO date string
+  items: ReturnItem[];
+  totalValue: number;
+  status: 'Pending' | 'Completed' | 'Cancelled';
+}

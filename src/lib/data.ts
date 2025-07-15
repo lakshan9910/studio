@@ -1,4 +1,4 @@
-import type { Product, Category, Brand, Unit } from '@/types';
+import type { Product, Category, Brand, Unit, Purchase, Return } from '@/types';
 
 export const initialProducts: Product[] = [
   {
@@ -144,4 +144,41 @@ export const initialUnits: Unit[] = [
     { id: 'unit_02', name: 'Kilogram', abbreviation: 'kg' },
     { id: 'unit_03', name: 'Liter', abbreviation: 'ltr' },
     { id: 'unit_04', name: 'Pack', abbreviation: 'pk' },
+];
+
+export const initialPurchases: Purchase[] = [
+    {
+        id: 'purch_001',
+        supplier: 'FarmFresh Suppliers',
+        date: '2024-07-20T10:00:00Z',
+        items: [
+            { productId: 'prod_001', quantity: 50, cost: 1.50 },
+            { productId: 'prod_002', quantity: 100, cost: 0.75 },
+        ],
+        totalCost: 150.00,
+        status: 'Completed',
+    },
+     {
+        id: 'purch_002',
+        supplier: 'Bakery Co. Distributors',
+        date: '2024-07-22T14:30:00Z',
+        items: [
+            { productId: 'prod_003', quantity: 20, cost: 3.00 },
+        ],
+        totalCost: 60.00,
+        status: 'Pending',
+    }
+];
+
+export const initialReturns: Return[] = [
+    {
+        id: 'ret_001',
+        customerName: 'John Doe',
+        date: '2024-07-25T11:00:00Z',
+        items: [
+            { productId: 'prod_005', quantity: 1, reason: 'Expired' },
+        ],
+        totalValue: 3.89,
+        status: 'Completed'
+    }
 ];

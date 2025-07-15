@@ -129,7 +129,7 @@ export function ProductCatalog({ products: initialProducts, categories, brands, 
   }
 
   return (
-    <Card className="h-full flex flex-col shadow-lg rounded-xl">
+    <Card className="h-full flex flex-col shadow-lg rounded-xl overflow-hidden">
         <CardHeader className="p-4 sm:p-6 flex-row items-center justify-between gap-4 border-b">
             <div className="relative flex-1">
                 <Form {...form}>
@@ -171,8 +171,8 @@ export function ProductCatalog({ products: initialProducts, categories, brands, 
                 <Plus className="mr-2 h-4 w-4" /> Add Product
             </Button>
         </CardHeader>
-        <CardContent className="p-0 flex-1">
-            <ScrollArea className="h-full">
+        <CardContent className="p-0 flex-1 relative">
+            <ScrollArea className="absolute inset-0">
                 <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {filteredProducts.length > 0 ? filteredProducts.map((product) => (
                     <Card key={product.id} className="flex flex-col overflow-hidden group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 relative rounded-lg">

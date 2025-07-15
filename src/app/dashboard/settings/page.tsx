@@ -72,7 +72,7 @@ function ColorPicker({ form, name, label }: { form: any, name: `themePrimary` | 
     const hsl = form.watch(name);
     const colorString = `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
     return (
-        <div className="space-y-2">
+        <div className="space-y-2 rounded-md border p-4">
             <div className="flex items-center justify-between">
                 <FormLabel>{label}</FormLabel>
                 <div className="flex items-center gap-2">
@@ -80,12 +80,12 @@ function ColorPicker({ form, name, label }: { form: any, name: `themePrimary` | 
                     <div className="h-6 w-6 rounded-full border" style={{ backgroundColor: colorString }} />
                 </div>
             </div>
-            <div className="grid grid-cols-[auto,1fr] items-center gap-x-2 gap-y-1">
-                <span className="text-xs">H</span>
+            <div className="grid grid-cols-[auto,1fr] items-center gap-x-2 gap-y-1 pt-2">
+                <span className="text-xs font-medium text-muted-foreground">H</span>
                 <FormField control={form.control} name={`${name}.h`} render={({ field }) => (<FormItem><FormControl><Slider value={[field.value]} onValueChange={(v) => field.onChange(v[0])} max={360} step={1} /></FormControl></FormItem>)} />
-                <span className="text-xs">S</span>
+                <span className="text-xs font-medium text-muted-foreground">S</span>
                 <FormField control={form.control} name={`${name}.s`} render={({ field }) => (<FormItem><FormControl><Slider value={[field.value]} onValueChange={(v) => field.onChange(v[0])} max={100} step={1} /></FormControl></FormItem>)} />
-                <span className="text-xs">L</span>
+                <span className="text-xs font-medium text-muted-foreground">L</span>
                 <FormField control={form.control} name={`${name}.l`} render={({ field }) => (<FormItem><FormControl><Slider value={[field.value]} onValueChange={(v) => field.onChange(v[0])} max={100} step={1} /></FormControl></FormItem>)} />
             </div>
         </div>
@@ -221,9 +221,9 @@ export default function SettingsPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Theme Customization</CardTitle>
-                        <CardDescription>Adjust the application's color scheme.</CardDescription>
+                        <CardDescription>Adjust the application's color scheme for the main content area.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-6">
+                    <CardContent className="space-y-4">
                         <ColorPicker form={form} name="themePrimary" label="Primary Color" />
                         <ColorPicker form={form} name="themeBackground" label="Background Color" />
                         <ColorPicker form={form} name="themeAccent" label="Accent Color" />
@@ -233,11 +233,11 @@ export default function SettingsPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Sidebar Theme</CardTitle>
-                        <CardDescription>Customize the sidebar colors.</CardDescription>
+                        <CardDescription>Customize the colors for the navigation sidebar.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-6">
+                    <CardContent className="space-y-4">
                         <ColorPicker form={form} name="themeSidebarBackground" label="Sidebar Background" />
-                        <ColorPicker form={form} name="themeSidebarForeground" label="Sidebar Foreground" />
+                        <ColorPicker form={form} name="themeSidebarForeground" label="Sidebar Text" />
                     </CardContent>
                 </Card>
 

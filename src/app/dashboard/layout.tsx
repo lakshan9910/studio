@@ -10,7 +10,13 @@ import { useSettings } from '@/context/SettingsContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { LogOut, Settings, Store, Users } from 'lucide-react';
+import { 
+    LogOut, Settings, Store, Users, BarChart3, ShoppingCart, Receipt, Undo2, 
+    Shapes, Shield, Beaker, Truck, UserCog, Wallet, Package 
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { usePathname } from 'next/navigation';
+
 
 export default function DashboardLayout({
   children,
@@ -20,6 +26,7 @@ export default function DashboardLayout({
   const { user, loading, logout } = useAuth();
   const { settings } = useSettings();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -58,98 +65,131 @@ export default function DashboardLayout({
   }
 
   const isAdmin = user.role === 'Admin';
+  
+  const navLinks = [
+    { 
+        category: 'Storefront',
+        adminOnly: false,
+        links: [
+            { href: '/dashboard', label: 'POS', icon: Store },
+        ]
+    },
+    {
+        category: 'Analytics & Finance',
+        adminOnly: true,
+        links: [
+            { href: '/dashboard/reports', label: 'Reports', icon: BarChart3 },
+            { href: '/dashboard/purchases', label: 'Purchases', icon: ShoppingCart },
+            { href: '/dashboard/expenses', label: 'Expenses', icon: Receipt },
+            { href: '/dashboard/expense-categories', label: 'Expense Categories', icon: Wallet },
+        ]
+    },
+    {
+        category: 'General',
+        adminOnly: false,
+        links: [
+             { href: '/dashboard/returns', label: 'Returns', icon: Undo2 },
+             { href: '/dashboard/customers', label: 'Customers', icon: Users },
+        ]
+    },
+    {
+        category: 'Product Management',
+        adminOnly: true,
+        links: [
+            { href: '/dashboard/categories', label: 'Categories', icon: Shapes },
+            { href: '/dashboard/brands', label: 'Brands', icon: Shield },
+            { href: '/dashboard/units', label: 'Units', icon: Beaker },
+        ]
+    },
+    {
+        category: 'User & Supplier Management',
+        adminOnly: true,
+        links: [
+            { href: '/dashboard/suppliers', label: 'Suppliers', icon: Truck },
+            { href: '/dashboard/users', label: 'Users', icon: UserCog },
+        ]
+    },
+  ];
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-muted/40">
-      <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
-        <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
-          <Link href="/dashboard" className="flex items-center gap-2 text-lg font-semibold md:text-base">
-             {settings.storeLogo ? (
-                <Image src={settings.storeLogo} alt={settings.storeName} width={24} height={24} className="object-contain" />
-              ) : (
-                <Store className="h-6 w-6" />
-              )}
-            <span className="">{settings.storeName}</span>
-          </Link>
-          <Link href="/dashboard" className="text-foreground transition-colors hover:text-foreground">
-            POS
-          </Link>
-           {isAdmin && (
-            <>
-              <Link href="/dashboard/reports" className="text-muted-foreground transition-colors hover:text-foreground">
-                Reports
-              </Link>
-              <Link href="/dashboard/purchases" className="text-muted-foreground transition-colors hover:text-foreground">
-                Purchases
-              </Link>
-              <Link href="/dashboard/expenses" className="text-muted-foreground transition-colors hover:text-foreground">
-                Expenses
-              </Link>
-              <Link href="/dashboard/expense-categories" className="text-muted-foreground transition-colors hover:text-foreground">
-                Expense Categories
-              </Link>
-            </>
-           )}
-          <Link href="/dashboard/returns" className="text-muted-foreground transition-colors hover:text-foreground">
-            Returns
-          </Link>
-           <Link href="/dashboard/customers" className="text-muted-foreground transition-colors hover:text-foreground">
-            Customers
-          </Link>
-          {isAdmin && (
-            <>
-              <Link href="/dashboard/suppliers" className="text-muted-foreground transition-colors hover:text-foreground">
-                Suppliers
-              </Link>
-              <Link href="/dashboard/categories" className="text-muted-foreground transition-colors hover:text-foreground">
-                Categories
-              </Link>
-              <Link href="/dashboard/brands" className="text-muted-foreground transition-colors hover:text-foreground">
-                Brands
-              </Link>
-              <Link href="/dashboard/units" className="text-muted-foreground transition-colors hover:text-foreground">
-                Units
-              </Link>
-               <Link href="/dashboard/users" className="text-muted-foreground transition-colors hover:text-foreground">
-                Users
-              </Link>
-            </>
-          )}
-        </nav>
-        <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
-            <div className='ml-auto'>
-                 <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                    <Button variant="secondary" size="icon" className="rounded-full">
-                        <Avatar>
-                        <AvatarImage src={user.imageUrl || `https://avatar.vercel.sh/${user.email}.png`} alt={user.name} />
-                        <AvatarFallback>{user.name?.charAt(0) || user.email.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <span className="sr-only">Toggle user menu</span>
-                    </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>{user.name || user.email} <span className='text-xs text-muted-foreground'>({user.role})</span></DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {isAdmin && (
-                       <DropdownMenuItem asChild>
-                          <Link href="/dashboard/settings">
-                              <Settings className="mr-2 h-4 w-4" />
-                              <span>Settings</span>
-                          </Link>
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={logout}>
-                        <LogOut className="mr-2 h-4 w-4" />
-                        <span>Logout</span>
-                    </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
+    <div className="flex min-h-screen w-full bg-muted/40">
+      <aside className="fixed inset-y-0 left-0 z-10 hidden w-64 flex-col border-r bg-background sm:flex">
+        <div className="flex h-16 items-center gap-2 border-b px-6">
+            <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
+                {settings.storeLogo ? (
+                    <Image src={settings.storeLogo} alt={settings.storeName} width={24} height={24} className="object-contain" />
+                ) : (
+                    <Package className="h-6 w-6" />
+                )}
+                <span className="">{settings.storeName}</span>
+            </Link>
         </div>
-      </header>
-      <main className="flex-1">{children}</main>
+        <nav className="flex flex-col gap-4 p-4 text-sm font-medium overflow-y-auto">
+          {navLinks.map((section, index) => (
+            (!section.adminOnly || isAdmin) && (
+              <div key={index}>
+                <h3 className="mb-2 px-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">{section.category}</h3>
+                <div className='flex flex-col gap-1'>
+                    {section.links.map((link, linkIndex) => (
+                         (!section.adminOnly || isAdmin) && (
+                            <Link 
+                                key={linkIndex} 
+                                href={link.href} 
+                                className={cn(
+                                    "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-primary/10",
+                                    pathname === link.href && "text-primary bg-primary/10"
+                                )}
+                            >
+                                <link.icon className="h-4 w-4" />
+                                {link.label}
+                            </Link>
+                        )
+                    ))}
+                </div>
+              </div>
+            )
+          ))}
+        </nav>
+      </aside>
+
+      <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-64 w-full">
+         <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6 sm:bg-muted/40 sm:border-none sm:rounded-xl">
+            <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
+                <div className='ml-auto'>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                        <Button variant="secondary" size="icon" className="rounded-full">
+                            <Avatar>
+                            <AvatarImage src={user.imageUrl || `https://avatar.vercel.sh/${user.email}.png`} alt={user.name} />
+                            <AvatarFallback>{user.name?.charAt(0) || user.email.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <span className="sr-only">Toggle user menu</span>
+                        </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>{user.name || user.email} <span className='text-xs text-muted-foreground'>({user.role})</span></DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {isAdmin && (
+                        <DropdownMenuItem asChild>
+                            <Link href="/dashboard/settings">
+                                <Settings className="mr-2 h-4 w-4" />
+                                <span>Settings</span>
+                            </Link>
+                        </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={logout}>
+                            <LogOut className="mr-2 h-4 w-4" />
+                            <span>Logout</span>
+                        </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            </div>
+        </header>
+        <main className="flex-1 sm:px-6">{children}</main>
+      </div>
     </div>
   );
 }
+

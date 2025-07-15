@@ -47,7 +47,7 @@ const defaultSettings: Settings = {
     receiptHeaderText: 'Thank you for your purchase!',
     receiptFooterText: 'Please come again!',
     language: 'en',
-    themePrimary: { h: 200, s: 95, l: 74 },
+    themePrimary: { h: 200, s: 95, l: 44 },
     themeBackground: { h: 220, s: 13, l: 95 },
     themeAccent: { h: 170, s: 65, l: 53 },
     themeSidebarBackground: { h: 0, s: 0, l: 100 },

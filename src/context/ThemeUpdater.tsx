@@ -5,10 +5,19 @@ import { useEffect } from 'react';
 import { useSettings } from './SettingsContext';
 
 export function ThemeUpdater() {
-  const { settings } = useSettings();
-  const { themePrimary, themeBackground, themeAccent, themeSidebarBackground, themeSidebarForeground } = settings;
-
+  const { settings, loading } = useSettings();
+  
   useEffect(() => {
+    if (loading) return;
+
+    const { 
+      themePrimary, 
+      themeBackground, 
+      themeAccent, 
+      themeSidebarBackground, 
+      themeSidebarForeground 
+    } = settings;
+
     const root = document.documentElement;
 
     root.style.setProperty('--primary-hsl', `${themePrimary.h} ${themePrimary.s}% ${themePrimary.l}%`);
@@ -17,7 +26,7 @@ export function ThemeUpdater() {
     root.style.setProperty('--sidebar-background-hsl', `${themeSidebarBackground.h} ${themeSidebarBackground.s}% ${themeSidebarBackground.l}%`);
     root.style.setProperty('--sidebar-foreground-hsl', `${themeSidebarForeground.h} ${themeSidebarForeground.s}% ${themeSidebarForeground.l}%`);
     
-  }, [themePrimary, themeBackground, themeAccent, themeSidebarBackground, themeSidebarForeground]);
+  }, [settings, loading]);
 
   return null;
 }

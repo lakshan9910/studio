@@ -14,7 +14,7 @@
     --popover: hsl(var(--popover-hsl, 0 0% 100%));
     --popover-foreground: hsl(var(--popover-foreground-hsl, 222.2 84% 4.9%));
 
-    --primary: hsl(var(--primary-hsl, 200 95% 74%));
+    --primary: hsl(var(--primary-hsl, 200 95% 44%));
     --primary-foreground: hsl(var(--primary-foreground-hsl, 222.2 47.4% 11.2%));
     
     --secondary: hsl(var(--secondary-hsl, 210 40% 96.1%));
@@ -31,7 +31,7 @@
 
     --border: hsl(var(--border-hsl, 214.3 31.8% 91.4%));
     --input: hsl(var(--input-hsl, 214.3 31.8% 91.4%));
-    --ring: hsl(var(--ring-hsl, 200 95% 74%));
+    --ring: hsl(var(--ring-hsl, 200 95% 44%));
 
     --radius: 0.5rem;
     
@@ -55,7 +55,7 @@
     --popover: hsl(var(--popover-hsl, 222.2 84% 4.9%));
     --popover-foreground: hsl(var(--popover-foreground-hsl, 210 40% 98%));
 
-    --primary: hsl(var(--primary-hsl, 200 95% 74%));
+    --primary: hsl(var(--primary-hsl, 200 95% 44%));
     --primary-foreground: hsl(var(--primary-foreground-hsl, 222.2 47.4% 11.2%));
 
     --secondary: hsl(var(--secondary-hsl, 217.2 32.6% 17.5%));
@@ -72,7 +72,7 @@
 
     --border: hsl(var(--border-hsl, 217.2 32.6% 17.5%));
     --input: hsl(var(--input-hsl, 217.2 32.6% 17.5%));
-    --ring: hsl(var(--ring-hsl, 200 95% 74%));
+    --ring: hsl(var(--ring-hsl, 200 95% 44%));
 
     --sidebar-background: hsl(var(--sidebar-background-hsl, 222.2 84% 4.9%));
     --sidebar-foreground: hsl(var(--sidebar-foreground-hsl, 210 40% 98%));

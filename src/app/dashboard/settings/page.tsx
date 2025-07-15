@@ -176,7 +176,7 @@ export default function SettingsPage() {
                         <CardTitle>Branding Settings</CardTitle>
                         <CardDescription>Customize the name and logo of your business.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-4 pt-6">
                         <FormField
                             control={form.control}
                             name="storeName"
@@ -223,7 +223,7 @@ export default function SettingsPage() {
                         <CardTitle>Theme Customization</CardTitle>
                         <CardDescription>Adjust the application's color scheme for the main content area.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-4 pt-6">
                         <ColorPicker form={form} name="themePrimary" label="Primary Color" />
                         <ColorPicker form={form} name="themeBackground" label="Background Color" />
                         <ColorPicker form={form} name="themeAccent" label="Accent Color" />
@@ -235,7 +235,7 @@ export default function SettingsPage() {
                         <CardTitle>Sidebar Theme</CardTitle>
                         <CardDescription>Customize the colors for the navigation sidebar.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-4 pt-6">
                         <ColorPicker form={form} name="themeSidebarBackground" label="Sidebar Background" />
                         <ColorPicker form={form} name="themeSidebarForeground" label="Sidebar Text" />
                     </CardContent>
@@ -247,7 +247,7 @@ export default function SettingsPage() {
                         <CardTitle>System Settings</CardTitle>
                         <CardDescription>Configure general settings for the application.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-4 pt-6">
                          <FormField
                             control={form.control}
                             name="currency"
@@ -269,7 +269,7 @@ export default function SettingsPage() {
                         <CardTitle>Email Settings</CardTitle>
                         <CardDescription>Configure SMTP settings for sending emails.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-4 pt-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                              <FormField
                                 control={form.control}
@@ -334,7 +334,7 @@ export default function SettingsPage() {
                         <CardTitle>Receipt Settings</CardTitle>
                         <CardDescription>Customize the template for printed receipts.</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-4 pt-6">
                         <FormField
                             control={form.control}
                             name="receiptHeaderText"

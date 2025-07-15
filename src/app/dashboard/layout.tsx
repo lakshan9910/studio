@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { 
     LogOut, Settings, Store, Users, BarChart3, ShoppingCart, Receipt, Undo2, 
@@ -255,14 +256,13 @@ export default function DashboardLayout({
                  <Popover>
                     <PopoverTrigger asChild>
                         <Button variant="outline" size="icon">
-                            <Calendar className="h-4 w-4" />
+                            <CalendarIcon className="h-4 w-4" />
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
                         <Calendar
                             mode="single"
                             selected={new Date()}
-                            disabled
                             className="rounded-md border"
                         />
                     </PopoverContent>

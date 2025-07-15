@@ -72,24 +72,30 @@ export default function BarcodePrintingPage() {
     }
   }, [debouncedSearchTerm, products]);
   
+  const barcodesToPrint = useMemo(() => {
+    return printQueue.flatMap(item => 
+        Array.from({ length: item.quantity }, (_, i) => ({
+            ...item,
+            uniqueId: `${item.variant.id}-${i}`
+        }))
+    );
+  }, [printQueue]);
+
   useEffect(() => {
-    printQueue.forEach(item => {
-        for(let i=0; i < item.quantity; i++) {
-            const elementId = `barcode-${item.variant.id}-${i}`;
-            const element = document.getElementById(elementId);
-             if (element) {
-                JsBarcode(element, item.variant.sku, {
-                    format: "CODE128",
-                    displayValue: true,
-                    fontSize: 12,
-                    textMargin: 0,
-                    height: 40,
-                    margin: 4,
-                });
-            }
+    barcodesToPrint.forEach(item => {
+        const element = document.getElementById(item.uniqueId);
+         if (element) {
+            JsBarcode(element, item.variant.sku, {
+                format: "CODE128",
+                displayValue: true,
+                fontSize: 12,
+                textMargin: 0,
+                height: 40,
+                margin: 4,
+            });
         }
     });
-  }, [printQueue]);
+  }, [barcodesToPrint]);
 
   const addToQueue = (product: Product, variant: ProductVariant) => {
     setPrintQueue(prev => {
@@ -122,10 +128,6 @@ export default function BarcodePrintingPage() {
   const handlePrint = () => {
     window.print();
   };
-  
-  const barcodesToPrint = useMemo(() => {
-    return printQueue.flatMap(item => Array(item.quantity).fill(item));
-  }, [printQueue]);
 
   if (user?.role !== 'Admin') {
     return null;
@@ -195,7 +197,7 @@ export default function BarcodePrintingPage() {
                             <Input
                                 type="number"
                                 value={item.quantity}
-                                onChange={e => updateQuantity(item.variant.id, parseInt(e.target.value, 10))}
+                                onChange={e => updateQuantity(item.variant.id, parseInt(e.target.value, 10) || 0)}
                                 className="w-16 h-8 text-center"
                             />
                             <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => removeFromQueue(item.variant.id)}>
@@ -245,14 +247,14 @@ export default function BarcodePrintingPage() {
                 rowGap: currentPaper.gap
               }}
             >
-                {barcodesToPrint.map((item, index) => (
-                    <div key={`${item.variant.id}-${index}`} 
+                {barcodesToPrint.map((item) => (
+                    <div key={item.uniqueId} 
                          className="barcode-cell text-center flex flex-col items-center justify-center p-1 break-all"
                          style={{ width: currentPaper.labelWidth, height: currentPaper.labelHeight }}
                     >
                         <p className="text-[8px] font-bold truncate w-full">{item.product.name}</p>
                         <p className="text-[7px] truncate w-full">{item.variant.name}</p>
-                        <svg id={`barcode-${item.variant.id}-${index}`} className="w-full h-auto"></svg>
+                        <svg id={item.uniqueId} className="w-full h-auto"></svg>
                     </div>
                 ))}
             </div>
@@ -261,5 +263,3 @@ export default function BarcodePrintingPage() {
     </div>
   );
 }
-
-    

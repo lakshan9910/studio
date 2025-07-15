@@ -107,10 +107,10 @@ export default function PosPage() {
     null;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)]">
-      <main className="flex-1 overflow-hidden">
-        <div className="h-full max-w-screen-2xl mx-auto grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-[2fr,1fr] gap-6 p-4 sm:p-6 lg:p-8">
-          <div className="h-full flex flex-col gap-4 lg:col-span-2 xl:col-span-1">
+    <div className="flex flex-col min-h-[calc(100vh-4rem)]">
+      <main className="flex-1">
+        <div className="max-w-screen-2xl mx-auto grid grid-cols-1 lg:grid-cols-[2fr,1fr] gap-6 p-4 sm:p-6 lg:p-8">
+          <div className="flex flex-col gap-4">
             <ProductCatalog 
                 products={products}
                 categories={categories}
@@ -122,7 +122,7 @@ export default function PosPage() {
                 onDeleteProduct={handleDeleteProduct}
             />
           </div>
-          <div className="h-full flex flex-col gap-4 lg:col-span-1">
+          <div className="flex flex-col gap-4">
             <h2 className="text-2xl font-bold tracking-tight hidden lg:block">Current Order</h2>
             <div className="flex-1">
                 <OrderPanel

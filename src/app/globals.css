@@ -86,10 +86,11 @@
   body * {
     visibility: hidden;
   }
-  #receipt-content, #receipt-content * {
+  #receipt-content, #receipt-content *,
+  #barcode-content, #barcode-content * {
     visibility: visible;
   }
-  #receipt-content {
+  #receipt-content, #barcode-content {
     position: absolute;
     left: 0;
     top: 0;

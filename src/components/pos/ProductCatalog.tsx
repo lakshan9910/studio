@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
-import { Search, Plus, LoaderCircle, Frown, Edit, Trash2 } from 'lucide-react';
+import { Search, Plus, LoaderCircle, Frown, Edit, Trash2, Barcode } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreVertical } from 'lucide-react';
@@ -35,6 +35,7 @@ interface ProductCatalogProps {
   onAddProduct: () => void;
   onEditProduct: (product: Product) => void;
   onDeleteProduct: (productId: string) => void;
+  onPrintBarcode?: (product: Product) => void;
   isManagementView?: boolean;
 }
 
@@ -70,7 +71,7 @@ function VariantSelector({ product, onSelectVariant, trigger }: { product: Produ
   )
 }
 
-export function ProductCatalog({ products: initialProducts, categories, brands, onAddToOrder, onAddProduct, onEditProduct, onDeleteProduct, isManagementView = false }: ProductCatalogProps) {
+export function ProductCatalog({ products: initialProducts, categories, brands, onAddToOrder, onAddProduct, onEditProduct, onDeleteProduct, onPrintBarcode, isManagementView = false }: ProductCatalogProps) {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(initialProducts);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isAiLoading, startAiTransition] = useTransition();
@@ -234,6 +235,12 @@ export function ProductCatalog({ products: initialProducts, categories, brands, 
                                             <Edit className="mr-2 h-4 w-4" />
                                             <span>{t('edit')}</span>
                                         </DropdownMenuItem>
+                                        {isManagementView && onPrintBarcode && (
+                                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onPrintBarcode(product); }}>
+                                                <Barcode className="mr-2 h-4 w-4" />
+                                                <span>Print Barcodes</span>
+                                            </DropdownMenuItem>
+                                        )}
                                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDeleteProduct(product.id); }} className="text-destructive focus:text-destructive focus:bg-destructive/10">
                                             <Trash2 className="mr-2 h-4 w-4" />
                                             <span>{t('delete')}</span>

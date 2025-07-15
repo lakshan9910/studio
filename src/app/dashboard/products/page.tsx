@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { ProductCatalog } from '@/components/pos/ProductCatalog';
 import { ProductModal, ProductFormData } from '@/components/pos/ProductModal';
+import { BarcodeModal } from '@/components/pos/BarcodeModal';
 import { useToast } from '@/hooks/use-toast';
 
 export default function ProductsPage() {
@@ -20,6 +21,10 @@ export default function ProductsPage() {
   
   const [isProductModalOpen, setProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
+  const [isBarcodeModalOpen, setBarcodeModalOpen] = useState(false);
+  const [productForBarcode, setProductForBarcode] = useState<Product | null>(null);
+
   const { toast } = useToast();
   
   useEffect(() => {
@@ -45,6 +50,11 @@ export default function ProductsPage() {
   
   const handleDeleteProduct = (productId: string) => {
     setProducts(products.filter(p => p.id !== productId));
+  };
+
+  const handleOpenBarcodeModal = (product: Product) => {
+    setProductForBarcode(product);
+    setBarcodeModalOpen(true);
   };
 
   const handleSaveProduct = async (productData: ProductFormData) => {
@@ -101,6 +111,7 @@ export default function ProductsPage() {
             onAddProduct={handleOpenAddProduct}
             onEditProduct={handleOpenEditProduct}
             onDeleteProduct={handleDeleteProduct}
+            onPrintBarcode={handleOpenBarcodeModal}
             isManagementView={true}
         />
         <ProductModal
@@ -111,6 +122,11 @@ export default function ProductsPage() {
             categories={categories}
             brands={brands}
             units={units}
+        />
+        <BarcodeModal
+            isOpen={isBarcodeModalOpen}
+            onClose={() => setBarcodeModalOpen(false)}
+            product={productForBarcode}
         />
     </div>
   );

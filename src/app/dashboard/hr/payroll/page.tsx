@@ -4,7 +4,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import type { Payroll, PayrollItem, Attendance, EmployeeSalary, Loan } from "@/types";
+import type { Payroll, PayrollItem, Attendance, EmployeeSalary, Loan, SalaryComponent } from "@/types";
 import { initialAttendance, initialSalaries, initialLoans } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,6 @@ import { Calendar as CalendarIcon, Briefcase, PlusCircle, Printer, ChevronsRight
 import { Calendar } from "@/components/ui/calendar";
 import { addDays, format, differenceInDays, isWithinInterval } from "date-fns";
 import Link from "next/link";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from 'zod';
@@ -54,7 +53,7 @@ export default function PayrollPage() {
     }, [currentUser, loading, router, toast, hasPermission]);
     
     const userMap = useMemo(() => new Map(users.map(u => [u.id, u])), [users]);
-    const salaryMap = useMemo(() => new Map(salaries.map(s => [s.userId, s.baseSalary])), [salaries]);
+    const salaryMap = useMemo(() => new Map(salaries.map(s => [s.userId, s])), [salaries]);
     const canWrite = hasPermission('hr:write');
 
     const handleGeneratePayroll = () => {
@@ -71,7 +70,11 @@ export default function PayrollPage() {
         const totalDaysInPeriod = differenceInDays(date.to, date.from) + 1;
 
         const newPayrollItems: PayrollItem[] = users.map(user => {
-            const baseSalary = salaryMap.get(user.id) || 0;
+            const salaryStructure = salaryMap.get(user.id);
+            const baseSalary = salaryStructure?.baseSalary || 0;
+            const allowances = salaryStructure?.allowances || [];
+            const recurringDeductions = salaryStructure?.deductions || [];
+
             const userAttendance = attendanceRecords.filter(
                 rec => rec.userId === user.id && isWithinInterval(new Date(rec.date), { start: date.from!, end: date.to! })
             );
@@ -83,28 +86,35 @@ export default function PayrollPage() {
             
             const dailySalary = baseSalary / totalDaysInPeriod;
             const salaryPayable = dailySalary * daysWorked;
-
-            const userLoans = loans.filter(l => l.userId === user.id && l.status === 'Active');
-            const loanDeductions = userLoans.map(loan => ({
+            
+            const totalAllowances = allowances.reduce((sum, a) => sum + a.amount, 0);
+            const grossEarnings = salaryPayable + totalAllowances;
+            
+            const loanDeductions = loans
+              .filter(l => l.userId === user.id && l.status === 'Active')
+              .map(loan => ({
                 id: `deduct_${loan.id}_${Date.now()}`,
                 type: 'Loan' as const,
                 description: `Installment for loan ${loan.id.slice(-4)}`,
                 amount: loan.monthlyInstallment,
                 loanId: loan.id
-            }));
+              }));
 
-            const totalDeductions = loanDeductions.reduce((sum, d) => sum + d.amount, 0);
-            const netPay = salaryPayable - totalDeductions;
+            const allDeductions = [...recurringDeductions, ...loanDeductions];
+            const totalDeductionsAmount = allDeductions.reduce((sum, d) => sum + d.amount, 0);
+            const netPay = grossEarnings - totalDeductionsAmount;
 
             return {
                 userId: user.id,
                 userName: user.name || user.email,
                 baseSalary,
+                allowances,
+                grossEarnings,
                 daysWorked,
                 daysAbsent,
                 salaryPayable,
                 bonus: 0,
-                deductions: loanDeductions,
+                deductions: allDeductions,
                 netPay,
             };
         });
@@ -135,10 +145,10 @@ export default function PayrollPage() {
                         if (field === 'bonus') {
                             newItem.bonus = value;
                         } else {
-                            const otherDeductionIndex = newItem.deductions.findIndex(d => d.type === 'Other');
+                             const otherDeductionIndex = newItem.deductions.findIndex(d => 'type' in d && d.type === 'Other');
                             if (otherDeductionIndex > -1) {
                                 if (value > 0) {
-                                    newItem.deductions[otherDeductionIndex].amount = value;
+                                    (newItem.deductions[otherDeductionIndex] as any).amount = value;
                                 } else {
                                     newItem.deductions.splice(otherDeductionIndex, 1);
                                 }
@@ -153,7 +163,7 @@ export default function PayrollPage() {
                         }
                         
                         const totalDeductions = newItem.deductions.reduce((sum, d) => sum + d.amount, 0);
-                        newItem.netPay = newItem.salaryPayable + newItem.bonus - totalDeductions;
+                        newItem.netPay = newItem.grossEarnings + newItem.bonus - totalDeductions;
                         return newItem;
                     }
                     return item;
@@ -239,8 +249,7 @@ export default function PayrollPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Employee</TableHead>
-                                    <TableHead>Base Salary</TableHead>
-                                    <TableHead>Payable</TableHead>
+                                    <TableHead>Gross Pay</TableHead>
                                     <TableHead>Bonus</TableHead>
                                     <TableHead>Deductions</TableHead>
                                     <TableHead>Net Pay</TableHead>
@@ -250,8 +259,7 @@ export default function PayrollPage() {
                                 {pr.items.map(item => (
                                     <TableRow key={item.userId}>
                                         <TableCell>{item.userName}</TableCell>
-                                        <TableCell>${item.baseSalary.toFixed(2)}</TableCell>
-                                        <TableCell>${item.salaryPayable.toFixed(2)}</TableCell>
+                                        <TableCell>${item.grossEarnings.toFixed(2)}</TableCell>
                                         <TableCell>
                                             <Input 
                                                 type="number" 
@@ -264,13 +272,13 @@ export default function PayrollPage() {
                                         <TableCell>
                                              <Input 
                                                 type="number" 
-                                                defaultValue={item.deductions.find(d => d.type === 'Other')?.amount || 0}
+                                                defaultValue={(item.deductions.find(d => 'type' in d && d.type === 'Other') as any)?.amount || 0}
                                                 onBlur={e => handleUpdatePayrollItem(pr.id, item.userId, 'otherDeductions', parseFloat(e.target.value) || 0)}
                                                 className="w-24 h-8"
                                                 disabled={!canWrite}
                                             />
                                             <p className="text-xs text-muted-foreground mt-1">
-                                                Loan: ${item.deductions.filter(d => d.type === 'Loan').reduce((sum, d) => sum + d.amount, 0).toFixed(2)}
+                                                Auto: ${item.deductions.filter(d => 'type' in d ? d.type !== 'Other' : true).reduce((sum, d) => sum + d.amount, 0).toFixed(2)}
                                             </p>
                                         </TableCell>
                                         <TableCell className="font-bold">${item.netPay.toFixed(2)}</TableCell>

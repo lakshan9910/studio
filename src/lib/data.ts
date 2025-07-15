@@ -222,9 +222,27 @@ export const initialStockTransfers: StockTransfer[] = [
 ];
 
 export const initialSalaries: EmployeeSalary[] = [
-    { userId: 'user_admin_1', baseSalary: 5000 },
-    { userId: 'user_cashier_1', baseSalary: 3000 },
+    { 
+        userId: 'user_admin_1', 
+        baseSalary: 5000, 
+        allowances: [
+            { name: 'Housing', amount: 500 },
+            { name: 'Transport', amount: 150 }
+        ],
+        deductions: [
+            { name: 'Provident Fund', amount: 250 }
+        ]
+    },
+    { 
+        userId: 'user_cashier_1', 
+        baseSalary: 3000,
+        allowances: [
+            { name: 'Transport', amount: 100 }
+        ],
+        deductions: []
+    },
 ];
+
 
 export const initialAttendance: Attendance[] = [
     { id: 'att_01', userId: 'user_admin_1', date: subDays(new Date(), 2).toISOString().split('T')[0], status: 'Present' },

@@ -192,9 +192,16 @@ export interface Attendance {
     status: AttendanceStatus;
 }
 
+export interface SalaryComponent {
+    name: string;
+    amount: number;
+}
+
 export interface EmployeeSalary {
     userId: string;
     baseSalary: number; // Monthly
+    allowances: SalaryComponent[];
+    deductions: SalaryComponent[];
 }
 
 export interface PayrollDeduction {
@@ -209,13 +216,16 @@ export interface PayrollItem {
     userId: string;
     userName: string;
     baseSalary: number;
+    grossEarnings: number;
     daysWorked: number;
     daysAbsent: number;
     salaryPayable: number;
     bonus: number;
-    deductions: PayrollDeduction[];
+    allowances: SalaryComponent[];
+    deductions: (PayrollDeduction | SalaryComponent)[];
     netPay: number;
 }
+
 
 export interface Payroll {
     id: string;

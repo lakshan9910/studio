@@ -59,6 +59,7 @@ export const translations = {
         warehouses: 'Warehouses',
         stock_transfers: 'Stock Transfers',
         loans_advances: 'Loans & Advances',
+        salaries: 'Salaries',
     },
     mg: {
         storefront: 'Varotra',
@@ -119,6 +120,7 @@ export const translations = {
         warehouses: 'Trano fitehirizam-bokatra',
         stock_transfers: 'Famindrana tahiry',
         loans_advances: 'Fampindramam-bola & Avansa',
+        salaries: 'Karama',
     },
     ar: {
         storefront: 'واجهة المتجر',
@@ -179,6 +181,7 @@ export const translations = {
         warehouses: 'المستودعات',
         stock_transfers: 'تحويلات المخزون',
         loans_advances: 'القروض والسلف',
+        salaries: 'الرواتب',
     },
     si: {
         storefront: 'වෙළඳසැල',
@@ -239,6 +242,7 @@ export const translations = {
         warehouses: 'ගබඩා',
         stock_transfers: 'තොග මාරු කිරීම්',
         loans_advances: 'ණය සහ අත්තිකාරම්',
+        salaries: 'වැටුප්',
     },
     ta: {
         storefront: 'கடை முகப்பு',
@@ -299,6 +303,7 @@ export const translations = {
         warehouses: 'கிடங்குகள்',
         stock_transfers: 'பங்கு இடமாற்றங்கள்',
         loans_advances: 'கடன்கள் மற்றும் முன்பணங்கள்',
+        salaries: 'சம்பளம்',
     },
 };
 

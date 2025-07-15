@@ -4,7 +4,7 @@
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { useSettings } from '@/context/SettingsContext';
-import type { Payroll } from '@/types';
+import type { Payroll, SalaryComponent, PayrollDeduction } from '@/types';
 import { Button } from "@/components/ui/button";
 import { format } from 'date-fns';
 import { Printer } from 'lucide-react';
@@ -47,7 +47,6 @@ function PaySlipContent() {
             <main className="p-4 md:p-8" id="printable-area">
                 <div className="space-y-8">
                     {payrollRun.items.map(item => {
-                        const totalEarnings = item.salaryPayable + item.bonus;
                         const totalDeductions = item.deductions.reduce((sum, d) => sum + d.amount, 0);
 
                         return (
@@ -80,16 +79,19 @@ function PaySlipContent() {
                                         <div className="space-y-1 text-sm">
                                             <div className="flex justify-between"><p>Base Salary:</p> <p>${item.baseSalary.toFixed(2)}</p></div>
                                             <div className="flex justify-between"><p>Salary Payable ({item.daysWorked} days):</p> <p>${item.salaryPayable.toFixed(2)}</p></div>
+                                            {item.allowances.map(allowance => (
+                                                 <div key={allowance.name} className="flex justify-between"><p>{allowance.name}:</p> <p>${allowance.amount.toFixed(2)}</p></div>
+                                            ))}
                                             <div className="flex justify-between"><p>Bonus:</p> <p>${item.bonus.toFixed(2)}</p></div>
-                                            <div className="flex justify-between font-bold border-t pt-1 mt-1"><p>Total Earnings:</p> <p>${totalEarnings.toFixed(2)}</p></div>
+                                            <div className="flex justify-between font-bold border-t pt-1 mt-1"><p>Total Earnings:</p> <p>${(item.grossEarnings + item.bonus).toFixed(2)}</p></div>
                                         </div>
                                     </div>
                                     <div>
                                          <h3 className="font-semibold text-lg mb-2 border-b pb-1">Deductions</h3>
                                          <div className="space-y-1 text-sm">
-                                            {item.deductions.map(deduction => (
-                                                 <div key={deduction.id} className="flex justify-between">
-                                                    <p>{deduction.description}:</p>
+                                            {item.deductions.map((deduction, index) => (
+                                                 <div key={index} className="flex justify-between">
+                                                    <p>{'description' in deduction ? deduction.description : deduction.name}:</p>
                                                     <p>${deduction.amount.toFixed(2)}</p>
                                                  </div>
                                             ))}

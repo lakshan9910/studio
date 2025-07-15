@@ -23,6 +23,7 @@ import { format, addDays } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const quotationItemSchema = z.object({
   productId: z.string().min(1, "Product is required."),
@@ -77,7 +78,7 @@ export default function QuotationsPage() {
     defaultValues: { customerId: "", date: format(new Date(), 'yyyy-MM-dd'), expiryDate: format(addDays(new Date(), 14), 'yyyy-MM-dd'), items: [], notes: "" },
   });
 
-  const { control, watch } = form;
+  const { control, watch, setValue } = form;
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -85,6 +86,42 @@ export default function QuotationsPage() {
   });
   
   const watchedItems = watch("items");
+
+  // Effect to update price when a variant is selected or product is changed
+  useEffect(() => {
+    const subscription = watch((value, { name, type }) => {
+      if (type !== 'change' || !name || !name.startsWith('items.')) return;
+      
+      const parts = name.split('.');
+      if (parts.length < 3) return;
+      const index = parseInt(parts[1], 10);
+      const fieldName = parts[2];
+      
+      const allItems = value.items || [];
+      if (index >= allItems.length) return;
+
+      // When product ID changes, reset the variant ID and price
+      if (fieldName === 'productId') {
+        setValue(`items.${index}.variantId`, '');
+        setValue(`items.${index}.price`, 0);
+      }
+      
+      // When variant ID changes, update the price
+      if (fieldName === 'variantId') {
+        const selectedProductId = allItems[index]?.productId;
+        const selectedVariantId = allItems[index]?.variantId;
+        
+        if (selectedProductId && selectedVariantId) {
+          const product = products.find(p => p.id === selectedProductId);
+          const variant = product?.variants.find(v => v.id === selectedVariantId);
+          if (variant) {
+            setValue(`items.${index}.price`, variant.price, { shouldValidate: true });
+          }
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, products, setValue]);
 
   useEffect(() => {
     if (!loading && !hasPermission('quotations:read')) {
@@ -112,20 +149,6 @@ export default function QuotationsPage() {
   }, [filteredQuotations, currentPage]);
 
   useEffect(() => { setCurrentPage(1); }, [debouncedSearchTerm]);
-
-  // Effect to update price when a variant is selected
-  useEffect(() => {
-    watchedItems.forEach((item, index) => {
-        if (item.variantId) {
-            const product = products.find(p => p.id === item.productId);
-            const variant = product?.variants.find(v => v.id === item.variantId);
-            if (variant && form.getValues(`items.${index}.price`) !== variant.price) {
-                form.setValue(`items.${index}.price`, variant.price);
-            }
-        }
-    });
-  }, [watchedItems, products, form]);
-
 
   const handleOpenModal = (quotation: Quotation | null = null) => {
     setEditingQuotation(quotation);
@@ -317,7 +340,7 @@ export default function QuotationsPage() {
               <div className="space-y-4">
                 <FormLabel>Items</FormLabel>
                 {fields.map((field, index) => {
-                   const selectedProductId = watchedItems.items[index]?.productId;
+                   const selectedProductId = watchedItems?.[index]?.productId;
                    const availableVariants = products.find(p => p.id === selectedProductId)?.variants || [];
                    return (
                      <div key={field.id} className="grid grid-cols-[2fr,1fr,1fr,1fr,auto] items-end gap-2 p-3 border rounded-lg">
@@ -355,5 +378,3 @@ export default function QuotationsPage() {
     </div>
   );
 }
-
-    

@@ -1,6 +1,7 @@
 
 
-export type UserRole = 'Admin' | 'Cashier';
+import type { Permission } from './permissions';
+
 export type PaymentMethod = 'Cash' | 'Card' | 'Online' | 'Credit';
 export type StockAdjustmentType = 'Addition' | 'Subtraction';
 export type PaymentStatus = 'Paid' | 'Due' | 'Overdue';
@@ -85,9 +86,9 @@ export interface User {
   id: string;
   email: string;
   name?: string;
-  role: UserRole;
   phone?: string;
   imageUrl?: string;
+  permissions: Permission[];
 }
 
 export interface PurchaseItem {

@@ -25,7 +25,7 @@ const initialDateRange: DateRange = {
 }
 
 export default function PayrollPage() {
-    const { user: currentUser, users, loading } = useAuth();
+    const { user: currentUser, users, loading, hasPermission } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
 
@@ -36,16 +36,21 @@ export default function PayrollPage() {
     const [date, setDate] = useState<DateRange | undefined>(initialDateRange);
 
     useEffect(() => {
-        if (!loading && currentUser?.role !== 'Admin') {
+        if (!loading && !hasPermission('hr:read')) {
             toast({ variant: 'destructive', title: 'Access Denied', description: 'You do not have permission to view this page.' });
             router.replace('/dashboard');
         }
-    }, [currentUser, loading, router, toast]);
+    }, [currentUser, loading, router, toast, hasPermission]);
     
     const userMap = useMemo(() => new Map(users.map(u => [u.id, u])), [users]);
     const salaryMap = useMemo(() => new Map(salaries.map(s => [s.userId, s.baseSalary])), [salaries]);
+    const canWrite = hasPermission('hr:write');
 
     const handleGeneratePayroll = () => {
+        if (!canWrite) {
+             toast({ variant: 'destructive', title: 'Permission Denied' });
+             return;
+        }
         if (!date?.from || !date?.to) {
             toast({ variant: 'destructive', title: 'Error', description: 'Please select a valid date range.' });
             return;
@@ -95,6 +100,10 @@ export default function PayrollPage() {
     };
 
     const handleUpdatePayrollItem = (payrollId: string, userId: string, field: 'bonus' | 'deductions', value: number) => {
+         if (!canWrite) {
+             toast({ variant: 'destructive', title: 'Permission Denied' });
+             return;
+        }
         setPayrollRuns(prev => prev.map(pr => {
             if (pr.id === payrollId) {
                 const newItems = pr.items.map(item => {
@@ -111,7 +120,7 @@ export default function PayrollPage() {
         }));
     };
 
-    if (!currentUser || currentUser.role !== 'Admin') return null;
+    if (!currentUser || !hasPermission('hr:read')) return null;
 
     return (
         <div className="p-4 sm:p-6 lg:p-8 space-y-6">
@@ -154,7 +163,7 @@ export default function PayrollPage() {
                             />
                         </PopoverContent>
                     </Popover>
-                    <Button onClick={handleGeneratePayroll}>
+                    <Button onClick={handleGeneratePayroll} disabled={!canWrite}>
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Generate Payroll
                     </Button>
@@ -209,6 +218,7 @@ export default function PayrollPage() {
                                                 value={item.bonus} 
                                                 onChange={e => handleUpdatePayrollItem(pr.id, item.userId, 'bonus', parseFloat(e.target.value) || 0)}
                                                 className="w-24 h-8"
+                                                disabled={!canWrite}
                                             />
                                         </TableCell>
                                         <TableCell>
@@ -217,6 +227,7 @@ export default function PayrollPage() {
                                                 value={item.deductions} 
                                                 onChange={e => handleUpdatePayrollItem(pr.id, item.userId, 'deductions', parseFloat(e.target.value) || 0)}
                                                 className="w-24 h-8"
+                                                disabled={!canWrite}
                                             />
                                         </TableCell>
                                         <TableCell className="font-bold">${item.netPay.toFixed(2)}</TableCell>

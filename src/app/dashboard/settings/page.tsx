@@ -54,7 +54,7 @@ const settingsSchema = systemSettingsSchema.merge(brandingSettingsSchema).merge(
 type SettingsFormValues = z.infer<typeof settingsSchema>;
 
 export default function SettingsPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, hasPermission } = useAuth();
   const { settings, updateSettings } = useSettings();
   const router = useRouter();
   const { toast } = useToast();
@@ -82,7 +82,7 @@ export default function SettingsPage() {
 
 
   useEffect(() => {
-    if (!loading && user?.role !== 'Admin') {
+    if (!loading && !hasPermission('settings:write')) {
       toast({
         variant: 'destructive',
         title: 'Access Denied',
@@ -90,7 +90,7 @@ export default function SettingsPage() {
       });
       router.replace('/dashboard');
     }
-  }, [user, loading, router, toast]);
+  }, [user, loading, router, toast, hasPermission]);
 
   useEffect(() => {
     form.reset(settings);
@@ -118,7 +118,7 @@ export default function SettingsPage() {
     });
   };
   
-  if (user?.role !== 'Admin') {
+  if (!user || !hasPermission('settings:write')) {
     return null;
   }
   

@@ -14,7 +14,7 @@ import { CategoryPieChart } from '@/components/reports/CategoryPieChart';
 import { useToast } from "@/hooks/use-toast";
 
 export default function ReportsPage() {
-    const { user, loading } = useAuth();
+    const { user, loading, hasPermission } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
     const { t } = useSettings();
@@ -27,7 +27,7 @@ export default function ReportsPage() {
     const [expenses] = useState<Expense[]>(initialExpenses);
     
     useEffect(() => {
-        if (!loading && user?.role !== 'Admin') {
+        if (!loading && !hasPermission('reports:read')) {
           toast({
             variant: 'destructive',
             title: 'Access Denied',
@@ -35,7 +35,7 @@ export default function ReportsPage() {
           });
           router.replace('/dashboard');
         }
-    }, [user, loading, router, toast]);
+    }, [user, loading, router, toast, hasPermission]);
 
     const reportData = useMemo(() => {
         const productMap = new Map(products.map(p => [p.id, p]));
@@ -106,7 +106,7 @@ export default function ReportsPage() {
 
     }, [sales, purchases, returns, products, categories, expenses]);
 
-    if (user?.role !== 'Admin') {
+    if (!user || !hasPermission('reports:read')) {
         return null;
     }
 

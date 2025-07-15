@@ -68,73 +68,74 @@ function SimpleCalculator() {
     );
 }
 
-const NavContent = ({ searchTerm, isAdmin, t }: { searchTerm: string, isAdmin: boolean, t: (key: string) => string }) => {
+const NavContent = ({ searchTerm, hasPermission, t }: { searchTerm: string, hasPermission: (p: any) => boolean, t: (key: string) => string }) => {
     const pathname = usePathname();
     const navLinks = [
         { 
             category: t('storefront'),
-            adminOnly: false,
+            permissions: ['pos:read'],
             links: [
-                { href: '/dashboard', label: 'POS', icon: Store },
+                { href: '/dashboard', label: 'POS', icon: Store, permission: 'pos:read' },
             ]
         },
         {
             category: t('analytics_finance'),
-            adminOnly: true,
+            permissions: ['reports:read', 'payments:read', 'purchases:read', 'expenses:read'],
             links: [
-                { href: '/dashboard/reports', label: t('reports'), icon: BarChart3 },
-                { href: '/dashboard/payments', label: t('payments'), icon: History },
-                { href: '/dashboard/purchases', label: t('purchases'), icon: ShoppingCart },
-                { href: '/dashboard/expenses', label: t('expenses'), icon: Receipt },
-                { href: '/dashboard/expense-categories', label: t('expense_categories'), icon: Wallet },
+                { href: '/dashboard/reports', label: t('reports'), icon: BarChart3, permission: 'reports:read' },
+                { href: '/dashboard/payments', label: t('payments'), icon: History, permission: 'payments:read' },
+                { href: '/dashboard/purchases', label: t('purchases'), icon: ShoppingCart, permission: 'purchases:read' },
+                { href: '/dashboard/expenses', label: t('expenses'), icon: Receipt, permission: 'expenses:read' },
+                { href: '/dashboard/expense-categories', label: t('expense_categories'), icon: Wallet, permission: 'expenses:read' },
             ]
         },
         {
             category: t('general'),
-            adminOnly: false,
+            permissions: ['returns:read', 'customers:read'],
             links: [
-                 { href: '/dashboard/returns', label: t('sales_return'), icon: Undo2 },
-                 { href: '/dashboard/customers', label: t('customers'), icon: Users },
+                 { href: '/dashboard/returns', label: t('sales_return'), icon: Undo2, permission: 'returns:read' },
+                 { href: '/dashboard/customers', label: t('customers'), icon: Users, permission: 'customers:read' },
             ]
         },
         {
             category: t('product_management'),
-            adminOnly: true,
+            permissions: ['products:read', 'stock:read'],
             links: [
-                { href: '/dashboard/products', label: t('products'), icon: Package },
-                { href: '/dashboard/categories', label: t('categories'), icon: Shapes },
-                { href: '/dashboard/brands', label: t('brands'), icon: Shield },
-                { href: '/dashboard/units', label: t('units'), icon: Beaker },
-                { href: '/dashboard/stock-adjustments', label: t('stock_adjustments'), icon: Wrench },
-                { href: '/dashboard/print/barcodes', label: 'Print Barcodes', icon: Barcode },
-                { href: '/dashboard/transfers', label: t('stock_transfers'), icon: ArrowRightLeft },
-                { href: '/dashboard/warehouses', label: t('warehouses'), icon: Warehouse },
+                { href: '/dashboard/products', label: t('products'), icon: Package, permission: 'products:read' },
+                { href: '/dashboard/categories', label: t('categories'), icon: Shapes, permission: 'products:read' },
+                { href: '/dashboard/brands', label: t('brands'), icon: Shield, permission: 'products:read' },
+                { href: '/dashboard/units', label: t('units'), icon: Beaker, permission: 'products:read' },
+                { href: '/dashboard/stock-adjustments', label: t('stock_adjustments'), icon: Wrench, permission: 'stock:read' },
+                { href: '/dashboard/print/barcodes', label: 'Print Barcodes', icon: Barcode, permission: 'products:read' },
+                { href: '/dashboard/transfers', label: t('stock_transfers'), icon: ArrowRightLeft, permission: 'stock:read' },
+                { href: '/dashboard/warehouses', label: t('warehouses'), icon: Warehouse, permission: 'stock:read' },
             ]
         },
         {
             category: t('user_supplier_management'),
-            adminOnly: true,
+            permissions: ['suppliers:read', 'users:read'],
             links: [
-                { href: '/dashboard/suppliers', label: t('suppliers'), icon: Truck },
-                { href: '/dashboard/users', label: t('users'), icon: UserCog },
+                { href: '/dashboard/suppliers', label: t('suppliers'), icon: Truck, permission: 'suppliers:read' },
+                { href: '/dashboard/users', label: t('users'), icon: UserCog, permission: 'users:read' },
             ]
         },
         {
             category: t('hr_management'),
-            adminOnly: true,
+            permissions: ['hr:read'],
             links: [
-                { href: '/dashboard/hr/attendance', label: t('attendance'), icon: CalendarCheck },
-                { href: '/dashboard/hr/payroll', label: t('payroll'), icon: Briefcase },
+                { href: '/dashboard/hr/attendance', label: t('attendance'), icon: CalendarCheck, permission: 'hr:read' },
+                { href: '/dashboard/hr/payroll', label: t('payroll'), icon: Briefcase, permission: 'hr:read' },
             ]
         },
     ];
 
     const filteredNavLinks = navLinks
         .map(section => {
-            if (section.adminOnly && !isAdmin) {
+            if (!section.permissions.some(p => hasPermission(p))) {
                 return null;
             }
             const filteredLinks = section.links.filter(link => 
+                hasPermission(link.permission) &&
                 link.label.toLowerCase().includes(searchTerm.toLowerCase())
             );
 
@@ -179,7 +180,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout, hasPermission } = useAuth();
   const { settings, setLanguage, t } = useSettings();
   const router = useRouter();
   
@@ -229,8 +230,6 @@ export default function DashboardLayout({
       </div>
     );
   }
-
-  const isAdmin = user.role === 'Admin';
   
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
@@ -260,7 +259,7 @@ export default function DashboardLayout({
                     </div>
                 </div>
                 <ScrollArea className="flex-1">
-                    <NavContent searchTerm={searchTerm} isAdmin={isAdmin} t={t} />
+                    <NavContent searchTerm={searchTerm} hasPermission={hasPermission} t={t} />
                 </ScrollArea>
             </div>
         </div>
@@ -290,7 +289,7 @@ export default function DashboardLayout({
                         </Link>
                     </div>
                     <ScrollArea className="flex-1">
-                        <NavContent searchTerm={searchTerm} isAdmin={isAdmin} t={t}/>
+                        <NavContent searchTerm={searchTerm} hasPermission={hasPermission} t={t}/>
                     </ScrollArea>
                 </SheetContent>
             </Sheet>
@@ -367,9 +366,9 @@ export default function DashboardLayout({
                         </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>{user.name || user.email} <span className='text-xs text-muted-foreground'>({user.role})</span></DropdownMenuLabel>
+                        <DropdownMenuLabel>{user.name || user.email}</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        {isAdmin && (
+                        {hasPermission('settings:write') && (
                         <DropdownMenuItem asChild>
                             <Link href="/dashboard/settings">
                                 <Settings className="mr-2 h-4 w-4" />

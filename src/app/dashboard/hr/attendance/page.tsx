@@ -18,7 +18,7 @@ import { CalendarCheck, UserCheck, UserX, Coffee } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function AttendancePage() {
-    const { user: currentUser, users, loading } = useAuth();
+    const { user: currentUser, users, loading, hasPermission } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
 
@@ -27,7 +27,7 @@ export default function AttendancePage() {
     const [currentMonth, setCurrentMonth] = useState(new Date());
 
     useEffect(() => {
-        if (!loading && currentUser?.role !== 'Admin') {
+        if (!loading && !hasPermission('hr:read')) {
           toast({
             variant: 'destructive',
             title: 'Access Denied',
@@ -35,9 +35,14 @@ export default function AttendancePage() {
           });
           router.replace('/dashboard');
         }
-    }, [currentUser, loading, router, toast]);
+    }, [currentUser, loading, router, toast, hasPermission]);
 
     const handleAttendanceChange = (userId: string, status: 'Present' | 'Absent' | 'Leave') => {
+        if (!hasPermission('hr:write')) {
+            toast({ variant: 'destructive', title: 'Permission Denied', description: 'You do not have permission to update attendance.' });
+            return;
+        }
+
         const dateString = format(selectedDate, 'yyyy-MM-dd');
         const existingRecordIndex = attendanceRecords.findIndex(
             rec => rec.userId === userId && rec.date === dateString
@@ -91,9 +96,11 @@ export default function AttendancePage() {
         return monthData;
     }, [attendanceRecords, users, currentMonth]);
 
-    if (!currentUser || currentUser.role !== 'Admin') {
+    if (!currentUser || !hasPermission('hr:read')) {
         return null;
     }
+
+    const canEdit = hasPermission('hr:write');
 
     return (
         <div className="p-4 sm:p-6 lg:p-8 grid gap-8 md:grid-cols-3">
@@ -129,6 +136,7 @@ export default function AttendancePage() {
                                             <Select
                                                 value={getAttendanceStatusForUser(user.id) || ''}
                                                 onValueChange={(value: 'Present' | 'Absent' | 'Leave') => handleAttendanceChange(user.id, value)}
+                                                disabled={!canEdit}
                                             >
                                                 <SelectTrigger className="w-[150px] ml-auto">
                                                     <SelectValue placeholder="Mark Status" />

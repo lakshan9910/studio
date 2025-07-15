@@ -4,6 +4,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from 'next/navigation';
 import { useForm } from "react-hook-form";
+import Image from 'next/image';
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { initialCategories } from "@/lib/data";
@@ -41,6 +42,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 
 const categorySchema = z.object({
   name: z.string().min(2, { message: "Category name must be at least 2 characters." }),
+  imageUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
 });
 
 type CategoryFormValues = z.infer<typeof categorySchema>;
@@ -58,7 +60,7 @@ export default function CategoriesPage() {
 
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
-    defaultValues: { name: "" },
+    defaultValues: { name: "", imageUrl: "" },
   });
 
   useEffect(() => {
@@ -80,27 +82,29 @@ export default function CategoriesPage() {
 
   const handleOpenModal = (category: Category | null = null) => {
     setEditingCategory(category);
-    form.reset(category ? { name: category.name } : { name: "" });
+    form.reset(category ? { name: category.name, imageUrl: category.imageUrl } : { name: "", imageUrl: "https://placehold.co/200x200.png" });
     setModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setModalOpen(false);
     setEditingCategory(null);
-    form.reset({ name: "" });
+    form.reset({ name: "", imageUrl: "" });
   };
 
   const onSubmit = (data: CategoryFormValues) => {
+    const imageData = data.imageUrl || 'https://placehold.co/200x200.png';
     if (editingCategory) {
       setCategories(
         categories.map((c) =>
-          c.id === editingCategory.id ? { ...c, name: data.name } : c
+          c.id === editingCategory.id ? { ...c, name: data.name, imageUrl: imageData } : c
         )
       );
     } else {
       const newCategory: Category = {
         id: `cat_${Date.now()}`,
         name: data.name,
+        imageUrl: imageData,
       };
       setCategories([...categories, newCategory]);
     }
@@ -148,6 +152,7 @@ export default function CategoriesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Image</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead className="w-[100px] text-right">Actions</TableHead>
                 </TableRow>
@@ -156,6 +161,9 @@ export default function CategoriesPage() {
                 {filteredCategories.length > 0 ? (
                   filteredCategories.map((category) => (
                     <TableRow key={category.id}>
+                       <TableCell>
+                        <Image src={category.imageUrl} alt={category.name} width={40} height={40} className="rounded-md object-cover" data-ai-hint={`${category.name}`}/>
+                      </TableCell>
                       <TableCell className="font-medium">{category.name}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
@@ -184,7 +192,7 @@ export default function CategoriesPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={2} className="h-24 text-center">
+                    <TableCell colSpan={3} className="h-24 text-center">
                       No categories found.
                     </TableCell>
                   </TableRow>
@@ -215,6 +223,19 @@ export default function CategoriesPage() {
                     <FormLabel>Category Name</FormLabel>
                     <FormControl>
                       <Input placeholder="e.g., Beverages" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="imageUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Image URL</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://example.com/image.png" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

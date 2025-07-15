@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,6 +42,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 
 const brandSchema = z.object({
   name: z.string().min(2, { message: "Brand name must be at least 2 characters." }),
+  imageUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
 });
 
 type BrandFormValues = z.infer<typeof brandSchema>;
@@ -58,7 +60,7 @@ export default function BrandsPage() {
 
   const form = useForm<BrandFormValues>({
     resolver: zodResolver(brandSchema),
-    defaultValues: { name: "" },
+    defaultValues: { name: "" , imageUrl: ""},
   });
 
   useEffect(() => {
@@ -80,27 +82,29 @@ export default function BrandsPage() {
 
   const handleOpenModal = (brand: Brand | null = null) => {
     setEditingBrand(brand);
-    form.reset(brand ? { name: brand.name } : { name: "" });
+    form.reset(brand ? { name: brand.name, imageUrl: brand.imageUrl } : { name: "", imageUrl: "https://placehold.co/200x200.png" });
     setModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setModalOpen(false);
     setEditingBrand(null);
-    form.reset({ name: "" });
+    form.reset({ name: "", imageUrl: "" });
   };
 
   const onSubmit = (data: BrandFormValues) => {
+    const imageData = data.imageUrl || 'https://placehold.co/200x200.png';
     if (editingBrand) {
       setBrands(
         brands.map((b) =>
-          b.id === editingBrand.id ? { ...b, name: data.name } : b
+          b.id === editingBrand.id ? { ...b, name: data.name, imageUrl: imageData } : b
         )
       );
     } else {
       const newBrand: Brand = {
         id: `brand_${Date.now()}`,
         name: data.name,
+        imageUrl: imageData,
       };
       setBrands([...brands, newBrand]);
     }
@@ -148,6 +152,7 @@ export default function BrandsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Image</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead className="w-[100px] text-right">Actions</TableHead>
                 </TableRow>
@@ -156,6 +161,9 @@ export default function BrandsPage() {
                 {filteredBrands.length > 0 ? (
                   filteredBrands.map((brand) => (
                     <TableRow key={brand.id}>
+                      <TableCell>
+                        <Image src={brand.imageUrl} alt={brand.name} width={40} height={40} className="rounded-md object-cover" data-ai-hint={`${brand.name} logo`}/>
+                      </TableCell>
                       <TableCell className="font-medium">{brand.name}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
@@ -184,7 +192,7 @@ export default function BrandsPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={2} className="h-24 text-center">
+                    <TableCell colSpan={3} className="h-24 text-center">
                       No brands found.
                     </TableCell>
                   </TableRow>
@@ -215,6 +223,19 @@ export default function BrandsPage() {
                     <FormLabel>Brand Name</FormLabel>
                     <FormControl>
                       <Input placeholder="e.g., FarmFresh" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="imageUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Image URL</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://example.com/image.png" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

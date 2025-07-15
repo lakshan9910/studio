@@ -125,18 +125,18 @@ export const initialProducts: Product[] = [
 
 
 export const initialCategories: Category[] = [
-    { id: 'cat_01', name: 'Fresh Produce' },
-    { id: 'cat_02', name: 'Bakery' },
-    { id: 'cat_03', name: 'Dairy' },
-    { id: 'cat_04', name: 'Snacks' },
+    { id: 'cat_01', name: 'Fresh Produce', imageUrl: 'https://placehold.co/200x200.png' },
+    { id: 'cat_02', name: 'Bakery', imageUrl: 'https://placehold.co/200x200.png' },
+    { id: 'cat_03', name: 'Dairy', imageUrl: 'https://placehold.co/200x200.png' },
+    { id: 'cat_04', name: 'Snacks', imageUrl: 'https://placehold.co/200x200.png' },
 ];
 
 export const initialBrands: Brand[] = [
-    { id: 'brand_01', name: 'FarmFresh' },
-    { id: 'brand_02', name: 'Bakery Co.' },
-    { id: 'brand_03', name: 'Happy Cow Dairy' },
-    { id: 'brand_04', name: 'Snacktastic' },
-    { id: 'brand_05', name: 'ChocoGood' },
+    { id: 'brand_01', name: 'FarmFresh', imageUrl: 'https://placehold.co/200x200.png' },
+    { id: 'brand_02', name: 'Bakery Co.', imageUrl: 'https://placehold.co/200x200.png' },
+    { id: 'brand_03', name: 'Happy Cow Dairy', imageUrl: 'https://placehold.co/200x200.png' },
+    { id: 'brand_04', name: 'Snacktastic', imageUrl: 'https://placehold.co/200x200.png' },
+    { id: 'brand_05', name: 'ChocoGood', imageUrl: 'https://placehold.co/200x200.png' },
 ];
 
 export const initialUnits: Unit[] = [

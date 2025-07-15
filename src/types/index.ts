@@ -31,11 +31,13 @@ export interface Sale {
 export interface Category {
   id: string;
   name: string;
+  imageUrl: string;
 }
 
 export interface Brand {
     id: string;
     name: string;
+    imageUrl: string;
 }
 
 export interface Unit {

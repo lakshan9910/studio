@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { ShoppingCart } from "lucide-react";
+import { Store } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -56,7 +56,7 @@ export default function SignupPage() {
              <div className="flex justify-center mb-6">
                 <div className="flex items-center gap-3">
                     <div className="bg-primary/20 p-2 rounded-lg">
-                        <ShoppingCart className="text-primary h-6 w-6" />
+                        <Store className="text-primary h-6 w-6" />
                     </div>
                     <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Cashy</h1>
                 </div>
